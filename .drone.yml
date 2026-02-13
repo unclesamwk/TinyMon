@@ -21,22 +21,6 @@ steps:
     commands:
       - composer install --no-interaction --prefer-dist
 
-  - name: notify-lint-failed
-    image: appleboy/drone-telegram
-    environment:
-      PLUGIN_TOKEN:
-        from_secret: telegram_token
-      PLUGIN_TO:
-        from_secret: telegram_chat_id
-      PLUGIN_MESSAGE: |
-        ❌ {{repo.name}} lint failed
-        {{#if build.tag}}Tag: {{build.tag}}{{else}}Branch: {{commit.branch}}{{/if}}
-        Commit: {{commit.message}}
-        {{build.link}}
-    when:
-      status:
-        - failure
-
 ---
 kind: pipeline
 type: kubernetes
@@ -81,23 +65,3 @@ steps:
         - git checkout "$${DRONE_TAG}"
         - docker compose up --build -d
         - echo "Deployment of $${DRONE_TAG} complete."
-
-  - name: notify-deploy
-    image: appleboy/drone-telegram
-    environment:
-      PLUGIN_TOKEN:
-        from_secret: telegram_token
-      PLUGIN_TO:
-        from_secret: telegram_chat_id
-      PLUGIN_MESSAGE: |
-        {{#success build.status}}
-        ✅ {{repo.name}} {{build.tag}} deployed
-        {{else}}
-        ❌ {{repo.name}} {{build.tag}} deploy failed
-        {{/success}}
-        Commit: {{commit.message}}
-        {{build.link}}
-    when:
-      status:
-        - success
-        - failure
