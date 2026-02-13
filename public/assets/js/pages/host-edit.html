@@ -1,0 +1,75 @@
+<div class="page" data-name="host-edit">
+    <div class="navbar">
+        <div class="navbar-bg"></div>
+        <div class="navbar-inner">
+            <div class="left">
+                <a href="#" class="link back"
+                    ><i class="icon icon-back"></i
+                    ><span class="if-not-md">Back</span></a
+                >
+            </div>
+            <div class="title" id="page-title">Neuer Host</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="list">
+            <ul>
+                <li class="item-content item-input">
+                    <div class="item-inner">
+                        <div class="item-title item-label">Name</div>
+                        <div class="item-input-wrap">
+                            <input
+                                type="text"
+                                id="host-name"
+                                placeholder="z.B. Webserver"
+                            />
+                        </div>
+                    </div>
+                </li>
+                <li class="item-content item-input">
+                    <div class="item-inner">
+                        <div class="item-title item-label">Adresse</div>
+                        <div class="item-input-wrap">
+                            <input
+                                type="text"
+                                id="host-address"
+                                placeholder="z.B. example.com oder 1.2.3.4"
+                            />
+                        </div>
+                    </div>
+                </li>
+                <li class="item-content item-input">
+                    <div class="item-inner">
+                        <div class="item-title item-label">Beschreibung</div>
+                        <div class="item-input-wrap">
+                            <input
+                                type="text"
+                                id="host-description"
+                                placeholder="Optional"
+                            />
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <label class="item-content">
+                        <div class="item-inner">
+                            <div class="item-title">Aktiviert</div>
+                            <div class="item-after">
+                                <div class="toggle toggle-init">
+                                    <input
+                                        type="checkbox"
+                                        id="host-enabled"
+                                        checked
+                                    /><span class="toggle-icon"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="block">
+            <button class="button button-fill" id="save-host">Speichern</button>
+        </div>
+    </div>
+</div>

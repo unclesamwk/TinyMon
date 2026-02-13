@@ -1,0 +1,79 @@
+<div class="page" data-name="check-edit">
+    <div class="navbar">
+        <div class="navbar-bg"></div>
+        <div class="navbar-inner">
+            <div class="left">
+                <a href="#" class="link back"
+                    ><i class="icon icon-back"></i
+                    ><span class="if-not-md">Back</span></a
+                >
+            </div>
+            <div class="title" id="page-title">Neuer Check</div>
+        </div>
+    </div>
+    <div class="page-content">
+        <div class="list">
+            <ul>
+                <li class="item-content item-input">
+                    <div class="item-inner">
+                        <div class="item-title item-label">Typ</div>
+                        <div class="item-input-wrap">
+                            <select id="check-type">
+                                <option value="ping">Ping</option>
+                                <option value="http">HTTP</option>
+                                <option value="port">Port</option>
+                                <option value="certificate">Certificate</option>
+                                <option value="disk">Disk</option>
+                                <option value="load">Load</option>
+                                <option value="memory">Memory</option>
+                                <option value="content">Content</option>
+                                <option value="content_hash">
+                                    Content Hash
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </li>
+                <li class="item-content item-input">
+                    <div class="item-inner">
+                        <div class="item-title item-label">
+                            Intervall (Sekunden)
+                        </div>
+                        <div class="item-input-wrap">
+                            <input
+                                type="number"
+                                id="check-interval"
+                                value="300"
+                                min="30"
+                                step="30"
+                            />
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <label class="item-content">
+                        <div class="item-inner">
+                            <div class="item-title">Aktiviert</div>
+                            <div class="item-after">
+                                <div class="toggle toggle-init">
+                                    <input
+                                        type="checkbox"
+                                        id="check-enabled"
+                                        checked
+                                    /><span class="toggle-icon"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="block-title">Konfiguration</div>
+        <div class="list"><ul id="config-list"></ul></div>
+        <div class="block">
+            <button class="button button-fill" id="save-check">
+                Speichern
+            </button>
+        </div>
+    </div>
+</div>

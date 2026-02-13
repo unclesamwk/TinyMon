@@ -1,0 +1,103 @@
+kind: pipeline
+type: kubernetes
+name: lint
+
+trigger:
+  branch:
+    - main
+    - master
+  event:
+    - push
+    - tag
+
+steps:
+  - name: syntax-check
+    image: php:8.4-cli
+    commands:
+      - find app public bin -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  - name: install-dev-deps
+    image: composer:2
+    commands:
+      - composer install --no-interaction --prefer-dist
+
+  - name: notify-lint-failed
+    image: appleboy/drone-telegram
+    environment:
+      PLUGIN_TOKEN:
+        from_secret: telegram_token
+      PLUGIN_TO:
+        from_secret: telegram_chat_id
+      PLUGIN_MESSAGE: |
+        ❌ {{repo.name}} lint failed
+        {{#if build.tag}}Tag: {{build.tag}}{{else}}Branch: {{commit.branch}}{{/if}}
+        Commit: {{commit.message}}
+        {{build.link}}
+    when:
+      status:
+        - failure
+
+---
+kind: pipeline
+type: kubernetes
+name: deploy
+
+trigger:
+  event:
+    - tag
+  ref:
+    - refs/tags/v*
+
+depends_on:
+  - lint
+
+steps:
+  - name: deploy
+    image: appleboy/drone-ssh
+    environment:
+      GITEA_TOKEN:
+        from_secret: gitea_token
+      DRONE_TAG: ${DRONE_TAG}
+    settings:
+      host:
+        - "ssh.frotheim.project.host"
+      username: "s.warkentin@mittwald.de@a-m03740"
+      key:
+        from_secret: ssh_key
+      port: 22
+      command_timeout: 60s
+      envs:
+        - gitea_token
+        - drone_tag
+      script_stop: true
+      script:
+        - set -e
+        - REPO_URL="https://$${GITEA_TOKEN}@gitea.sam-services.de/sam-services/MiniMon.git"
+        - echo "Deploying tag $${DRONE_TAG}..."
+        - cd /html/minimon
+        - if [ ! -d .git ]; then git init && git remote add origin "$$REPO_URL"; fi
+        - git remote set-url origin "$$REPO_URL"
+        - git fetch origin --tags
+        - git checkout "$${DRONE_TAG}"
+        - docker compose up --build -d
+        - echo "Deployment of $${DRONE_TAG} complete."
+
+  - name: notify-deploy
+    image: appleboy/drone-telegram
+    environment:
+      PLUGIN_TOKEN:
+        from_secret: telegram_token
+      PLUGIN_TO:
+        from_secret: telegram_chat_id
+      PLUGIN_MESSAGE: |
+        {{#success build.status}}
+        ✅ {{repo.name}} {{build.tag}} deployed
+        {{else}}
+        ❌ {{repo.name}} {{build.tag}} deploy failed
+        {{/success}}
+        Commit: {{commit.message}}
+        {{build.link}}
+    when:
+      status:
+        - success
+        - failure

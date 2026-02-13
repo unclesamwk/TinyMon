@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8001:80"
+      - "8444:443"
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    command: >
+      bash -c "composer install --no-interaction && apache2-foreground"

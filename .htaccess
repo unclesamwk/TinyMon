@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Block access to sensitive files and directories
+RewriteRule ^\.env - [F,L]
+RewriteRule ^app/ - [F,L]
+RewriteRule ^vendor/ - [F,L]
+RewriteRule ^data/ - [F,L]
+RewriteRule ^bin/ - [F,L]
+RewriteRule ^docker/ - [F,L]
+RewriteRule ^composer\.(json|lock)$ - [F,L]
+
+# Redirect everything to public/
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
