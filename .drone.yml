@@ -61,6 +61,6 @@ steps:
         - cd /html/minimon
         - if [ ! -d .git ]; then git init && git remote add origin "$$REPO_URL"; fi
         - git remote set-url origin "$$REPO_URL"
-        - git fetch origin --tags
+        - git fetch origin --tags --force
         - git checkout "$${DRONE_TAG}"
         - bash deploy.sh "$${DRONE_TAG}"
