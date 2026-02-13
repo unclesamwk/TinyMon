@@ -63,5 +63,4 @@ steps:
         - git remote set-url origin "$$REPO_URL"
         - git fetch origin --tags
         - git checkout "$${DRONE_TAG}"
-        - docker compose up --build -d
-        - echo "Deployment of $${DRONE_TAG} complete."
+        - bash deploy.sh "$${DRONE_TAG}"
