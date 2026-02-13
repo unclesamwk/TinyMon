@@ -45,7 +45,7 @@ steps:
     settings:
       host:
         - "ssh.frotheim.project.host"
-      username: "s.warkentin@mittwald.de@a-m03740"
+      username: "ssh-h7qqf0@a-m03740"
       key:
         from_secret: ssh_key
       port: 22
