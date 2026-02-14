@@ -5,6 +5,7 @@ require __DIR__ . "/../vendor/autoload.php";
 use App\services\Database;
 use App\services\CheckRunner;
 use App\services\AlertService;
+use App\services\WebPushService;
 
 // Ensure we run from project root
 chdir(__DIR__ . "/../");
@@ -39,16 +40,26 @@ $results = $runner->runDue();
 
 // Send alerts for status changes
 $alertService = new AlertService($config["smtp"], $config["alert_recipients"]);
+$pushService = new WebPushService($db, $config);
 
 $alertCount = 0;
 foreach ($results as $result) {
     if (!empty($result["status_changed"])) {
         $alertService->sendAlert($result);
+        $pushService->sendAll($result);
         $alertCount++;
     }
 }
 
 $total = count($results);
 $timestamp = date("Y-m-d H:i:s");
+
+// Store last run timestamp in settings
+$db->runQuery(
+    "INSERT INTO settings (key, value) VALUES ('runner_last_run', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    [$timestamp],
+);
+
 echo "[{$timestamp}] Ran {$total} checks, {$alertCount} alerts sent.\n";
 

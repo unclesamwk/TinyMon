@@ -28,4 +28,7 @@ return [
     ],
     "alert_recipients" => $_ENV["ALERT_RECIPIENTS"] ?? "",
     "push_api_key" => $_ENV["PUSH_API_KEY"] ?? "",
+    "vapid_public_key" => $_ENV["VAPID_PUBLIC_KEY"] ?? "",
+    "vapid_private_key" => $_ENV["VAPID_PRIVATE_KEY"] ?? "",
+    "vapid_subject" => $_ENV["VAPID_SUBJECT"] ?? "",
 ];

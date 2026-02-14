@@ -126,6 +126,13 @@ function loadDashboard(page) {
       s += "</div>";
       page.$el.find("#dashboard-summary").html(s);
 
+      var runnerEl = page.$el.find("#runner-status");
+      if (data.runner_last_run) {
+        runnerEl.html("Runner: " + timeAgo(data.runner_last_run));
+      } else {
+        runnerEl.html("Runner: noch nicht gelaufen");
+      }
+
       var html = "";
       if (hosts.length === 0) {
         html =
@@ -385,6 +392,9 @@ function renderConfigFields(page, type, cfg) {
   page.$el.find("#config-list").html(html);
 }
 
+// Cache buster for SPA page templates
+var pageV = "?v=" + (APP_VERSION || Date.now());
+
 // App
 var app = new Framework7({
   el: "#app",
@@ -396,7 +406,7 @@ var app = new Framework7({
     // Home / Dashboard
     {
       path: "/",
-      url: "/assets/js/pages/home.html",
+      url: "/assets/js/pages/home.html" + pageV,
       on: {
         pageInit: function (e, page) {
           updateDarkModeIcon();
@@ -430,7 +440,7 @@ var app = new Framework7({
     // Host new (must be before :id)
     {
       path: "/hosts/new/",
-      url: "/assets/js/pages/host-edit.html",
+      url: "/assets/js/pages/host-edit.html" + pageV,
       on: {
         pageInit: function (e, page) {
           page.$el.find("#page-title").text("Neuer Host");
@@ -473,7 +483,7 @@ var app = new Framework7({
     // Host detail
     {
       path: "/hosts/:id/",
-      url: "/assets/js/pages/host-detail.html",
+      url: "/assets/js/pages/host-detail.html" + pageV,
       on: {
         pageInit: function (e, page) {
           var hostId = page.route.params.id;
@@ -547,7 +557,7 @@ var app = new Framework7({
     // Host edit
     {
       path: "/hosts/:id/edit/",
-      url: "/assets/js/pages/host-edit.html",
+      url: "/assets/js/pages/host-edit.html" + pageV,
       on: {
         pageInit: function (e, page) {
           var id = page.route.params.id;
@@ -602,7 +612,7 @@ var app = new Framework7({
     // Check new
     {
       path: "/hosts/:id/checks/new/",
-      url: "/assets/js/pages/check-edit.html",
+      url: "/assets/js/pages/check-edit.html" + pageV,
       on: {
         pageInit: function (e, page) {
           var hostId = page.route.params.id;
@@ -644,7 +654,7 @@ var app = new Framework7({
     // Check edit
     {
       path: "/checks/:id/edit/",
-      url: "/assets/js/pages/check-edit.html",
+      url: "/assets/js/pages/check-edit.html" + pageV,
       on: {
         pageInit: function (e, page) {
           var checkId = page.route.params.id;
@@ -716,7 +726,7 @@ var app = new Framework7({
     // Settings
     {
       path: "/settings/",
-      url: "/assets/js/pages/settings.html",
+      url: "/assets/js/pages/settings.html" + pageV,
       on: {
         pageInit: function (e, page) {
           var dm = page.$el.find("#settings-darkmode")[0];
@@ -739,7 +749,132 @@ var app = new Framework7({
               });
               page.$el.find("#settings-host-count").text(hosts.length);
               page.$el.find("#settings-check-count").text(checkCount);
+              page.$el
+                .find("#settings-runner")
+                .text(
+                  data.runner_last_run ? timeAgo(data.runner_last_run) : "nie",
+                );
             });
+
+          // Push Notifications toggle
+          var pushToggle = page.$el.find("#settings-push")[0];
+          if (
+            pushToggle &&
+            "serviceWorker" in navigator &&
+            "PushManager" in window
+          ) {
+            navigator.serviceWorker.ready.then(function (reg) {
+              reg.pushManager.getSubscription().then(function (sub) {
+                pushToggle.checked = !!sub;
+              });
+            });
+
+            page.$el.find("#settings-push").on("change", function () {
+              if (this.checked) {
+                Notification.requestPermission().then(function (permission) {
+                  if (permission !== "granted") {
+                    pushToggle.checked = false;
+                    app.dialog.alert(
+                      "Benachrichtigungen wurden vom Browser blockiert.",
+                    );
+                    return;
+                  }
+                  fetch("/api/notifications/vapid-key")
+                    .then(function (r) {
+                      return r.json();
+                    })
+                    .then(function (data) {
+                      var key = data.publicKey;
+                      var padding = "=".repeat((4 - (key.length % 4)) % 4);
+                      var base64 = (key + padding)
+                        .replace(/-/g, "+")
+                        .replace(/_/g, "/");
+                      var raw = atob(base64);
+                      var arr = new Uint8Array(raw.length);
+                      for (var i = 0; i < raw.length; i++)
+                        arr[i] = raw.charCodeAt(i);
+
+                      navigator.serviceWorker.ready.then(function (reg) {
+                        reg.pushManager
+                          .subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: arr,
+                          })
+                          .then(function (sub) {
+                            var subJson = sub.toJSON();
+                            fetch("/api/notifications/subscribe", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                endpoint: subJson.endpoint,
+                                keys: subJson.keys,
+                              }),
+                            });
+                          })
+                          .catch(function () {
+                            pushToggle.checked = false;
+                            app.dialog.alert(
+                              "Push-Subscription fehlgeschlagen.",
+                            );
+                          });
+                      });
+                    });
+                });
+              } else {
+                navigator.serviceWorker.ready.then(function (reg) {
+                  reg.pushManager.getSubscription().then(function (sub) {
+                    if (sub) {
+                      var endpoint = sub.endpoint;
+                      sub.unsubscribe().then(function () {
+                        fetch("/api/notifications/unsubscribe", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ endpoint: endpoint }),
+                        });
+                      });
+                    }
+                  });
+                });
+              }
+            });
+          } else if (pushToggle) {
+            pushToggle.disabled = true;
+          }
+
+          // Push test button
+          page.$el.find("#push-test-btn").on("click", function () {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = "...";
+            fetch("/api/notifications/test", { method: "POST" })
+              .then(function (r) {
+                return r.json();
+              })
+              .then(function (data) {
+                btn.disabled = false;
+                btn.textContent = "Senden";
+                if (data.sent > 0) {
+                  app.dialog.alert(
+                    "Test gesendet an " + data.sent + " Gerät(e).",
+                  );
+                } else if (data.failed > 0) {
+                  app.dialog.alert(
+                    "Senden fehlgeschlagen (" + data.failed + " Fehler).",
+                  );
+                } else {
+                  app.dialog.alert(
+                    "Keine aktiven Push-Subscriptions vorhanden.",
+                  );
+                }
+              })
+              .catch(function () {
+                btn.disabled = false;
+                btn.textContent = "Senden";
+                app.dialog.alert(
+                  "Fehler beim Senden der Test-Benachrichtigung.",
+                );
+              });
+          });
 
           page.$el.find("#logout-btn").on("click", function () {
             var form = document.createElement("form");

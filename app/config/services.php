@@ -2,9 +2,9 @@
 
 use App\services\Database;
 
-$config = Flight::get('config');
+$config = Flight::get("config");
 
-$dbPath = $config['db']['path'];
+$dbPath = $config["db"]["path"];
 $dbDir = dirname($dbPath);
 if (!is_dir($dbDir)) {
     mkdir($dbDir, 0755, true);
@@ -12,12 +12,12 @@ if (!is_dir($dbDir)) {
 
 $isNew = !file_exists($dbPath);
 
-$dsn = 'sqlite:' . $dbPath;
+$dsn = "sqlite:" . $dbPath;
 $pdo = new Database($dsn);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-$pdo->exec('PRAGMA journal_mode=WAL');
-$pdo->exec('PRAGMA foreign_keys=ON');
+$pdo->exec("PRAGMA journal_mode=WAL");
+$pdo->exec("PRAGMA foreign_keys=ON");
 
 if ($isNew) {
     $pdo->exec("
@@ -67,9 +67,23 @@ if ($isNew) {
     ");
 }
 
-// Cleanup old login attempts
-$pdo->exec("DELETE FROM login_attempts WHERE attempted_at < datetime('now', '-1 hour')");
+// Ensure push_subscriptions table exists (migration)
+$pdo->exec("
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh_key TEXT NOT NULL,
+        auth_key TEXT NOT NULL,
+        user_agent TEXT DEFAULT '',
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+");
 
-Flight::map('db', function () use ($pdo) {
+// Cleanup old login attempts
+$pdo->exec(
+    "DELETE FROM login_attempts WHERE attempted_at < datetime('now', '-1 hour')",
+);
+
+Flight::map("db", function () use ($pdo) {
     return $pdo;
 });

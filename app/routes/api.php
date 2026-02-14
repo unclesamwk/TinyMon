@@ -3,6 +3,7 @@
 use App\controllers\api\HostController;
 use App\controllers\api\CheckController;
 use App\controllers\api\DashboardController;
+use App\controllers\api\NotificationController;
 
 // API Documentation
 Flight::route("GET /api/docs", function () {
@@ -62,4 +63,26 @@ Flight::route("POST /api/checks/@id/run", [CheckController::class, "run"]);
 Flight::route("GET /api/checks/@id/results", [
     CheckController::class,
     "results",
+]);
+
+// Notifications (Web Push)
+Flight::route("GET /api/notifications/vapid-key", [
+    NotificationController::class,
+    "vapidKey",
+]);
+Flight::route("POST /api/notifications/subscribe", [
+    NotificationController::class,
+    "subscribe",
+]);
+Flight::route("POST /api/notifications/unsubscribe", [
+    NotificationController::class,
+    "unsubscribe",
+]);
+Flight::route("GET /api/notifications/status", [
+    NotificationController::class,
+    "status",
+]);
+Flight::route("POST /api/notifications/test", [
+    NotificationController::class,
+    "test",
 ]);

@@ -64,6 +64,12 @@ use OpenApi\Attributes as OA;
     ),
 ]
 #[
+    OA\Tag(
+        name: "Notifications",
+        description: "Browser Push-Benachrichtigungen (Session-Auth)",
+    ),
+]
+#[
     OA\Schema(
         schema: "Error",
         properties: [new OA\Property(property: "error", type: "string")],
@@ -172,9 +178,16 @@ class DashboardController
             $summary[$hostStatus]++;
         }
 
+        $runnerLastRun = $db->fetchRow(
+            "SELECT value FROM settings WHERE key = 'runner_last_run'",
+        );
+
         Flight::json([
             "summary" => $summary,
             "hosts" => $hosts,
+            "runner_last_run" => $runnerLastRun
+                ? $runnerLastRun["value"]
+                : null,
         ]);
     }
 }
