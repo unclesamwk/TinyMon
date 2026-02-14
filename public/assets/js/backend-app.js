@@ -424,10 +424,7 @@ var app = new Framework7({
             app.views.main.router.navigate("/hosts/new/");
           });
           page.$el.find(".ptr-content").on("ptr:refresh", function () {
-            loadDashboard(page);
-            setTimeout(function () {
-              app.ptr.done(page.$el.find(".ptr-content"));
-            }, 300);
+            window.location.reload();
           });
         },
         pageBeforeIn: function (e, page) {
