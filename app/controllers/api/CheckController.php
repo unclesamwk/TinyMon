@@ -468,6 +468,13 @@ class CheckController
                         maximum: 1000,
                     ),
                 ),
+                new OA\Parameter(
+                    name: "since",
+                    in: "query",
+                    required: false,
+                    description: "ISO 8601 Zeitstempel. Wenn gesetzt, werden Ergebnisse ab diesem Zeitpunkt chronologisch zurueckgegeben.",
+                    schema: new OA\Schema(type: "string", format: "date-time"),
+                ),
             ],
             responses: [
                 new OA\Response(
@@ -499,13 +506,21 @@ class CheckController
             return;
         }
 
-        $limit = (int) (Flight::request()->query->limit ?? 100);
-        $limit = min($limit, 1000);
+        $since = Flight::request()->query->since ?? null;
 
-        $results = $db->fetchAll(
-            "SELECT * FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT ?",
-            [$id, $limit],
-        );
+        if ($since) {
+            $results = $db->fetchAll(
+                "SELECT * FROM check_results WHERE check_id = ? AND checked_at >= ? ORDER BY checked_at ASC",
+                [$id, $since],
+            );
+        } else {
+            $limit = (int) (Flight::request()->query->limit ?? 100);
+            $limit = min($limit, 1000);
+            $results = $db->fetchAll(
+                "SELECT * FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT ?",
+                [$id, $limit],
+            );
+        }
 
         Flight::json($results);
     }

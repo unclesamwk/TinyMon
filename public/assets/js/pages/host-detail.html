@@ -18,7 +18,41 @@
     </div>
     <div class="page-content">
         <div class="block" id="host-info" style="margin-top: 1rem"></div>
-        <div class="block-title">Checks</div>
+        <div
+            class="block-title"
+            style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            "
+        >
+            <span>Checks</span>
+            <div
+                class="segmented segmented-strong"
+                id="chart-range-selector"
+                style="width: 200px"
+            >
+                <button
+                    class="button button-small chart-range-btn button-active"
+                    data-range="24h"
+                >
+                    24h
+                </button>
+                <button
+                    class="button button-small chart-range-btn"
+                    data-range="7d"
+                >
+                    7 Tage
+                </button>
+                <button
+                    class="button button-small chart-range-btn"
+                    data-range="30d"
+                >
+                    30 Tage
+                </button>
+                <span class="segmented-highlight"></span>
+            </div>
+        </div>
         <div id="check-list"></div>
         <div class="block">
             <a href="#" class="button button-fill" id="add-check-btn"

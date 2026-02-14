@@ -40,6 +40,7 @@ function setDarkModePreference(pref) {
   localStorage.setItem("darkModePreference", pref);
   app.setDarkMode(resolveDarkMode(pref));
   updateDarkModeIcon();
+  reloadVisibleCharts();
 }
 
 function toggleDarkMode() {
@@ -227,7 +228,15 @@ function loadHostDetail(page, hostId) {
           var lr = c.last_result;
           var st = lr ? lr.status : "unknown";
           var color = statusColors[st] || statusColors.unknown;
-          html += '<li><div class="item-content">';
+          var cfgRaw =
+            typeof c.config === "string"
+              ? c.config
+              : JSON.stringify(c.config || {});
+          html += "<li>";
+          html +=
+            '<div class="item-content check-card" data-check-id="' +
+            c.id +
+            '" style="cursor:pointer;">';
           html +=
             '<div class="item-media"><i class="icon material-icons" style="color:' +
             color +
@@ -257,7 +266,16 @@ function loadHostDetail(page, hostId) {
             ' &middot; <a href="#" class="delete-check" data-check-id="' +
             c.id +
             '" style="color:#ff3b30;">Löschen</a>';
-          html += "</div></div></div></li>";
+          html += "</div></div></div>";
+          html +=
+            '<div class="check-chart-container" id="chart-container-' +
+            c.id +
+            '" data-check-type="' +
+            escHtml(c.type) +
+            '" data-check-config="' +
+            escHtml(cfgRaw) +
+            '" style="display:none; padding:0.5rem 1rem 1rem;"></div>';
+          html += "</li>";
         });
         html += "</ul></div>";
       }
@@ -411,6 +429,236 @@ function renderConfigFields(page, type, cfg) {
   page.$el.find("#config-list").html(html);
 }
 
+// Chart helpers
+var chartInstances = {};
+var currentChartRange = "24h";
+
+function getSinceTimestamp(range) {
+  var now = new Date();
+  if (range === "7d") now.setDate(now.getDate() - 7);
+  else if (range === "30d") now.setDate(now.getDate() - 30);
+  else now.setHours(now.getHours() - 24);
+  return now.toISOString().replace("Z", "");
+}
+
+function getChartThresholds(type, config) {
+  if (type === "ping" || type === "http" || type === "port") {
+    return {
+      warning: config.warning_ms,
+      critical: config.critical_ms,
+      unit: "ms",
+    };
+  }
+  if (type === "certificate") {
+    return {
+      warning: config.warning_days,
+      critical: config.critical_days,
+      unit: "Tage",
+      inverted: true,
+    };
+  }
+  if (type === "disk" || type === "memory") {
+    return {
+      warning: config.warning_pct,
+      critical: config.critical_pct,
+      unit: "%",
+    };
+  }
+  if (type === "load") {
+    return { warning: config.warning, critical: config.critical, unit: "Load" };
+  }
+  return { warning: null, critical: null, unit: "" };
+}
+
+function loadChart(checkId, range) {
+  var since = getSinceTimestamp(range);
+  var container = document.getElementById("chart-container-" + checkId);
+  if (!container) return;
+
+  var checkType = container.dataset.checkType;
+  var config = {};
+  try {
+    config = JSON.parse(container.dataset.checkConfig || "{}");
+  } catch (e) {}
+  var thresholds = getChartThresholds(checkType, config);
+  var dark = isDarkActive();
+  var textColor = dark ? "#ffffffb3" : "#666";
+  var gridColor = dark ? "#ffffff1a" : "#0000001a";
+  var lineColor = "#007aff";
+
+  fetch(
+    "/api/checks/" + checkId + "/results?since=" + encodeURIComponent(since),
+  )
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (data) {
+      if (chartInstances[checkId]) {
+        chartInstances[checkId].destroy();
+        delete chartInstances[checkId];
+      }
+
+      if (!data.length) {
+        container.innerHTML =
+          '<div style="text-align:center; color:gray; padding:1rem; font-size:0.8rem;">Keine Daten im gewählten Zeitraum</div>';
+        return;
+      }
+
+      container.innerHTML =
+        '<canvas id="chart-' +
+        checkId +
+        '" style="max-height:200px;"></canvas>';
+      var ctx = document.getElementById("chart-" + checkId).getContext("2d");
+
+      var labels = [];
+      var values = [];
+      var pointColors = [];
+      data.forEach(function (r) {
+        labels.push(r.checked_at + "Z");
+        values.push(r.value);
+        pointColors.push(statusColors[r.status] || statusColors.unknown);
+      });
+
+      // Threshold zone plugin
+      var zonePlugin = {
+        id: "thresholdZones",
+        beforeDraw: function (chart) {
+          if (thresholds.warning == null || thresholds.critical == null) return;
+          var yAxis = chart.scales.y;
+          var xAxis = chart.scales.x;
+          var ctx2 = chart.ctx;
+          var left = xAxis.left;
+          var right = xAxis.right;
+
+          var zones;
+          if (thresholds.inverted) {
+            // certificate: higher = better
+            zones = [
+              {
+                from: yAxis.min,
+                to: thresholds.critical,
+                color: "rgba(255,59,48,0.08)",
+              },
+              {
+                from: thresholds.critical,
+                to: thresholds.warning,
+                color: "rgba(255,149,0,0.08)",
+              },
+              {
+                from: thresholds.warning,
+                to: yAxis.max,
+                color: "rgba(76,217,100,0.08)",
+              },
+            ];
+          } else {
+            zones = [
+              {
+                from: yAxis.min,
+                to: thresholds.warning,
+                color: "rgba(76,217,100,0.08)",
+              },
+              {
+                from: thresholds.warning,
+                to: thresholds.critical,
+                color: "rgba(255,149,0,0.08)",
+              },
+              {
+                from: thresholds.critical,
+                to: yAxis.max,
+                color: "rgba(255,59,48,0.08)",
+              },
+            ];
+          }
+
+          zones.forEach(function (z) {
+            var top = yAxis.getPixelForValue(Math.min(z.to, yAxis.max));
+            var bottom = yAxis.getPixelForValue(Math.max(z.from, yAxis.min));
+            if (top > bottom) {
+              var tmp = top;
+              top = bottom;
+              bottom = tmp;
+            }
+            ctx2.save();
+            ctx2.fillStyle = z.color;
+            ctx2.fillRect(left, top, right - left, bottom - top);
+            ctx2.restore();
+          });
+        },
+      };
+
+      var smallPoints = data.length > 200;
+
+      chartInstances[checkId] = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              data: values,
+              borderColor: lineColor,
+              borderWidth: 2,
+              pointBackgroundColor: pointColors,
+              pointBorderColor: pointColors,
+              pointRadius: smallPoints ? 0 : 3,
+              pointHoverRadius: 5,
+              tension: 0.2,
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function (items) {
+                  var d = new Date(items[0].parsed.x);
+                  return (
+                    d.toLocaleDateString("de-DE") +
+                    " " +
+                    d.toLocaleTimeString("de-DE")
+                  );
+                },
+                label: function (item) {
+                  return (
+                    (item.parsed.y != null ? item.parsed.y : "-") +
+                    " " +
+                    thresholds.unit
+                  );
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              type: "time",
+              time: { tooltipFormat: "dd.MM.yyyy HH:mm" },
+              ticks: { color: textColor, maxTicksLimit: 8 },
+              grid: { color: gridColor },
+            },
+            y: {
+              ticks: { color: textColor },
+              grid: { color: gridColor },
+              title: { display: true, text: thresholds.unit, color: textColor },
+            },
+          },
+        },
+        plugins: [zonePlugin],
+      });
+    });
+}
+
+function reloadVisibleCharts() {
+  Object.keys(chartInstances).forEach(function (checkId) {
+    var container = document.getElementById("chart-container-" + checkId);
+    if (container && container.style.display !== "none") {
+      loadChart(checkId, currentChartRange);
+    }
+  });
+}
+
 // Cache buster for SPA page templates
 var pageV = "?v=" + (APP_VERSION || Date.now());
 
@@ -528,6 +776,34 @@ var app = new Framework7({
             );
           });
 
+          // Toggle chart on check card click
+          page.$el.on("click", ".check-card", function (ev) {
+            if (ev.target.closest("a")) return;
+            var checkId = this.dataset.checkId;
+            var container = document.getElementById(
+              "chart-container-" + checkId,
+            );
+            if (!container) return;
+            if (container.style.display === "none") {
+              container.style.display = "block";
+              loadChart(checkId, currentChartRange);
+            } else {
+              container.style.display = "none";
+              if (chartInstances[checkId]) {
+                chartInstances[checkId].destroy();
+                delete chartInstances[checkId];
+              }
+            }
+          });
+
+          // Time range selector
+          page.$el.find(".chart-range-btn").on("click", function () {
+            page.$el.find(".chart-range-btn").removeClass("button-active");
+            this.classList.add("button-active");
+            currentChartRange = this.dataset.range;
+            reloadVisibleCharts();
+          });
+
           page.$el.on("click", ".run-check", function (ev) {
             ev.preventDefault();
             var checkId = this.dataset.checkId;
@@ -566,6 +842,12 @@ var app = new Framework7({
         pageBeforeIn: function (e, page) {
           var hostId = page.route.params.id;
           loadHostDetail(page, hostId);
+        },
+        pageBeforeRemove: function () {
+          Object.keys(chartInstances).forEach(function (id) {
+            chartInstances[id].destroy();
+          });
+          chartInstances = {};
         },
       },
     },

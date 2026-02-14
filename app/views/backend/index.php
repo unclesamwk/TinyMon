@@ -66,6 +66,8 @@ $isDebug = !empty($debug);
         var CSRF_TOKEN = <?= json_encode(\App\services\CsrfService::token()) ?>;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="/assets/js/backend-app.js<?= $v ?>"></script>
     <script>
     if ('serviceWorker' in navigator) {
