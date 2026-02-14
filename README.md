@@ -1,74 +1,82 @@
-# MiniMon
+<p align="center">
+  <img src="public/assets/images/logo.svg" width="120" alt="MiniMon Logo">
+</p>
 
-Minimalistisches Server-Monitoring. Eine Datei als Datenbank. Ein Container zum Deployen. Kein Overhead.
+<h1 align="center">MiniMon</h1>
 
-MiniMon ist ein schlankes, webbasiertes Monitoring-Tool fuer Server und Services. Es prueft Erreichbarkeit, Antwortzeiten, Zertifikate und Ressourcen -- und benachrichtigt per E-Mail und Push Notification, wenn sich etwas aendert.
+<p align="center">
+  <strong>Minimalist server monitoring. One database file. One container. Zero overhead.</strong>
+</p>
 
-## Warum MiniMon?
+---
 
-Die meisten Monitoring-Systeme sind komplex: Prometheus braucht Exporters, Grafana braucht Dashboards, Nagios braucht Konfigurationsdateien. MiniMon braucht nichts davon.
+MiniMon is a lightweight, web-based monitoring tool for servers and services. It checks availability, response times, certificates, and resources -- and notifies you via email and push notification when something changes.
 
-- **Eine SQLite-Datei** statt PostgreSQL, InfluxDB oder MySQL
-- **Ein Docker-Container** statt Microservice-Architektur
-- **Ein Cronjob** statt Message Queues und Worker
-- **Ein Login** statt LDAP, OAuth und Rollenkonzept
-- **Zero Dependencies** auf dem Zielsystem -- kein Agent, kein Exporter
+## Why MiniMon?
 
-Perfekt fuer kleine Teams, Homelabs, Side-Projects und ueberall dort, wo ein vollstaendiges Monitoring-Stack Overkill waere.
+Most monitoring systems are complex: Prometheus needs exporters, Grafana needs dashboards, Nagios needs config files. MiniMon needs none of that.
+
+- **One SQLite file** instead of PostgreSQL, InfluxDB, or MySQL
+- **One Docker container** instead of microservice architecture
+- **One cronjob** instead of message queues and workers
+- **One login** instead of LDAP, OAuth, and role management
+- **Zero dependencies** on target systems -- no agent, no exporter
+
+Perfect for small teams, homelabs, side projects, and everywhere a full monitoring stack is overkill.
 
 ## Features
 
 **Monitoring**
-- Ping (ICMP mit TCP-Fallback fuer Shared Hosting)
-- HTTP/HTTPS (Status-Code, Response-Time, SSL-Verify)
-- TCP Port (Connect-Time)
-- SSL-Zertifikat (Tage bis Ablauf)
-- Content Check (erwarteter/unerwarteter Inhalt)
-- Content Hash (Aenderungserkennung)
-- Disk, Load, Memory (lokal)
+- Ping (ICMP with TCP fallback for shared hosting)
+- HTTP/HTTPS (status code, response time, SSL verification)
+- TCP port (connect time)
+- SSL certificate (days until expiry)
+- Content check (expected/unexpected content)
+- Content hash (change detection)
+- Disk, load, memory (local)
 
 **Alerting**
-- E-Mail-Benachrichtigung bei Statusaenderungen (ok/warning/critical)
-- Browser Push Notifications (VAPID, funktioniert auf iOS, Android, Desktop)
-- Alerts nur bei Statuswechsel -- kein Spam
+- Email notifications on status changes (ok/warning/critical)
+- Browser push notifications (VAPID -- works on iOS, Android, desktop)
+- Alerts only on status transitions -- no spam
 
 **Dashboard**
-- Framework7 Mobile-First SPA
-- Status-Uebersicht aller Hosts auf einen Blick
-- Chart.js Graphen pro Check (24h, 7 Tage, 30 Tage)
-- Schwellenwert-Zonen in den Graphen (gruen/gelb/rot)
-- Dark Mode (Auto/An/Aus)
-- Pull-to-Refresh, PWA-faehig
+- Framework7 mobile-first SPA
+- At-a-glance status overview of all hosts
+- Chart.js graphs per check (24h, 7 days, 30 days)
+- Threshold zones in graphs (green/yellow/red)
+- Dark mode (auto/on/off)
+- Pull-to-refresh, PWA-ready
 
 **API**
-- REST API mit Session-Auth fuer das Frontend
-- Push API mit Bearer-Token fuer externe Systeme
-- OpenAPI-Dokumentation (auto-generiert aus PHP-Attributen)
-- Swagger UI unter `/api/docs`
+- REST API with session auth for the frontend
+- Push API with bearer token for external systems
+- OpenAPI documentation (auto-generated from PHP attributes)
+- Swagger UI at `/api/docs`
 
 ## Kubernetes & Operator
 
-MiniMon ist nicht nur ein klassisches Pull-Monitoring. Ueber die **Push API** kann es als Monitoring-Backend fuer Kubernetes dienen.
+MiniMon is not just a classic pull monitor. Through its **Push API**, it can serve as a monitoring backend for Kubernetes.
 
-Ein K8s Operator kann:
-- Hosts und Checks per API anlegen (`POST /api/push/hosts`, `POST /api/push/checks`)
-- Messergebnisse einliefern (`POST /api/push/results`, `POST /api/push/bulk`)
-- Idempotent arbeiten (Upsert by Address/Type)
+A K8s operator can:
+- Create hosts and checks via API (`POST /api/push/hosts`, `POST /api/push/checks`)
+- Submit check results (`POST /api/push/results`, `POST /api/push/bulk`)
+- Work idempotently (upsert by address/type)
 
 ```bash
-# Host anlegen
+# Create a host
 curl -X POST https://mon.example.com/api/push/hosts \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "k8s-node-1", "address": "10.0.1.5"}'
 
-# Messwert pushen
+# Push a check result
 curl -X POST https://mon.example.com/api/push/results \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"host_address": "10.0.1.5", "check_type": "memory", "status": "ok", "value": 62.5, "message": "62.5% used"}'
 
-# Bulk-Ergebnisse
+# Bulk results
 curl -X POST https://mon.example.com/api/push/bulk \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
@@ -78,7 +86,7 @@ curl -X POST https://mon.example.com/api/push/bulk \
   ]}'
 ```
 
-So bleibt MiniMon das zentrale Dashboard -- egal ob die Daten per Pull-Check oder per Push vom Operator kommen.
+MiniMon stays your single dashboard -- whether data comes from pull checks or is pushed by an operator.
 
 ## Quickstart
 
@@ -86,82 +94,82 @@ So bleibt MiniMon das zentrale Dashboard -- egal ob die Daten per Pull-Check ode
 git clone https://github.com/your-org/MiniMon.git
 cd MiniMon
 cp .env.example .env
-# .env anpassen: ADMIN_PASSWORD, SMTP-Daten, etc.
+# Edit .env: set ADMIN_PASSWORD, SMTP credentials, etc.
 docker compose up -d
 ```
 
-Oeffne `http://localhost:8001/backend` und logge dich mit dem Passwort aus `.env` ein.
+Open `http://localhost:8001/backend` and log in with the password from `.env`.
 
-### Cronjob einrichten
+### Set up the cronjob
 
-Der Runner fuehrt die Checks aus und sendet Alerts:
+The runner executes checks and sends alerts:
 
 ```bash
 * * * * * cd /path/to/MiniMon && php bin/runner.php >> data/runner.log 2>&1
 ```
 
-Oder im Container:
+Or inside the container:
 
 ```bash
 docker compose exec app php bin/runner.php
 ```
 
-## Konfiguration
+## Configuration
 
-Alle Einstellungen stehen in `.env`:
+All settings are in `.env`:
 
-| Variable | Beschreibung |
+| Variable | Description |
 |----------|-------------|
-| `ADMIN_PASSWORD` | Login-Passwort fuer `/backend` |
-| `SMTP_HOST/PORT/USER/PASSWORD` | SMTP-Server fuer E-Mail-Alerts |
-| `ALERT_RECIPIENTS` | Komma-getrennte E-Mail-Empfaenger |
-| `PUSH_API_KEY` | API-Key fuer die Push API (leer = deaktiviert) |
-| `VAPID_PUBLIC_KEY/PRIVATE_KEY` | VAPID-Keys fuer Browser Push (leer = Auto-Generierung) |
-| `VAPID_SUBJECT` | Kontakt-E-Mail fuer Push-Provider |
+| `ADMIN_PASSWORD` | Login password for `/backend` |
+| `SMTP_HOST/PORT/USER/PASSWORD` | SMTP server for email alerts |
+| `ALERT_RECIPIENTS` | Comma-separated email recipients |
+| `PUSH_API_KEY` | API key for the Push API (empty = disabled) |
+| `VAPID_PUBLIC_KEY/PRIVATE_KEY` | VAPID keys for browser push (empty = auto-generate) |
+| `VAPID_SUBJECT` | Contact email for push service providers |
 
-Die Datenbank (`data/minimon.sqlite`) wird beim ersten Start automatisch erstellt. Kein Setup, keine Migration.
+The database (`data/minimon.sqlite`) is created automatically on first start. No setup, no migrations.
 
-## Check-Typen
+## Check Types
 
-| Typ | Prueft | Messwert |
-|-----|--------|----------|
-| `ping` | ICMP/TCP Erreichbarkeit | Latenz (ms) |
-| `http` | HTTP(S) GET | Response-Time (ms) |
-| `port` | TCP-Verbindung | Connect-Time (ms) |
-| `certificate` | SSL-Ablaufdatum | Tage bis Ablauf |
-| `content` | Seiteninhalt | Response-Time (ms) |
-| `content_hash` | Inhaltsaenderung | Response-Time (ms) |
-| `disk` | Festplattenauslastung | Prozent |
-| `load` | System Load | Load Average |
-| `memory` | RAM-Auslastung | Prozent |
+| Type | Checks | Metric |
+|------|--------|--------|
+| `ping` | ICMP/TCP reachability | Latency (ms) |
+| `http` | HTTP(S) GET | Response time (ms) |
+| `port` | TCP connection | Connect time (ms) |
+| `certificate` | SSL expiry date | Days until expiry |
+| `content` | Page content | Response time (ms) |
+| `content_hash` | Content changes | Response time (ms) |
+| `disk` | Disk usage | Percent |
+| `load` | System load | Load average |
+| `memory` | RAM usage | Percent |
 
-Jeder Check hat konfigurierbare Warning- und Critical-Schwellenwerte.
+Each check has configurable warning and critical thresholds.
 
-## API-Dokumentation
+## API Documentation
 
-Die komplette API-Doku ist unter `/api/docs` verfuegbar (Swagger UI). Die OpenAPI-Spec wird automatisch aus den PHP-Attributen generiert.
+Full API docs are available at `/api/docs` (Swagger UI). The OpenAPI spec is auto-generated from PHP attributes.
 
-**Session API** (`/api/*`) -- Cookie-Auth nach Login:
-- `GET /api/dashboard` -- Statusuebersicht
-- `GET/POST/PUT/DELETE /api/hosts` -- Host-CRUD
-- `GET/POST/PUT/DELETE /api/checks` -- Check-CRUD
-- `POST /api/checks/{id}/run` -- Check sofort ausfuehren
-- `GET /api/checks/{id}/results` -- Ergebnis-Historie
+**Session API** (`/api/*`) -- cookie auth after login:
+- `GET /api/dashboard` -- Status overview
+- `GET/POST/PUT/DELETE /api/hosts` -- Host CRUD
+- `GET/POST/PUT/DELETE /api/checks` -- Check CRUD
+- `POST /api/checks/{id}/run` -- Run check immediately
+- `GET /api/checks/{id}/results` -- Result history
 
-**Push API** (`/api/push/*`) -- Bearer-Token-Auth:
-- `POST /api/push/hosts` -- Host anlegen/aktualisieren
-- `POST /api/push/checks` -- Check anlegen/aktualisieren
-- `POST /api/push/results` -- Einzelergebnis einliefern
-- `POST /api/push/bulk` -- Bulk-Ergebnisse einliefern
+**Push API** (`/api/push/*`) -- bearer token auth:
+- `POST /api/push/hosts` -- Create/update host
+- `POST /api/push/checks` -- Create/update check
+- `POST /api/push/results` -- Submit single result
+- `POST /api/push/bulk` -- Submit bulk results
 
 ## Tech Stack
 
 - **Backend:** PHP 8.4, Flight PHP, SQLite
 - **Frontend:** Framework7, Chart.js
 - **Push:** minishlink/web-push (VAPID)
-- **API-Docs:** zircote/swagger-php (OpenAPI 3)
-- **Deploy:** Docker, oder direkt auf Shared Hosting
+- **API Docs:** zircote/swagger-php (OpenAPI 3)
+- **Deploy:** Docker, or directly on shared hosting
 
-## Lizenz
+## License
 
 MIT
