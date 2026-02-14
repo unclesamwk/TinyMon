@@ -50,20 +50,36 @@
         <div class="block-title">Darstellung</div>
         <div class="list">
             <ul>
-                <li>
-                    <label class="item-content">
-                        <div class="item-inner">
-                            <div class="item-title">Dark Mode</div>
-                            <div class="item-after">
-                                <div class="toggle toggle-init">
-                                    <input
-                                        type="checkbox"
-                                        id="settings-darkmode"
-                                    /><span class="toggle-icon"></span>
-                                </div>
+                <li class="item-content">
+                    <div class="item-inner">
+                        <div class="item-title">Dark Mode</div>
+                        <div class="item-after">
+                            <div
+                                class="segmented segmented-strong"
+                                style="width: 180px"
+                            >
+                                <button
+                                    class="button button-small darkmode-btn"
+                                    data-mode="auto"
+                                >
+                                    Auto
+                                </button>
+                                <button
+                                    class="button button-small darkmode-btn"
+                                    data-mode="off"
+                                >
+                                    Aus
+                                </button>
+                                <button
+                                    class="button button-small darkmode-btn"
+                                    data-mode="on"
+                                >
+                                    An
+                                </button>
+                                <span class="segmented-highlight"></span>
                             </div>
                         </div>
-                    </label>
+                    </div>
                 </li>
             </ul>
         </div>

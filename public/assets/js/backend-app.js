@@ -15,12 +15,16 @@
   };
 })();
 
-// Dark mode
-var storedDarkMode = localStorage.getItem("darkMode");
-var initialDarkMode =
-  storedDarkMode === null
-    ? window.matchMedia("(prefers-color-scheme: dark)").matches
-    : storedDarkMode === "true";
+// Dark mode (auto / on / off)
+var darkModePref = localStorage.getItem("darkModePreference") || "auto";
+
+function resolveDarkMode(pref) {
+  if (pref === "on") return true;
+  if (pref === "off") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+var initialDarkMode = resolveDarkMode(darkModePref);
 
 function isDarkActive() {
   return document.documentElement.classList.contains("dark");
@@ -31,12 +35,27 @@ function updateDarkModeIcon() {
   if (icon) icon.textContent = isDarkActive() ? "light_mode" : "dark_mode";
 }
 
-function toggleDarkMode() {
-  var newMode = !isDarkActive();
-  app.setDarkMode(newMode);
-  localStorage.setItem("darkMode", String(newMode));
+function setDarkModePreference(pref) {
+  darkModePref = pref;
+  localStorage.setItem("darkModePreference", pref);
+  app.setDarkMode(resolveDarkMode(pref));
   updateDarkModeIcon();
 }
+
+function toggleDarkMode() {
+  var newPref = isDarkActive() ? "off" : "on";
+  setDarkModePreference(newPref);
+}
+
+// Listen for system theme changes when in auto mode
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", function () {
+    if (darkModePref === "auto") {
+      app.setDarkMode(resolveDarkMode("auto"));
+      updateDarkModeIcon();
+    }
+  });
 
 // Status helpers
 var statusColors = {
@@ -726,10 +745,16 @@ var app = new Framework7({
       url: "/assets/js/pages/settings.html" + pageV,
       on: {
         pageInit: function (e, page) {
-          var dm = page.$el.find("#settings-darkmode")[0];
-          if (dm) dm.checked = isDarkActive();
-          page.$el.find("#settings-darkmode").on("change", function () {
-            toggleDarkMode();
+          // Dark mode segmented control
+          page.$el.find(".darkmode-btn").each(function () {
+            if (this.dataset.mode === darkModePref) {
+              this.classList.add("button-active");
+            }
+          });
+          page.$el.find(".darkmode-btn").on("click", function () {
+            page.$el.find(".darkmode-btn").removeClass("button-active");
+            this.classList.add("button-active");
+            setDarkModePreference(this.dataset.mode);
           });
 
           page.$el.find("#settings-version").text(APP_VERSION || "dev");
