@@ -99,8 +99,21 @@ class CheckRunner
     {
         $warningMs = $config["warning_ms"] ?? 100;
         $criticalMs = $config["critical_ms"] ?? 500;
-        $count = 3;
 
+        // Try native ping first, fallback to TCP connect on port 80
+        $pingBin = trim((string) shell_exec("which ping 2>/dev/null"));
+        if ($pingBin !== "") {
+            return $this->checkPingIcmp($address, $warningMs, $criticalMs);
+        }
+        return $this->checkPingTcp($address, $warningMs, $criticalMs);
+    }
+
+    private function checkPingIcmp(
+        string $address,
+        float $warningMs,
+        float $criticalMs,
+    ): array {
+        $count = 3;
         $isLinux = PHP_OS_FAMILY === "Linux";
         $flag = $isLinux ? "-W 5" : "-t 5";
         $cmd = sprintf(
@@ -123,7 +136,6 @@ class CheckRunner
             ];
         }
 
-        // Parse average latency
         if (
             preg_match("/(\d+\.\d+)\/(\d+\.\d+)\/(\d+\.\d+)/", $outputStr, $m)
         ) {
@@ -145,6 +157,49 @@ class CheckRunner
             "status" => "unknown",
             "value" => null,
             "message" => "Could not parse ping output",
+        ];
+    }
+
+    private function checkPingTcp(
+        string $address,
+        float $warningMs,
+        float $criticalMs,
+    ): array {
+        $port = 80;
+        $attempts = 3;
+        $times = [];
+
+        for ($i = 0; $i < $attempts; $i++) {
+            $start = hrtime(true);
+            $sock = @fsockopen($address, $port, $errno, $errstr, 5);
+            $elapsed = (hrtime(true) - $start) / 1e6;
+
+            if ($sock) {
+                fclose($sock);
+                $times[] = $elapsed;
+            }
+        }
+
+        if (empty($times)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "TCP connect failed (ping fallback, port $port)",
+            ];
+        }
+
+        $avg = round(array_sum($times) / count($times), 2);
+        $status = "ok";
+        if ($avg >= $criticalMs) {
+            $status = "critical";
+        } elseif ($avg >= $warningMs) {
+            $status = "warning";
+        }
+
+        return [
+            "status" => $status,
+            "value" => $avg,
+            "message" => sprintf("%.1fms avg (TCP fallback)", $avg),
         ];
     }
 
