@@ -524,13 +524,14 @@ function renderConfigFields(page, type, cfg) {
 
 // Chart helpers
 var chartInstances = {};
-var currentChartRange = "24h";
+var currentChartRange = "1h";
 
 function getSinceTimestamp(range) {
   var now = new Date();
-  if (range === "7d") now.setDate(now.getDate() - 7);
+  if (range === "24h") now.setHours(now.getHours() - 24);
+  else if (range === "7d") now.setDate(now.getDate() - 7);
   else if (range === "30d") now.setDate(now.getDate() - 30);
-  else now.setHours(now.getHours() - 24);
+  else now.setHours(now.getHours() - 1);
   return now.toISOString().replace("Z", "");
 }
 
@@ -679,8 +680,6 @@ function loadChart(checkId, range) {
         },
       };
 
-      var smallPoints = data.length > 200;
-
       chartInstances[checkId] = new Chart(ctx, {
         type: "line",
         data: {
@@ -692,7 +691,7 @@ function loadChart(checkId, range) {
               borderWidth: 2,
               pointBackgroundColor: pointColors,
               pointBorderColor: pointColors,
-              pointRadius: smallPoints ? 0 : 3,
+              pointRadius: 0,
               pointHoverRadius: 5,
               tension: 0.2,
               fill: false,
