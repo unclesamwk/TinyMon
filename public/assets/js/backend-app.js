@@ -277,6 +277,15 @@ function loadDashboard(page) {
 
 // Host detail loader
 function loadHostDetail(page, hostId) {
+  // Remember which charts are currently open
+  var openCharts = [];
+  page.$el.find(".check-chart-container").each(function () {
+    if (this.style.display !== "none") {
+      var id = this.id.replace("chart-container-", "");
+      if (id) openCharts.push(id);
+    }
+  });
+
   fetch("/api/hosts/" + hostId)
     .then(function (r) {
       return r.json();
@@ -355,6 +364,15 @@ function loadHostDetail(page, hostId) {
         html += "</ul></div>";
       }
       page.$el.find("#check-list").html(html);
+
+      // Restore previously open charts
+      openCharts.forEach(function (checkId) {
+        var container = document.getElementById("chart-container-" + checkId);
+        if (container) {
+          container.style.display = "block";
+          loadChart(checkId, currentChartRange);
+        }
+      });
     });
 }
 
