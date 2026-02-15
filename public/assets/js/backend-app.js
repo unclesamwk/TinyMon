@@ -1305,8 +1305,12 @@ var app = new Framework7({
   name: "TinyMon",
   theme: "ios",
   darkMode: initialDarkMode,
-  view: { iosSwipeBack: true, iosAnimateNavbarBackIcon: false },
-  navbar: { iosCenterTitle: true, showOnPageScrollEnd: true },
+  view: {
+    iosSwipeBack: true,
+    iosAnimateNavbarBackIcon: false,
+    iosPageBackTitle: false,
+  },
+  navbar: { iosCenterTitle: true },
   routes: [
     // Home / Dashboard
     {
