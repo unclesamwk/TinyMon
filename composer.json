@@ -1,5 +1,5 @@
 {
-  "name": "minimon/minimon",
+  "name": "tinymon/tinymon",
   "description": "Minimalist server monitoring tool",
   "type": "project",
   "require": {

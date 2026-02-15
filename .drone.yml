@@ -56,9 +56,9 @@ steps:
       script_stop: true
       script:
         - set -e
-        - REPO_URL="https://$${GITEA_TOKEN}@gitea.sam-services.de/sam-services/MiniMon.git"
+        - REPO_URL="https://$${GITEA_TOKEN}@gitea.sam-services.de/sam-services/TinyMon.git"
         - echo "Deploying tag $${DRONE_TAG}..."
-        - cd /html/minimon
+        - cd /html/tinymon
         - if [ ! -d .git ]; then git init && git remote add origin "$$REPO_URL"; fi
         - git remote set-url origin "$$REPO_URL"
         - git fetch origin --tags --force

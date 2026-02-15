@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/assets/images/logo.svg" width="120" alt="MiniMon Logo">
+  <img src="public/assets/images/logo.svg" width="120" alt="TinyMon Logo">
 </p>
 
-<h1 align="center">MiniMon</h1>
+<h1 align="center">TinyMon</h1>
 
 <p align="center">
   <strong>Minimalist server monitoring. One database file. One container. Zero overhead.</strong>
@@ -10,11 +10,11 @@
 
 ---
 
-MiniMon is a lightweight, web-based monitoring tool for servers and services. It checks availability, response times, certificates, and resources -- and notifies you via email and push notification when something changes.
+TinyMon is a lightweight, web-based monitoring tool for servers and services. It checks availability, response times, certificates, and resources -- and notifies you via email and push notification when something changes.
 
-## Why MiniMon?
+## Why TinyMon?
 
-Most monitoring systems are complex: Prometheus needs exporters, Grafana needs dashboards, Nagios needs config files. MiniMon needs none of that.
+Most monitoring systems are complex: Prometheus needs exporters, Grafana needs dashboards, Nagios needs config files. TinyMon needs none of that.
 
 - **One SQLite file** instead of PostgreSQL, InfluxDB, or MySQL
 - **One Docker container** instead of microservice architecture
@@ -56,7 +56,7 @@ Perfect for small teams, homelabs, side projects, and everywhere a full monitori
 
 ## Kubernetes & Operator
 
-MiniMon is not just a classic pull monitor. Through its **Push API**, it can serve as a monitoring backend for Kubernetes.
+TinyMon is not just a classic pull monitor. Through its **Push API**, it can serve as a monitoring backend for Kubernetes.
 
 A K8s operator can:
 - Create hosts and checks via API (`POST /api/push/hosts`, `POST /api/push/checks`)
@@ -86,13 +86,13 @@ curl -X POST https://mon.example.com/api/push/bulk \
   ]}'
 ```
 
-MiniMon stays your single dashboard -- whether data comes from pull checks or is pushed by an operator.
+TinyMon stays your single dashboard -- whether data comes from pull checks or is pushed by an operator.
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/your-org/MiniMon.git
-cd MiniMon
+git clone https://github.com/your-org/TinyMon.git
+cd TinyMon
 cp .env.example .env
 # Edit .env: set ADMIN_PASSWORD, SMTP credentials, etc.
 docker compose up -d
@@ -105,7 +105,7 @@ Open `http://localhost:8001/backend` and log in with the password from `.env`.
 The runner executes checks and sends alerts:
 
 ```bash
-* * * * * cd /path/to/MiniMon && php bin/runner.php >> data/runner.log 2>&1
+* * * * * cd /path/to/TinyMon && php bin/runner.php >> data/runner.log 2>&1
 ```
 
 Or inside the container:
@@ -127,7 +127,7 @@ All settings are in `.env`:
 | `VAPID_PUBLIC_KEY/PRIVATE_KEY` | VAPID keys for browser push (empty = auto-generate) |
 | `VAPID_SUBJECT` | Contact email for push service providers |
 
-The database (`data/minimon.sqlite`) is created automatically on first start. No setup, no migrations.
+The database (`data/tinymon.sqlite`) is created automatically on first start. No setup, no migrations.
 
 ## Check Types
 

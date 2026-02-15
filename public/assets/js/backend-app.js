@@ -1279,7 +1279,7 @@ var pageV = "?v=" + (APP_VERSION || Date.now());
 // App
 var app = new Framework7({
   el: "#app",
-  name: "MiniMon",
+  name: "TinyMon",
   theme: "ios",
   darkMode: initialDarkMode,
   view: { iosSwipeBack: true },

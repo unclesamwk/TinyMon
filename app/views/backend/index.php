@@ -16,9 +16,9 @@ $isDebug = !empty($debug);
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="MiniMon">
+    <meta name="apple-mobile-web-app-title" content="TinyMon">
     <meta name="theme-color" content="#007aff">
-    <title>MiniMon</title>
+    <title>TinyMon</title>
     <link rel="manifest" href="/backend/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
     <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">

@@ -1,5 +1,5 @@
 <?php
-$loginTitle = "MiniMon";
+$loginTitle = "TinyMon";
 $lang = $_COOKIE["lang"] ?? "en";
 ?>
 <!DOCTYPE html>
@@ -41,7 +41,7 @@ $lang = $_COOKIE["lang"] ?? "en";
 <body>
     <div class="login-card">
         <div style="text-align:center; margin-bottom:1rem;">
-            <img src="/assets/images/logo.svg" alt="MiniMon" style="width:80px; height:80px;">
+            <img src="/assets/images/logo.svg" alt="TinyMon" style="width:80px; height:80px;">
         </div>
         <h1><?= htmlspecialchars($loginTitle) ?></h1>
         <?php if (!empty($error)): ?>

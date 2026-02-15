@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
 #[
     OA\Info(
         version: "1.0",
-        title: "MiniMon API",
+        title: "TinyMon API",
         description: "Minimalistisches Server-Monitoring.
 
 ## Authentifizierung

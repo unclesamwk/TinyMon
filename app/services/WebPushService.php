@@ -92,7 +92,7 @@ class WebPushService
         $prevLabel = strtoupper($result["previous_status"] ?? "unknown");
 
         $payload = json_encode([
-            "title" => sprintf("MiniMon: %s", $statusLabel),
+            "title" => sprintf("TinyMon: %s", $statusLabel),
             "body" => sprintf(
                 "%s / %s: %s → %s",
                 $hostName,
@@ -101,7 +101,7 @@ class WebPushService
                 $statusLabel,
             ),
             "icon" => "/assets/images/logo.svg",
-            "tag" => "minimon-" . ($result["check_id"] ?? "alert"),
+            "tag" => "tinymon-" . ($result["check_id"] ?? "alert"),
             "url" => "/backend",
         ]);
 
@@ -128,7 +128,7 @@ class WebPushService
                     );
                 }
                 error_log(
-                    "[MiniMon] Push failed for " .
+                    "[TinyMon] Push failed for " .
                         $endpoint .
                         ": " .
                         $report->getReason(),
@@ -160,10 +160,10 @@ class WebPushService
         $webPush->setReuseVAPIDHeaders(true);
 
         $payload = json_encode([
-            "title" => "MiniMon Test",
+            "title" => "TinyMon Test",
             "body" => "Push Notifications funktionieren!",
             "icon" => "/assets/images/logo.svg",
-            "tag" => "minimon-test",
+            "tag" => "tinymon-test",
             "url" => "/backend",
         ]);
 

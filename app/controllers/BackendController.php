@@ -89,8 +89,8 @@ class BackendController
     public static function manifest(): void
     {
         $manifest = [
-            "name" => "MiniMon",
-            "short_name" => "MiniMon",
+            "name" => "TinyMon",
+            "short_name" => "TinyMon",
             "start_url" => "/backend",
             "scope" => "/",
             "display" => "standalone",

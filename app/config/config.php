@@ -4,7 +4,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . "/../../");
 $dotenv->safeLoad();
 
 $projectRoot = realpath(__DIR__ . "/../../") . "/";
-$dbPath = $_ENV["DB_PATH"] ?? $projectRoot . "data/minimon.sqlite";
+$dbPath = $_ENV["DB_PATH"] ?? $projectRoot . "data/tinymon.sqlite";
 // Resolve relative paths against project root
 if ($dbPath !== "" && $dbPath[0] !== "/") {
     $dbPath = $projectRoot . $dbPath;
@@ -22,7 +22,7 @@ return [
         "username" => $_ENV["SMTP_USER"] ?? "",
         "password" => $_ENV["SMTP_PASSWORD"] ?? "",
         "from_email" => $_ENV["SMTP_FROM_EMAIL"] ?? "",
-        "from_name" => $_ENV["SMTP_FROM_NAME"] ?? "MiniMon",
+        "from_name" => $_ENV["SMTP_FROM_NAME"] ?? "TinyMon",
         "encryption" => $_ENV["SMTP_ENCRYPTION"] ?? "tls",
         "debug_email" => $_ENV["DEBUG_EMAIL"] ?? "",
     ],

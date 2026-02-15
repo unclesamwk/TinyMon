@@ -405,7 +405,7 @@ class CheckRunner
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_SSL_VERIFYPEER => $verifySsl,
             CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
-            CURLOPT_USERAGENT => "MiniMon/1.0",
+            CURLOPT_USERAGENT => "TinyMon/1.0",
         ]);
 
         $start = microtime(true);
@@ -755,7 +755,7 @@ class CheckRunner
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_USERAGENT => "MiniMon/1.0",
+            CURLOPT_USERAGENT => "TinyMon/1.0",
         ]);
 
         $body = curl_exec($ch);

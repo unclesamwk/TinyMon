@@ -1,4 +1,4 @@
-var CACHE_NAME = "minimon-v1";
+var CACHE_NAME = "tinymon-v1";
 var SHELL_URLS = [
   "/backend",
   "/assets/js/backend-app.js",
@@ -81,7 +81,7 @@ self.addEventListener("fetch", function (event) {
 });
 
 self.addEventListener("push", function (event) {
-  var data = { title: "MiniMon", body: "Status-Aenderung" };
+  var data = { title: "TinyMon", body: "Status-Aenderung" };
   try {
     if (event.data) {
       data = event.data.json();
@@ -94,14 +94,14 @@ self.addEventListener("push", function (event) {
     body: data.body || "",
     icon: data.icon || "/assets/images/logo.svg",
     badge: "/assets/images/logo.svg",
-    tag: data.tag || "minimon-alert",
+    tag: data.tag || "tinymon-alert",
     data: { url: data.url || "/backend" },
     vibrate: [100, 50, 100],
     requireInteraction: true,
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || "MiniMon", options),
+    self.registration.showNotification(data.title || "TinyMon", options),
   );
 });
 
