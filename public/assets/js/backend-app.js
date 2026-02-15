@@ -236,16 +236,23 @@ function loadDashboard(page) {
               }
             });
 
-            html += '<li class="accordion-item accordion-item-opened">';
-            html += '<a class="item-link item-content" href="#">';
+            html +=
+              '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
+            html +=
+              '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
             html +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
             html += '<div class="item-inner">';
             html +=
-              '<div class="item-title" style="font-weight:600;">' +
+              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
               escHtml(topic) +
               "</div>";
-            html += '<div class="item-after">' + groupHosts.length + "</div>";
+            html +=
+              '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+              groupHosts.length +
+              " Host" +
+              (groupHosts.length > 1 ? "s" : "") +
+              "</div>";
             html += "</div></a>";
             html += '<div class="accordion-item-content">';
             html +=
@@ -257,12 +264,19 @@ function loadDashboard(page) {
           });
 
           if (ungrouped.length > 0) {
-            html += '<li class="accordion-item accordion-item-opened">';
-            html += '<a class="item-link item-content" href="#">';
+            html +=
+              '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
+            html +=
+              '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
             html += '<div class="item-inner">';
             html +=
-              '<div class="item-title" style="font-weight:600;">Allgemein</div>';
-            html += '<div class="item-after">' + ungrouped.length + "</div>";
+              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Allgemein</div>';
+            html +=
+              '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+              ungrouped.length +
+              " Host" +
+              (ungrouped.length > 1 ? "s" : "") +
+              "</div>";
             html += "</div></a>";
             html += '<div class="accordion-item-content">';
             html +=
