@@ -21,7 +21,7 @@ $isDebug = !empty($debug);
     <title>MiniMon</title>
     <link rel="manifest" href="/backend/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
-    <link rel="apple-touch-icon" href="/assets/images/logo.svg">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.css">
     <style>

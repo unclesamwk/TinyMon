@@ -1,19 +1,51 @@
-// 401 → redirect to login
+// 401 → redirect to login, network error detection
 (function () {
   var originalFetch = window.fetch;
   window.fetch = function (url, options) {
-    return originalFetch.call(this, url, options).then(function (response) {
-      if (
-        response.status === 401 &&
-        typeof url === "string" &&
-        url.indexOf("/api/") !== -1
-      ) {
-        window.location.href = "/backend/login";
-      }
-      return response;
-    });
+    return originalFetch
+      .call(this, url, options)
+      .then(function (response) {
+        if (
+          response.status === 401 &&
+          typeof url === "string" &&
+          url.indexOf("/api/") !== -1
+        ) {
+          window.location.href = "/backend/login";
+        }
+        return response;
+      })
+      .catch(function (err) {
+        if (!navigator.onLine) {
+          if (typeof app !== "undefined" && app.toast) {
+            app.toast
+              .create({
+                text: "Keine Internetverbindung",
+                position: "center",
+                closeTimeout: 3000,
+              })
+              .open();
+          }
+        }
+        throw err;
+      });
   };
 })();
+
+// Online/offline banner
+window.addEventListener("online", function () {
+  if (typeof app !== "undefined" && app.toast) {
+    app.toast
+      .create({ text: "Wieder online", position: "center", closeTimeout: 2000 })
+      .open();
+  }
+});
+window.addEventListener("offline", function () {
+  if (typeof app !== "undefined" && app.toast) {
+    app.toast
+      .create({ text: "Offline", position: "center", closeTimeout: 3000 })
+      .open();
+  }
+});
 
 // Dark mode (auto / on / off)
 var darkModePref = localStorage.getItem("darkModePreference") || "auto";
@@ -116,6 +148,13 @@ function typeLabel(type) {
   return labels[type] || type;
 }
 
+// Toast helper
+function showToast(text) {
+  app.toast
+    .create({ text: text, position: "center", closeTimeout: 2000 })
+    .open();
+}
+
 function escHtml(str) {
   if (!str) return "";
   var div = document.createElement("div");
@@ -137,8 +176,9 @@ function renderHostListItem(h) {
     h.checks && h.checks.length > 0
       ? h.checks.length + " Check" + (h.checks.length > 1 ? "s" : "")
       : "Keine Checks";
-  var li =
-    '<li><a href="#" class="item-link item-content host-link" data-host-id="' +
+  var li = '<li class="swipeout" data-host-id="' + h.id + '">';
+  li +=
+    '<a href="#" class="item-link item-content swipeout-content host-link" data-host-id="' +
     h.id +
     '">';
   li += '<div class="item-media">' + statusBadge(h.status) + "</div>";
@@ -155,7 +195,12 @@ function renderHostListItem(h) {
     '<div class="item-subtitle" style="color:gray;">' +
     escHtml(h.address) +
     "</div>";
-  li += "</div></a></li>";
+  li += "</div></a>";
+  li +=
+    '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-host color-red swipeout-close" data-host-id="' +
+    h.id +
+    '">Löschen</a></div>';
+  li += "</li>";
   return li;
 }
 
@@ -315,6 +360,18 @@ function loadDashboard(page) {
         ev.preventDefault();
         app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
       });
+
+      page.$el.find(".swipeout-delete-host").on("click", function (ev) {
+        ev.preventDefault();
+        var hostId = this.dataset.hostId;
+        var li = this.closest("li");
+        app.dialog.confirm("Host wirklich löschen?", "Löschen", function () {
+          fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(function () {
+            app.swipeout.delete(li);
+            showToast("Host gelöscht");
+          });
+        });
+      });
     })
     .catch(function (err) {
       page.$el
@@ -368,9 +425,9 @@ function loadHostDetail(page, hostId) {
             typeof c.config === "string"
               ? c.config
               : JSON.stringify(c.config || {});
-          html += "<li>";
+          html += '<li class="swipeout" data-check-id="' + c.id + '">';
           html +=
-            '<div class="item-content check-card" data-check-id="' +
+            '<div class="item-content swipeout-content check-card" data-check-id="' +
             c.id +
             '" style="cursor:pointer;">';
           html +=
@@ -435,6 +492,10 @@ function loadHostDetail(page, hostId) {
             '" data-check-config="' +
             escHtml(cfgRaw) +
             '" style="display:none; padding:0.5rem 1rem 1rem;"></div>';
+          html +=
+            '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-check color-red swipeout-close" data-check-id="' +
+            c.id +
+            '">Löschen</a></div>';
           html += "</li>";
         });
         html += "</ul></div>";
@@ -605,6 +666,7 @@ function renderConfigFields(page, type, cfg) {
     var inputType = f.t || "number";
     html += '<li class="item-content item-input"><div class="item-inner">';
     html += '<div class="item-title item-label">' + f.label + "</div>";
+    var inputMode = inputType === "number" ? ' inputmode="decimal"' : "";
     html +=
       '<div class="item-input-wrap"><input type="' +
       inputType +
@@ -612,7 +674,9 @@ function renderConfigFields(page, type, cfg) {
       f.key +
       '" value="' +
       f.val +
-      '" step="any"></div>';
+      '" step="any"' +
+      inputMode +
+      "></div>";
     html += "</div></li>";
   });
   page.$el.find("#config-list").html(html);
@@ -796,6 +860,7 @@ function loadChart(checkId, range) {
               pointBorderColor: pointColors,
               pointRadius: 0,
               pointHoverRadius: 5,
+              pointHitRadius: 20,
               tension: 0.2,
               fill: false,
             },
@@ -804,6 +869,11 @@ function loadChart(checkId, range) {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: "nearest",
+            intersect: false,
+            axis: "x",
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -886,12 +956,21 @@ var app = new Framework7({
             app.views.main.router.navigate("/hosts/new/");
           });
           page.$el.find(".ptr-content").on("ptr:refresh", function () {
-            window.location.reload();
+            loadDashboard(page);
+            app.ptr.done();
           });
+
+          // Auto-refresh every 60s
+          page.dashboardInterval = setInterval(function () {
+            loadDashboard(page);
+          }, 60000);
         },
         pageBeforeIn: function (e, page) {
           updateDarkModeIcon();
           loadDashboard(page);
+        },
+        pageBeforeRemove: function (e, page) {
+          if (page.dashboardInterval) clearInterval(page.dashboardInterval);
         },
       },
     },
@@ -931,6 +1010,7 @@ var app = new Framework7({
                 return r.json();
               })
               .then(function (data) {
+                showToast("Host erstellt");
                 app.views.main.router.navigate("/hosts/" + data.id + "/");
               })
               .catch(function (err) {
@@ -966,6 +1046,7 @@ var app = new Framework7({
               function () {
                 fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(
                   function () {
+                    showToast("Host gelöscht");
                     app.views.main.router.back("/");
                   },
                 );
@@ -1008,11 +1089,13 @@ var app = new Framework7({
             app.preloader.show();
             fetch("/api/checks/" + checkId + "/run", { method: "POST" })
               .then(function () {
+                showToast("Check ausgeführt");
                 loadHostDetail(page, hostId);
                 app.preloader.hide();
               })
               .catch(function () {
                 app.preloader.hide();
+                showToast("Fehler beim Ausführen");
               });
           });
           page.$el.on("click", ".edit-check", function (ev) {
@@ -1032,7 +1115,25 @@ var app = new Framework7({
               function () {
                 fetch("/api/checks/" + checkId, { method: "DELETE" }).then(
                   function () {
+                    showToast("Check gelöscht");
                     loadHostDetail(page, hostId);
+                  },
+                );
+              },
+            );
+          });
+          page.$el.on("click", ".swipeout-delete-check", function (ev) {
+            ev.preventDefault();
+            var checkId = this.dataset.checkId;
+            var li = this.closest("li");
+            app.dialog.confirm(
+              "Check wirklich löschen?",
+              "Löschen",
+              function () {
+                fetch("/api/checks/" + checkId, { method: "DELETE" }).then(
+                  function () {
+                    app.swipeout.delete(li);
+                    showToast("Check gelöscht");
                   },
                 );
               },
@@ -1100,6 +1201,7 @@ var app = new Framework7({
                 return r.json();
               })
               .then(function () {
+                showToast("Host gespeichert");
                 app.views.main.router.back();
               })
               .catch(function (err) {
@@ -1151,6 +1253,7 @@ var app = new Framework7({
                     throw new Error(d.error || "Fehler beim Speichern");
                   });
                 }
+                showToast("Check erstellt");
                 app.views.main.router.back();
               })
               .catch(function (err) {
@@ -1232,6 +1335,7 @@ var app = new Framework7({
                     throw new Error(d.error || "Fehler beim Speichern");
                   });
                 }
+                showToast("Check gespeichert");
                 app.views.main.router.back();
               })
               .catch(function (err) {
