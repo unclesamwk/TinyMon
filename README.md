@@ -194,6 +194,10 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 - **API Docs:** zircote/swagger-php (OpenAPI 3)
 - **Deploy:** Docker or bare metal / shared hosting
 
+## Disclaimer
+
+TinyMon is provided as-is, without warranty of any kind. Use at your own risk. The authors are not liable for any damages, data loss, or missed alerts resulting from the use of this software.
+
 ## License
 
 MIT
