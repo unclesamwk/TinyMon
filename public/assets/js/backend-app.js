@@ -925,6 +925,7 @@ var app = new Framework7({
 
           page.$el.on("click", ".run-check", function (ev) {
             ev.preventDefault();
+            ev.stopPropagation();
             var checkId = this.dataset.checkId;
             app.preloader.show();
             fetch("/api/checks/" + checkId + "/run", { method: "POST" })
@@ -938,12 +939,14 @@ var app = new Framework7({
           });
           page.$el.on("click", ".edit-check", function (ev) {
             ev.preventDefault();
+            ev.stopPropagation();
             app.views.main.router.navigate(
               "/checks/" + this.dataset.checkId + "/edit/",
             );
           });
           page.$el.on("click", ".delete-check", function (ev) {
             ev.preventDefault();
+            ev.stopPropagation();
             var checkId = this.dataset.checkId;
             app.dialog.confirm(
               "Check wirklich löschen?",
