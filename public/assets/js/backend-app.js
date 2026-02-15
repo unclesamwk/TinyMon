@@ -90,6 +90,9 @@ var translations = {
     check_deleted: "Check gelöscht",
     check_run: "Check ausgeführt",
     check_run_error: "Fehler beim Ausführen",
+    accept_hash: "Hash akzeptieren",
+    hash_accepted: "Hash akzeptiert",
+    hash_accept_error: "Fehler beim Akzeptieren",
     delete_host_title: "Host löschen",
     delete_host_confirm: "Host und alle Checks wirklich löschen?",
     delete_check_title: "Löschen",
@@ -209,6 +212,9 @@ var translations = {
     check_deleted: "Check deleted",
     check_run: "Check executed",
     check_run_error: "Execution failed",
+    accept_hash: "Accept hash",
+    hash_accepted: "Hash accepted",
+    hash_accept_error: "Accept failed",
     delete_host_title: "Delete host",
     delete_host_confirm: "Delete host and all checks?",
     delete_check_title: "Delete",
@@ -769,6 +775,14 @@ function loadHostDetail(page, hostId) {
             '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">play_arrow</i> ' +
             t("run") +
             "</a>";
+          if (c.type === "content_hash" && lr && lr.status === "warning") {
+            html +=
+              '<a href="#" class="button button-small button-outline accept-hash" data-check-id="' +
+              c.id +
+              '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">check</i> ' +
+              t("accept_hash") +
+              "</a>";
+          }
           html +=
             '<a href="#" class="button button-small button-outline edit-check" data-check-id="' +
             c.id +
@@ -1484,6 +1498,24 @@ var app = new Framework7({
               .catch(function () {
                 app.preloader.hide();
                 showToast(t("check_run_error"));
+              });
+          });
+          page.$el.on("click", ".accept-hash", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var checkId = this.dataset.checkId;
+            app.preloader.show();
+            fetch("/api/checks/" + checkId + "/accept-hash", {
+              method: "POST",
+            })
+              .then(function () {
+                showToast(t("hash_accepted"));
+                loadHostDetail(page, hostId);
+                app.preloader.hide();
+              })
+              .catch(function () {
+                app.preloader.hide();
+                showToast(t("hash_accept_error"));
               });
           });
           page.$el.on("click", ".edit-check", function (ev) {

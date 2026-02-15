@@ -60,6 +60,10 @@ Flight::route("POST /api/hosts/@id/checks", [CheckController::class, "create"]);
 Flight::route("PUT /api/checks/@id", [CheckController::class, "update"]);
 Flight::route("DELETE /api/checks/@id", [CheckController::class, "delete"]);
 Flight::route("POST /api/checks/@id/run", [CheckController::class, "run"]);
+Flight::route("POST /api/checks/@id/accept-hash", [
+    CheckController::class,
+    "acceptHash",
+]);
 Flight::route("GET /api/checks/@id/results", [
     CheckController::class,
     "results",

@@ -573,6 +573,67 @@ class CheckRunner
         ];
     }
 
+    public function acceptContentHash(array $check): array
+    {
+        $config = json_decode($check["config"] ?? "{}", true) ?: [];
+        $address = $check["address"];
+        $expectedStatus = $config["expected_status"] ?? 200;
+        $selector = $config["selector"] ?? "";
+
+        $resp = $this->fetchUrl($address, $config);
+
+        if ($resp["http_code"] === 0) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Connection failed: " . $resp["error"],
+            ];
+        }
+
+        if ($expectedStatus && $resp["http_code"] !== $expectedStatus) {
+            return [
+                "status" => "critical",
+                "value" => $resp["http_code"],
+                "message" => sprintf(
+                    "HTTP %d (expected %d)",
+                    $resp["http_code"],
+                    $expectedStatus,
+                ),
+            ];
+        }
+
+        $body = $resp["body"] ?: "";
+
+        if ($selector !== "") {
+            if (preg_match($selector, $body, $m)) {
+                $body = $m[0];
+            }
+        }
+
+        $hash = hash("sha256", $body);
+
+        $result = [
+            "status" => "ok",
+            "value" => 0,
+            "message" => sprintf("Content accepted, hash:%s", $hash),
+        ];
+
+        $this->db->runQuery(
+            "INSERT INTO check_results (check_id, status, value, message) VALUES (?, ?, ?, ?)",
+            [
+                $check["id"],
+                $result["status"],
+                $result["value"],
+                $result["message"],
+            ],
+        );
+
+        $result["check_id"] = $check["id"];
+        $result["type"] = $check["type"];
+
+        return $result;
+    }
+
     private function checkDisk(array $config): array
     {
         $path = $config["path"] ?? "/";

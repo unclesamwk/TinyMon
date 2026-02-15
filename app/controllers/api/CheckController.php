@@ -446,6 +446,72 @@ class CheckController
     }
 
     #[
+        OA\Post(
+            path: "/api/checks/{id}/accept-hash",
+            summary: "Accept current content hash as new baseline",
+            description: "Re-fetches content, computes hash, and stores it as OK result. Only works for content_hash checks.",
+            tags: ["Checks"],
+            security: [["sessionAuth" => []]],
+            parameters: [
+                new OA\Parameter(
+                    name: "id",
+                    in: "path",
+                    required: true,
+                    schema: new OA\Schema(type: "integer"),
+                ),
+            ],
+            responses: [
+                new OA\Response(
+                    response: 200,
+                    description: "Hash accepted",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/CheckResult",
+                    ),
+                ),
+                new OA\Response(
+                    response: 400,
+                    description: "Not a content_hash check",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Error",
+                    ),
+                ),
+                new OA\Response(
+                    response: 404,
+                    description: "Check not found",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Error",
+                    ),
+                ),
+            ],
+        ),
+    ]
+    public static function acceptHash(int $id): void
+    {
+        $db = Flight::db();
+        $check = $db->fetchRow(
+            "SELECT c.*, h.address FROM checks c JOIN hosts h ON h.id = c.host_id WHERE c.id = ?",
+            [$id],
+        );
+        if (!$check) {
+            Flight::halt(404, json_encode(["error" => "Check not found"]));
+            return;
+        }
+        if ($check["type"] !== "content_hash") {
+            Flight::halt(
+                400,
+                json_encode([
+                    "error" => "Only content_hash checks support accept-hash",
+                ]),
+            );
+            return;
+        }
+
+        $runner = new CheckRunner($db);
+        $result = $runner->acceptContentHash($check);
+        Flight::json($result);
+    }
+
+    #[
         OA\Get(
             path: "/api/checks/{id}/results",
             summary: "Ergebnis-Historie abrufen",
