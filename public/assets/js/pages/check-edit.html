@@ -16,7 +16,9 @@
             <ul>
                 <li class="item-content item-input">
                     <div class="item-inner">
-                        <div class="item-title item-label">Typ</div>
+                        <div class="item-title item-label" data-i18n="type">
+                            Typ
+                        </div>
                         <div class="item-input-wrap">
                             <select id="check-type">
                                 <option value="ping">Ping</option>
@@ -39,7 +41,10 @@
                 </li>
                 <li class="item-content item-input">
                     <div class="item-inner">
-                        <div class="item-title item-label">
+                        <div
+                            class="item-title item-label"
+                            data-i18n="interval_seconds"
+                        >
                             Intervall (Sekunden)
                         </div>
                         <div class="item-input-wrap">
@@ -57,7 +62,9 @@
                 <li>
                     <label class="item-content">
                         <div class="item-inner">
-                            <div class="item-title">Aktiviert</div>
+                            <div class="item-title" data-i18n="enabled">
+                                Aktiviert
+                            </div>
                             <div class="item-after">
                                 <div class="toggle toggle-init">
                                     <input
@@ -72,10 +79,10 @@
                 </li>
             </ul>
         </div>
-        <div class="block-title">Konfiguration</div>
+        <div class="block-title" data-i18n="configuration">Konfiguration</div>
         <div class="list"><ul id="config-list"></ul></div>
         <div class="block">
-            <button class="button button-fill" id="save-check">
+            <button class="button button-fill" id="save-check" data-i18n="save">
                 Speichern
             </button>
         </div>

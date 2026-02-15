@@ -1332,26 +1332,15 @@ var app = new Framework7({
         pageInit: function (e, page) {
           page.$el.find("#page-title").text(t("new_host"));
           // i18n for host-edit template
-          page.$el.find('[for="host-name"], .item-label').eq(0).text(t("name"));
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
           page.$el.find("#host-name").attr("placeholder", t("ph_name"));
           page.$el.find("#host-address").attr("placeholder", t("ph_address"));
           page.$el
             .find("#host-description")
             .attr("placeholder", t("ph_optional"));
           page.$el.find("#host-topic").attr("placeholder", t("ph_topic"));
-          var labels = page.$el.find(".item-label");
-          if (labels.length >= 5) {
-            labels.eq(0).text(t("name"));
-            labels.eq(1).text(t("address"));
-            labels.eq(2).text(t("description"));
-            labels.eq(3).text(t("topic"));
-          }
-          page.$el
-            .find("#host-enabled")
-            .closest("li")
-            .find(".item-title")
-            .text(t("enabled"));
-          page.$el.find("#save-host").text(t("save"));
 
           page.$el.find("#save-host").on("click", function () {
             var name = page.$el.find("#host-name").val().trim();
@@ -1409,11 +1398,9 @@ var app = new Framework7({
             app.views.main.router.navigate("/hosts/" + hostId + "/checks/new/");
           });
           // i18n for host-detail template
-          page.$el.find(".block-title span").first().text(t("checks"));
-          page.$el.find('.chart-range-btn[data-range="7d"]').text(t("7_days"));
-          page.$el
-            .find('.chart-range-btn[data-range="30d"]')
-            .text(t("30_days"));
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
           page.$el.find("#add-check-btn").text(t("add_check"));
           page.$el.find("#delete-host-btn").text(t("delete_host_btn"));
 
@@ -1563,25 +1550,15 @@ var app = new Framework7({
           var id = page.route.params.id;
           page.$el.find("#page-title").text(t("edit_host"));
           // i18n for host-edit template
-          var labels = page.$el.find(".item-label");
-          if (labels.length >= 4) {
-            labels.eq(0).text(t("name"));
-            labels.eq(1).text(t("address"));
-            labels.eq(2).text(t("description"));
-            labels.eq(3).text(t("topic"));
-          }
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
           page.$el.find("#host-name").attr("placeholder", t("ph_name"));
           page.$el.find("#host-address").attr("placeholder", t("ph_address"));
           page.$el
             .find("#host-description")
             .attr("placeholder", t("ph_optional"));
           page.$el.find("#host-topic").attr("placeholder", t("ph_topic"));
-          page.$el
-            .find("#host-enabled")
-            .closest("li")
-            .find(".item-title")
-            .text(t("enabled"));
-          page.$el.find("#save-host").text(t("save"));
 
           fetch("/api/hosts/" + id)
             .then(function (r) {
@@ -1642,22 +1619,9 @@ var app = new Framework7({
           var hostId = page.route.params.id;
           page.$el.find("#page-title").text(t("new_check"));
           // i18n for check-edit template
-          var labels = page.$el.find(".item-label");
-          if (labels.length >= 2) {
-            labels.eq(0).text(t("type"));
-            labels.eq(1).text(t("interval_seconds"));
-          }
-          page.$el
-            .find("#check-enabled")
-            .closest("li")
-            .find(".item-title")
-            .text(t("enabled"));
-          page.$el
-            .find("#config-list")
-            .closest(".list")
-            .prev(".block-title")
-            .text(t("configuration"));
-          page.$el.find("#save-check").text(t("save"));
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
           renderConfigFields(page, "ping", {});
 
           page.$el.find("#check-type").on("change", function () {
@@ -1711,22 +1675,9 @@ var app = new Framework7({
           var checkId = page.route.params.id;
           page.$el.find("#page-title").text(t("edit_check"));
           // i18n for check-edit template
-          var labels = page.$el.find(".item-label");
-          if (labels.length >= 2) {
-            labels.eq(0).text(t("type"));
-            labels.eq(1).text(t("interval_seconds"));
-          }
-          page.$el
-            .find("#check-enabled")
-            .closest("li")
-            .find(".item-title")
-            .text(t("enabled"));
-          page.$el
-            .find("#config-list")
-            .closest(".list")
-            .prev(".block-title")
-            .text(t("configuration"));
-          page.$el.find("#save-check").text(t("save"));
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
 
           // Find the check data
           fetch("/api/hosts")
@@ -1813,52 +1764,9 @@ var app = new Framework7({
           blockTitles.eq(0).text(t("notifications"));
           blockTitles.eq(1).text(t("appearance"));
           blockTitles.eq(2).text(t("info"));
-          var itemTitles = page.$el.find(".item-title");
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Push Notifications";
-            })
-            .text(t("push_notifications"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Test-Benachrichtigung";
-            })
-            .text(t("test_notification"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Dark Mode";
-            })
-            .text(t("dark_mode"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Zeitformat";
-            })
-            .text(t("time_format"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Sprache";
-            })
-            .text(t("language"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Runner";
-            })
-            .text(t("runner"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Version";
-            })
-            .text(t("version"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Hosts";
-            })
-            .text(t("hosts"));
-          itemTitles
-            .filter(function () {
-              return this.textContent.trim() === "Checks";
-            })
-            .text(t("checks"));
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
           page.$el.find("#push-test-btn").text(t("send"));
           page.$el.find("#logout-btn").text(t("logout"));
           page.$el.find('.darkmode-btn[data-mode="auto"]').text(t("auto"));
