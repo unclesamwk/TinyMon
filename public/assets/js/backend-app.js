@@ -47,6 +47,15 @@ window.addEventListener("offline", function () {
   }
 });
 
+// Time format (24h / 12h)
+var timeFormatPref = localStorage.getItem("timeFormat") || "24h";
+
+function setTimeFormat(fmt) {
+  timeFormatPref = fmt;
+  localStorage.setItem("timeFormat", fmt);
+  reloadVisibleCharts();
+}
+
 // Dark mode (auto / on / off)
 var darkModePref = localStorage.getItem("darkModePreference") || "auto";
 
@@ -890,7 +899,9 @@ function loadChart(checkId, range) {
                   return (
                     d.toLocaleDateString("de-DE") +
                     " " +
-                    d.toLocaleTimeString("de-DE")
+                    d.toLocaleTimeString("de-DE", {
+                      hour12: timeFormatPref === "12h",
+                    })
                   );
                 },
                 label: function (item) {
@@ -909,7 +920,16 @@ function loadChart(checkId, range) {
           scales: {
             x: {
               type: "time",
-              time: { tooltipFormat: "dd.MM.yyyy HH:mm" },
+              time: {
+                tooltipFormat:
+                  timeFormatPref === "12h"
+                    ? "dd.MM.yyyy h:mm a"
+                    : "dd.MM.yyyy HH:mm",
+                displayFormats:
+                  timeFormatPref === "12h"
+                    ? { hour: "h:mm a", minute: "h:mm a" }
+                    : { hour: "HH:mm", minute: "HH:mm" },
+              },
               ticks: { color: textColor, maxTicksLimit: 8 },
               grid: { color: gridColor },
             },
@@ -1414,6 +1434,18 @@ var app = new Framework7({
             page.$el.find(".darkmode-btn").removeClass("button-active");
             this.classList.add("button-active");
             setDarkModePreference(this.dataset.mode);
+          });
+
+          // Time format segmented control
+          page.$el.find(".timeformat-btn").each(function () {
+            if (this.dataset.format === timeFormatPref) {
+              this.classList.add("button-active");
+            }
+          });
+          page.$el.find(".timeformat-btn").on("click", function () {
+            page.$el.find(".timeformat-btn").removeClass("button-active");
+            this.classList.add("button-active");
+            setTimeFormat(this.dataset.format);
           });
 
           page.$el.find("#settings-version").text(APP_VERSION || "dev");
