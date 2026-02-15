@@ -145,12 +145,16 @@ function renderHostListItem(h) {
   li +=
     '<div class="item-inner"><div class="item-title-row"><div class="item-title">' +
     escHtml(h.name) +
-    "</div></div>";
+    "</div>";
+  li +=
+    '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+    cs +
+    "</div>";
+  li += "</div>";
   li +=
     '<div class="item-subtitle" style="color:gray;">' +
     escHtml(h.address) +
     "</div>";
-  li += '<div class="item-text">' + cs + "</div>";
   li += "</div></a></li>";
   return li;
 }
