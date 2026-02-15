@@ -472,7 +472,9 @@ function loadHostDetail(page, hostId) {
           html +=
             '<div class="item-text" style="display:flex; gap:0.75rem; margin-top:4px; align-items:center;">';
           html +=
-            '<span class="toggle-chart-hint" style="color:#007aff; font-size:0.8rem; cursor:pointer;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</span>';
+            '<a href="#" class="toggle-chart" data-check-id="' +
+            c.id +
+            '" style="color:#007aff; font-size:0.8rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</a>';
           html +=
             '<a href="#" class="run-check" data-check-id="' +
             c.id +
@@ -1056,24 +1058,44 @@ var app = new Framework7({
             );
           });
 
-          // Toggle chart on check card click
-          page.$el.on("click", ".check-card", function (ev) {
-            if (ev.target.closest("a")) return;
-            var checkId = this.dataset.checkId;
+          // Toggle chart on check card click or chart button
+          function toggleChart(checkId) {
             var container = document.getElementById(
               "chart-container-" + checkId,
             );
             if (!container) return;
+            var link = page.$el.find(
+              '.toggle-chart[data-check-id="' + checkId + '"]',
+            );
             if (container.style.display === "none") {
               container.style.display = "block";
               loadChart(checkId, currentChartRange);
+              if (link.length)
+                link.html(
+                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Schließen',
+                );
             } else {
               container.style.display = "none";
               if (chartInstances[checkId]) {
                 chartInstances[checkId].destroy();
                 delete chartInstances[checkId];
               }
+              if (link.length)
+                link.html(
+                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart',
+                );
             }
+          }
+
+          page.$el.on("click", ".check-card", function (ev) {
+            if (ev.target.closest("a")) return;
+            toggleChart(this.dataset.checkId);
+          });
+
+          page.$el.on("click", ".toggle-chart", function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            toggleChart(this.dataset.checkId);
           });
 
           // Time range selector
