@@ -264,10 +264,25 @@ function loadDashboard(page) {
           });
 
           if (ungrouped.length > 0) {
+            var ungroupedStatus = "unknown";
+            ungrouped.forEach(function (h) {
+              var s = h.status;
+              if (
+                s === "critical" ||
+                (ungroupedStatus !== "critical" && s === "warning") ||
+                (ungroupedStatus === "unknown" && s === "ok")
+              ) {
+                ungroupedStatus = s;
+              }
+            });
             html +=
               '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
             html +=
               '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
+            html +=
+              '<div class="item-media">' +
+              statusBadge(ungroupedStatus) +
+              "</div>";
             html += '<div class="item-inner">';
             html +=
               '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Allgemein</div>';
