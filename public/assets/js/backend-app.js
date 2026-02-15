@@ -246,7 +246,7 @@ function loadDashboard(page) {
               '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
             html +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
-            html += '<div class="item-inner">';
+            html += '<div class="item-inner"><div class="item-title-row">';
             html +=
               '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
               escHtml(topic) +
@@ -257,7 +257,7 @@ function loadDashboard(page) {
               " Host" +
               (groupHosts.length > 1 ? "s" : "") +
               "</div>";
-            html += "</div></a>";
+            html += "</div></div></a>";
             html += '<div class="accordion-item-content">';
             html +=
               '<div class="list media-list" style="margin-left:1rem;"><ul>';
@@ -287,7 +287,7 @@ function loadDashboard(page) {
               '<div class="item-media">' +
               statusBadge(ungroupedStatus) +
               "</div>";
-            html += '<div class="item-inner">';
+            html += '<div class="item-inner"><div class="item-title-row">';
             html +=
               '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Allgemein</div>';
             html +=
@@ -296,7 +296,7 @@ function loadDashboard(page) {
               " Host" +
               (ungrouped.length > 1 ? "s" : "") +
               "</div>";
-            html += "</div></a>";
+            html += "</div></div></a>";
             html += '<div class="accordion-item-content">';
             html +=
               '<div class="list media-list" style="margin-left:1rem;"><ul>';
