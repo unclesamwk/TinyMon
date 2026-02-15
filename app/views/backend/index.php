@@ -31,16 +31,6 @@ $isDebug = !empty($debug);
         .ios .dark .topic-header, .ios.dark .topic-header {
             background: #3a3a3c;
         }
-        .page[data-name="home"] .navbar .left {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-        }
-        .page[data-name="home"] .navbar .left img {
-            transition: none !important;
-            transform: none !important;
-            opacity: 1 !important;
-        }
         .ios .dark, .ios.dark {
             --f7-page-bg-color: #1c1c1e;
             --f7-bars-bg-color: #2c2c2e;
