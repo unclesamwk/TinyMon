@@ -736,6 +736,7 @@ class CheckRunner
         array $config,
     ): array {
         $port = $config["port"] ?? 443;
+        $mount = $config["mount"] ?? "/stream";
         $warningListeners = $config["warning_listeners"] ?? 0;
         $criticalListeners = $config["critical_listeners"] ?? 0;
 
@@ -788,8 +789,9 @@ class CheckRunner
         }
 
         $sources = $data["icestats"]["source"] ?? null;
+        $mountNormalized = "/" . ltrim($mount, "/");
 
-        // No active sources
+        // No active sources at all
         if ($sources === null) {
             $status = "ok";
             if ($criticalListeners > 0 && 0 < $criticalListeners) {
@@ -800,7 +802,10 @@ class CheckRunner
             return [
                 "status" => $status,
                 "value" => 0,
-                "message" => "No active streams, 0 listeners",
+                "message" => sprintf(
+                    "Mountpoint %s not active, 0 listeners",
+                    $mountNormalized,
+                ),
             ];
         }
 
@@ -809,39 +814,49 @@ class CheckRunner
             $sources = [$sources];
         }
 
-        // Sum listeners across all streams
-        $totalListeners = 0;
-        $streamDetails = [];
+        // Find matching mountpoint
+        $listeners = null;
 
         foreach ($sources as $source) {
-            $mount =
-                parse_url($source["listenurl"] ?? "", PHP_URL_PATH) ??
-                "unknown";
-            $count = (int) ($source["listeners"] ?? 0);
-            $totalListeners += $count;
-            $streamDetails[] = $mount . ":" . $count;
+            $listenUrl = $source["listenurl"] ?? "";
+            $sourcePath = parse_url($listenUrl, PHP_URL_PATH) ?? "";
+            if (str_ends_with($sourcePath, $mountNormalized)) {
+                $listeners = (int) ($source["listeners"] ?? 0);
+                break;
+            }
+        }
+
+        if ($listeners === null) {
+            $status = "ok";
+            if ($criticalListeners > 0 && 0 < $criticalListeners) {
+                $status = "critical";
+            } elseif ($warningListeners > 0 && 0 < $warningListeners) {
+                $status = "warning";
+            }
+            return [
+                "status" => $status,
+                "value" => 0,
+                "message" => sprintf(
+                    "Mountpoint %s not active, 0 listeners",
+                    $mountNormalized,
+                ),
+            ];
         }
 
         $status = "ok";
-        if ($criticalListeners > 0 && $totalListeners < $criticalListeners) {
+        if ($criticalListeners > 0 && $listeners < $criticalListeners) {
             $status = "critical";
-        } elseif (
-            $warningListeners > 0 &&
-            $totalListeners < $warningListeners
-        ) {
+        } elseif ($warningListeners > 0 && $listeners < $warningListeners) {
             $status = "warning";
         }
 
-        $streamCount = count($sources);
         return [
             "status" => $status,
-            "value" => $totalListeners,
+            "value" => $listeners,
             "message" => sprintf(
-                "%d listeners on %d stream%s (%s)",
-                $totalListeners,
-                $streamCount,
-                $streamCount > 1 ? "s" : "",
-                implode(", ", $streamDetails),
+                "%d listeners on %s",
+                $listeners,
+                $mountNormalized,
             ),
         ];
     }

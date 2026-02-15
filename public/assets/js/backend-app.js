@@ -330,9 +330,20 @@ function loadHostDetail(page, hostId) {
             ';">' +
             typeIcon(c.type) +
             "</i></div>";
+          var checkLabel = c.type;
+          if (c.type === "icecast_listeners") {
+            var parsedCfg = {};
+            try {
+              parsedCfg =
+                typeof c.config === "string"
+                  ? JSON.parse(c.config || "{}")
+                  : c.config || {};
+            } catch (e) {}
+            checkLabel += " " + (parsedCfg.mount || "/stream");
+          }
           html +=
             '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="text-transform:uppercase; font-size:0.85rem;">' +
-            escHtml(c.type) +
+            escHtml(checkLabel) +
             "</div>";
           html += '<div class="item-after">' + statusBadge(st) + "</div></div>";
           html += '<div class="item-subtitle" style="color:gray;">';
@@ -509,6 +520,12 @@ function renderConfigFields(page, type, cfg) {
   } else if (type === "icecast_listeners") {
     fields = [
       { key: "port", label: "Port", val: cfg.port || 443 },
+      {
+        key: "mount",
+        label: "Mountpoint",
+        val: cfg.mount || "/stream",
+        t: "text",
+      },
       {
         key: "warning_listeners",
         label: "Warning unter (Listeners)",
