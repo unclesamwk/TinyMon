@@ -30,10 +30,13 @@ $isDebug = !empty($debug);
             --f7-bars-bg-color: #2c2c2e;
             --f7-navbar-bg-color: #2c2c2e;
             --f7-toolbar-bg-color: #2c2c2e;
+            --f7-list-bg-color: #2c2c2e;
             --f7-list-strong-bg-color: #2c2c2e;
             --f7-list-group-title-bg-color: #2c2c2e;
             --f7-block-strong-bg-color: #2c2c2e;
             --f7-glass-bg-color: #2c2c2ecc;
+            --f7-input-bg-color: transparent;
+            --f7-list-button-bg-color: #2c2c2e;
         }
     </style>
 </head>
