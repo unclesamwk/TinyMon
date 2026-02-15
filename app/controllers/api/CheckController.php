@@ -239,6 +239,7 @@ class CheckController
             "disk",
             "load",
             "memory",
+            "icecast_listeners",
         ];
         if (!in_array($type, $validTypes, true)) {
             Flight::halt(
