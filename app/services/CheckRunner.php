@@ -66,6 +66,10 @@ class CheckRunner
             "disk" => $this->checkDisk($config),
             "load" => $this->checkLoad($config),
             "memory" => $this->checkMemory($config),
+            "icecast_listeners" => $this->checkIcecastListeners(
+                $address,
+                $config,
+            ),
             default => [
                 "status" => "unknown",
                 "value" => null,
@@ -724,6 +728,118 @@ class CheckRunner
                 $usedPct,
                 $availMb,
             ),
+        ];
+    }
+
+    private function checkIcecastListeners(
+        string $address,
+        array $config,
+    ): array {
+        $port = $config["port"] ?? 8000;
+        $mount = $config["mount"] ?? "/stream";
+        $warningListeners = $config["warning_listeners"] ?? 0;
+        $criticalListeners = $config["critical_listeners"] ?? 0;
+
+        $url = "http://" . $address . ":" . $port . "/status-json.php";
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_USERAGENT => "MiniMon/1.0",
+        ]);
+
+        $body = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode === 0) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Connection failed: " . $error,
+            ];
+        }
+
+        if ($httpCode !== 200) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => sprintf("HTTP %d from Icecast", $httpCode),
+            ];
+        }
+
+        $data = json_decode($body, true);
+        if (!$data || !isset($data["icestats"])) {
+            return [
+                "status" => "unknown",
+                "value" => null,
+                "message" => "Invalid Icecast JSON response",
+            ];
+        }
+
+        $sources = $data["icestats"]["source"] ?? null;
+        if ($sources === null) {
+            return [
+                "status" => "unknown",
+                "value" => 0,
+                "message" => "No active sources on Icecast server",
+            ];
+        }
+
+        // Normalize: single source is an object, multiple sources is an array
+        if (isset($sources["listenurl"])) {
+            $sources = [$sources];
+        }
+
+        // Find matching mountpoint
+        $mountNormalized = "/" . ltrim($mount, "/");
+        $listeners = null;
+        $serverName = "";
+
+        foreach ($sources as $source) {
+            $sourceName = $source["server_name"] ?? "";
+            $listenUrl = $source["listenurl"] ?? "";
+            // Match by mount path at the end of listenurl
+            if (
+                isset($source["listenurl"]) &&
+                str_ends_with(
+                    parse_url($listenUrl, PHP_URL_PATH) ?? "",
+                    $mountNormalized,
+                )
+            ) {
+                $listeners = (int) ($source["listeners"] ?? 0);
+                $serverName = $sourceName;
+                break;
+            }
+        }
+
+        if ($listeners === null) {
+            return [
+                "status" => "unknown",
+                "value" => null,
+                "message" => sprintf(
+                    "Mountpoint %s not found",
+                    $mountNormalized,
+                ),
+            ];
+        }
+
+        $status = "ok";
+        if ($criticalListeners > 0 && $listeners < $criticalListeners) {
+            $status = "critical";
+        } elseif ($warningListeners > 0 && $listeners < $warningListeners) {
+            $status = "warning";
+        }
+
+        $label = $serverName !== "" ? $serverName : $mountNormalized;
+        return [
+            "status" => $status,
+            "value" => $listeners,
+            "message" => sprintf("%d listeners on %s", $listeners, $label),
         ];
     }
 }

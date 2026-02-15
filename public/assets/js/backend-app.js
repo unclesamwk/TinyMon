@@ -95,6 +95,7 @@ function typeIcon(type) {
     memory: "memory",
     content: "article",
     content_hash: "fingerprint",
+    icecast_listeners: "radio",
   };
   return icons[type] || "monitor_heart";
 }
@@ -503,6 +504,26 @@ function renderConfigFields(page, type, cfg) {
         t: "text",
       },
     ];
+  } else if (type === "icecast_listeners") {
+    fields = [
+      { key: "port", label: "Port", val: cfg.port || 8000 },
+      {
+        key: "mount",
+        label: "Mountpoint",
+        val: cfg.mount || "/stream",
+        t: "text",
+      },
+      {
+        key: "warning_listeners",
+        label: "Warning unter (Listeners)",
+        val: cfg.warning_listeners || 0,
+      },
+      {
+        key: "critical_listeners",
+        label: "Critical unter (Listeners)",
+        val: cfg.critical_listeners || 0,
+      },
+    ];
   }
   var html = "";
   fields.forEach(function (f) {
@@ -560,6 +581,14 @@ function getChartThresholds(type, config) {
   }
   if (type === "load") {
     return { warning: config.warning, critical: config.critical, unit: "Load" };
+  }
+  if (type === "icecast_listeners") {
+    return {
+      warning: config.warning_listeners,
+      critical: config.critical_listeners,
+      unit: "Listeners",
+      inverted: true,
+    };
   }
   return { warning: null, critical: null, unit: "" };
 }
