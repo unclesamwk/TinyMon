@@ -508,13 +508,7 @@ function renderConfigFields(page, type, cfg) {
     ];
   } else if (type === "icecast_listeners") {
     fields = [
-      { key: "port", label: "Port", val: cfg.port || 8000 },
-      {
-        key: "mount",
-        label: "Mountpoint",
-        val: cfg.mount || "/stream",
-        t: "text",
-      },
+      { key: "port", label: "Port", val: cfg.port || 443 },
       {
         key: "warning_listeners",
         label: "Warning unter (Listeners)",

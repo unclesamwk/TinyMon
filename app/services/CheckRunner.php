@@ -735,12 +735,17 @@ class CheckRunner
         string $address,
         array $config,
     ): array {
-        $port = $config["port"] ?? 8000;
-        $mount = $config["mount"] ?? "/stream";
+        $port = $config["port"] ?? 443;
         $warningListeners = $config["warning_listeners"] ?? 0;
         $criticalListeners = $config["critical_listeners"] ?? 0;
 
-        $url = "http://" . $address . ":" . $port . "/status-json.php";
+        $scheme = $port === 443 ? "https" : "http";
+        $portSuffix =
+            ($scheme === "https" && $port === 443) ||
+            ($scheme === "http" && $port === 80)
+                ? ""
+                : ":" . $port;
+        $url = $scheme . "://" . $address . $portSuffix . "/status-json.xsl";
 
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -748,6 +753,7 @@ class CheckRunner
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_USERAGENT => "MiniMon/1.0",
         ]);
 
@@ -782,11 +788,19 @@ class CheckRunner
         }
 
         $sources = $data["icestats"]["source"] ?? null;
+
+        // No active sources
         if ($sources === null) {
+            $status = "ok";
+            if ($criticalListeners > 0 && 0 < $criticalListeners) {
+                $status = "critical";
+            } elseif ($warningListeners > 0 && 0 < $warningListeners) {
+                $status = "warning";
+            }
             return [
-                "status" => "unknown",
+                "status" => $status,
                 "value" => 0,
-                "message" => "No active sources on Icecast server",
+                "message" => "No active streams, 0 listeners",
             ];
         }
 
@@ -795,51 +809,40 @@ class CheckRunner
             $sources = [$sources];
         }
 
-        // Find matching mountpoint
-        $mountNormalized = "/" . ltrim($mount, "/");
-        $listeners = null;
-        $serverName = "";
+        // Sum listeners across all streams
+        $totalListeners = 0;
+        $streamDetails = [];
 
         foreach ($sources as $source) {
-            $sourceName = $source["server_name"] ?? "";
-            $listenUrl = $source["listenurl"] ?? "";
-            // Match by mount path at the end of listenurl
-            if (
-                isset($source["listenurl"]) &&
-                str_ends_with(
-                    parse_url($listenUrl, PHP_URL_PATH) ?? "",
-                    $mountNormalized,
-                )
-            ) {
-                $listeners = (int) ($source["listeners"] ?? 0);
-                $serverName = $sourceName;
-                break;
-            }
-        }
-
-        if ($listeners === null) {
-            return [
-                "status" => "unknown",
-                "value" => null,
-                "message" => sprintf(
-                    "Mountpoint %s not found",
-                    $mountNormalized,
-                ),
-            ];
+            $mount =
+                parse_url($source["listenurl"] ?? "", PHP_URL_PATH) ??
+                "unknown";
+            $count = (int) ($source["listeners"] ?? 0);
+            $totalListeners += $count;
+            $streamDetails[] = $mount . ":" . $count;
         }
 
         $status = "ok";
-        if ($criticalListeners > 0 && $listeners < $criticalListeners) {
+        if ($criticalListeners > 0 && $totalListeners < $criticalListeners) {
             $status = "critical";
-        } elseif ($warningListeners > 0 && $listeners < $warningListeners) {
+        } elseif (
+            $warningListeners > 0 &&
+            $totalListeners < $warningListeners
+        ) {
             $status = "warning";
         }
 
-        $label = $serverName !== "" ? $serverName : $mountNormalized;
+        $streamCount = count($sources);
         return [
             "status" => $status,
-            "value" => $listeners,
-            "message" => sprintf("%d listeners on %s", $listeners, $label),
+            "value" => $totalListeners,
+            "message" => sprintf(
+                "%d listeners on %d stream%s (%s)",
+                $totalListeners,
+                $streamCount,
+                $streamCount > 1 ? "s" : "",
+                implode(", ", $streamDetails),
+            ),
         ];
     }
 }
