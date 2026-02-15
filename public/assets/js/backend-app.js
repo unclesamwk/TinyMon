@@ -470,7 +470,9 @@ function loadHostDetail(page, hostId) {
             html += "</div>";
           }
           html +=
-            '<div class="item-text" style="display:flex; gap:0.75rem; margin-top:4px;">';
+            '<div class="item-text" style="display:flex; gap:0.75rem; margin-top:4px; align-items:center;">';
+          html +=
+            '<span class="toggle-chart-hint" style="color:#007aff; font-size:0.8rem; cursor:pointer;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</span>';
           html +=
             '<a href="#" class="run-check" data-check-id="' +
             c.id +
