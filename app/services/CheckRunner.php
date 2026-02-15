@@ -793,14 +793,8 @@ class CheckRunner
 
         // No active sources at all
         if ($sources === null) {
-            $status = "ok";
-            if ($criticalListeners > 0 && 0 < $criticalListeners) {
-                $status = "critical";
-            } elseif ($warningListeners > 0 && 0 < $warningListeners) {
-                $status = "warning";
-            }
             return [
-                "status" => $status,
+                "status" => "ok",
                 "value" => 0,
                 "message" => sprintf(
                     "Mountpoint %s not active, 0 listeners",
@@ -827,14 +821,8 @@ class CheckRunner
         }
 
         if ($listeners === null) {
-            $status = "ok";
-            if ($criticalListeners > 0 && 0 < $criticalListeners) {
-                $status = "critical";
-            } elseif ($warningListeners > 0 && 0 < $warningListeners) {
-                $status = "warning";
-            }
             return [
-                "status" => $status,
+                "status" => "ok",
                 "value" => 0,
                 "message" => sprintf(
                     "Mountpoint %s not active, 0 listeners",
