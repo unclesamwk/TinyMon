@@ -243,7 +243,7 @@ function loadDashboard(page) {
             html +=
               '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
             html +=
-              '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
+              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;">';
             html +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
             html += '<div class="item-inner"><div class="item-title-row">';
@@ -282,7 +282,7 @@ function loadDashboard(page) {
             html +=
               '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
             html +=
-              '<a class="item-link item-content" href="#" style="background:var(--f7-bars-bg-color); border-radius:8px 8px 0 0;">';
+              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;">';
             html +=
               '<div class="item-media">' +
               statusBadge(ungroupedStatus) +

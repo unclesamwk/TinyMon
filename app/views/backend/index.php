@@ -25,6 +25,12 @@ $isDebug = !empty($debug);
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.css">
     <style>
+        .topic-header {
+            background: #e8e8ed;
+        }
+        .ios .dark .topic-header, .ios.dark .topic-header {
+            background: #3a3a3c;
+        }
         .ios .dark, .ios.dark {
             --f7-page-bg-color: #1c1c1e;
             --f7-bars-bg-color: #2c2c2e;
