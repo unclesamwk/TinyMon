@@ -19,7 +19,7 @@
           if (typeof app !== "undefined" && app.toast) {
             app.toast
               .create({
-                text: "Keine Internetverbindung",
+                text: t("no_internet"),
                 position: "center",
                 closeTimeout: 3000,
               })
@@ -35,14 +35,18 @@
 window.addEventListener("online", function () {
   if (typeof app !== "undefined" && app.toast) {
     app.toast
-      .create({ text: "Wieder online", position: "center", closeTimeout: 2000 })
+      .create({
+        text: t("online_again"),
+        position: "center",
+        closeTimeout: 2000,
+      })
       .open();
   }
 });
 window.addEventListener("offline", function () {
   if (typeof app !== "undefined" && app.toast) {
     app.toast
-      .create({ text: "Offline", position: "center", closeTimeout: 3000 })
+      .create({ text: t("offline"), position: "center", closeTimeout: 3000 })
       .open();
   }
 });
@@ -54,6 +58,261 @@ function setTimeFormat(fmt) {
   timeFormatPref = fmt;
   localStorage.setItem("timeFormat", fmt);
   reloadVisibleCharts();
+}
+
+// Language (de / en)
+var langPref = localStorage.getItem("lang") || "en";
+var translations = {
+  de: {
+    no_hosts: "Keine Hosts konfiguriert.\nTippe + um einen Host hinzuzufügen.",
+    general: "Allgemein",
+    host: "Host",
+    hosts: "Hosts",
+    check: "Check",
+    checks: "Checks",
+    no_checks: "Keine Checks",
+    runner_prefix: "Runner",
+    runner_never: "noch nicht gelaufen",
+    ok: "OK",
+    warning: "Warning",
+    critical: "Critical",
+    unknown: "Unknown",
+    never: "nie",
+    s_ago: "s her",
+    m_ago: "m her",
+    h_ago: "h her",
+    d_ago: "d her",
+    host_created: "Host erstellt",
+    host_saved: "Host gespeichert",
+    host_deleted: "Host gelöscht",
+    check_created: "Check erstellt",
+    check_saved: "Check gespeichert",
+    check_deleted: "Check gelöscht",
+    check_run: "Check ausgeführt",
+    check_run_error: "Fehler beim Ausführen",
+    delete_host_title: "Host löschen",
+    delete_host_confirm: "Host und alle Checks wirklich löschen?",
+    delete_check_title: "Löschen",
+    delete_check_confirm: "Check wirklich löschen?",
+    delete: "Löschen",
+    required_fields: "Name und Adresse sind Pflichtfelder.",
+    error_prefix: "Fehler",
+    save_error: "Fehler beim Speichern",
+    offline: "Offline",
+    online_again: "Wieder online",
+    no_internet: "Keine Internetverbindung",
+    chart: "Chart",
+    close: "Schließen",
+    no_data: "Keine Daten im gewählten Zeitraum",
+    unchanged: "Unverändert",
+    changed: "Geändert",
+    days: "Tage",
+    type_ping: "Ping",
+    type_http: "HTTP",
+    type_port: "Port",
+    type_certificate: "Zertifikat",
+    type_disk: "Festplatte",
+    type_load: "Load",
+    type_memory: "Arbeitsspeicher",
+    type_content: "Inhalt",
+    type_content_hash: "Inhalt Hash",
+    type_icecast: "Icecast",
+    cfg_path: "Pfad",
+    cfg_port: "Port",
+    cfg_expected_status: "Erwarteter Status",
+    cfg_warning_ms: "Warning (ms)",
+    cfg_critical_ms: "Critical (ms)",
+    cfg_warning_days: "Warning (Tage)",
+    cfg_critical_days: "Critical (Tage)",
+    cfg_warning_pct: "Warning (%)",
+    cfg_critical_pct: "Critical (%)",
+    cfg_warning_load: "Warning (Load)",
+    cfg_critical_load: "Critical (Load)",
+    cfg_expected_content: "Erwarteter Inhalt",
+    cfg_unexpected_content: "Unerwarteter Inhalt",
+    cfg_selector: "Regex-Selektor (optional)",
+    cfg_mount: "Mountpoint",
+    cfg_warning_listeners: "Warning (Listeners)",
+    cfg_critical_listeners: "Critical (Listeners)",
+    new_host: "Neuer Host",
+    edit_host: "Host bearbeiten",
+    name: "Name",
+    address: "Adresse",
+    description: "Beschreibung",
+    topic: "Topic",
+    enabled: "Aktiviert",
+    save: "Speichern",
+    ph_name: "z.B. Webserver",
+    ph_address: "z.B. example.com oder 1.2.3.4",
+    ph_optional: "Optional",
+    ph_topic: "z.B. production/default/deployments",
+    new_check: "Neuer Check",
+    edit_check: "Check bearbeiten",
+    type: "Typ",
+    interval_seconds: "Intervall (Sekunden)",
+    configuration: "Konfiguration",
+    run: "Prüfen",
+    settings: "Einstellungen",
+    notifications: "Benachrichtigungen",
+    push_notifications: "Push Notifications",
+    test_notification: "Test-Benachrichtigung",
+    send: "Senden",
+    appearance: "Darstellung",
+    dark_mode: "Dark Mode",
+    auto: "Auto",
+    off: "Aus",
+    on: "An",
+    time_format: "Zeitformat",
+    language: "Sprache",
+    info: "Info",
+    runner: "Runner",
+    version: "Version",
+    logout: "Abmelden",
+    push_blocked: "Benachrichtigungen wurden vom Browser blockiert.",
+    push_failed: "Push-Subscription fehlgeschlagen.",
+    push_test_sent: "Test gesendet an %d Gerät(e).",
+    push_test_failed: "Senden fehlgeschlagen (%d Fehler).",
+    push_no_subs: "Keine aktiven Push-Subscriptions vorhanden.",
+    push_test_error: "Fehler beim Senden der Test-Benachrichtigung.",
+    not_checked_yet: "Noch nicht geprüft",
+    add_check: "Check hinzufügen",
+    delete_host_btn: "Host löschen",
+    "7_days": "7 Tage",
+    "30_days": "30 Tage",
+    password: "Passwort",
+    login: "Anmelden",
+  },
+  en: {
+    no_hosts: "No hosts configured.\nTap + to add a host.",
+    general: "General",
+    host: "Host",
+    hosts: "Hosts",
+    check: "Check",
+    checks: "Checks",
+    no_checks: "No checks",
+    runner_prefix: "Runner",
+    runner_never: "not yet run",
+    ok: "OK",
+    warning: "Warning",
+    critical: "Critical",
+    unknown: "Unknown",
+    never: "never",
+    s_ago: "s ago",
+    m_ago: "m ago",
+    h_ago: "h ago",
+    d_ago: "d ago",
+    host_created: "Host created",
+    host_saved: "Host saved",
+    host_deleted: "Host deleted",
+    check_created: "Check created",
+    check_saved: "Check saved",
+    check_deleted: "Check deleted",
+    check_run: "Check executed",
+    check_run_error: "Execution failed",
+    delete_host_title: "Delete host",
+    delete_host_confirm: "Delete host and all checks?",
+    delete_check_title: "Delete",
+    delete_check_confirm: "Delete this check?",
+    delete: "Delete",
+    required_fields: "Name and address are required.",
+    error_prefix: "Error",
+    save_error: "Error saving",
+    offline: "Offline",
+    online_again: "Back online",
+    no_internet: "No internet connection",
+    chart: "Chart",
+    close: "Close",
+    no_data: "No data in selected time range",
+    unchanged: "Unchanged",
+    changed: "Changed",
+    days: "Days",
+    type_ping: "Ping",
+    type_http: "HTTP",
+    type_port: "Port",
+    type_certificate: "Certificate",
+    type_disk: "Disk",
+    type_load: "Load",
+    type_memory: "Memory",
+    type_content: "Content",
+    type_content_hash: "Content Hash",
+    type_icecast: "Icecast",
+    cfg_path: "Path",
+    cfg_port: "Port",
+    cfg_expected_status: "Expected status",
+    cfg_warning_ms: "Warning (ms)",
+    cfg_critical_ms: "Critical (ms)",
+    cfg_warning_days: "Warning (days)",
+    cfg_critical_days: "Critical (days)",
+    cfg_warning_pct: "Warning (%)",
+    cfg_critical_pct: "Critical (%)",
+    cfg_warning_load: "Warning (Load)",
+    cfg_critical_load: "Critical (Load)",
+    cfg_expected_content: "Expected content",
+    cfg_unexpected_content: "Unexpected content",
+    cfg_selector: "Regex selector (optional)",
+    cfg_mount: "Mountpoint",
+    cfg_warning_listeners: "Warning (Listeners)",
+    cfg_critical_listeners: "Critical (Listeners)",
+    new_host: "New Host",
+    edit_host: "Edit Host",
+    name: "Name",
+    address: "Address",
+    description: "Description",
+    topic: "Topic",
+    enabled: "Enabled",
+    save: "Save",
+    ph_name: "e.g. Webserver",
+    ph_address: "e.g. example.com or 1.2.3.4",
+    ph_optional: "Optional",
+    ph_topic: "e.g. production/default/deployments",
+    new_check: "New Check",
+    edit_check: "Edit Check",
+    type: "Type",
+    interval_seconds: "Interval (seconds)",
+    configuration: "Configuration",
+    run: "Run",
+    settings: "Settings",
+    notifications: "Notifications",
+    push_notifications: "Push Notifications",
+    test_notification: "Test notification",
+    send: "Send",
+    appearance: "Appearance",
+    dark_mode: "Dark Mode",
+    auto: "Auto",
+    off: "Off",
+    on: "On",
+    time_format: "Time format",
+    language: "Language",
+    info: "Info",
+    runner: "Runner",
+    version: "Version",
+    logout: "Log out",
+    push_blocked: "Notifications were blocked by the browser.",
+    push_failed: "Push subscription failed.",
+    push_test_sent: "Test sent to %d device(s).",
+    push_test_failed: "Sending failed (%d errors).",
+    push_no_subs: "No active push subscriptions.",
+    push_test_error: "Error sending test notification.",
+    not_checked_yet: "Not checked yet",
+    add_check: "Add check",
+    delete_host_btn: "Delete host",
+    "7_days": "7 Days",
+    "30_days": "30 Days",
+    password: "Password",
+    login: "Log in",
+  },
+};
+
+function t(key) {
+  return (translations[langPref] || translations.de)[key] || key;
+}
+
+function setLang(lang) {
+  langPref = lang;
+  localStorage.setItem("lang", lang);
+  document.cookie = "lang=" + lang + ";path=/;max-age=31536000";
+  var currentUrl = app.views.main.router.currentRoute.url || "/settings/";
+  app.views.main.router.navigate(currentUrl, { reloadCurrent: true });
 }
 
 // Dark mode (auto / on / off)
@@ -142,19 +401,19 @@ function typeIcon(type) {
 }
 
 function typeLabel(type) {
-  var labels = {
-    ping: "Ping",
-    http: "HTTP",
-    port: "Port",
-    certificate: "Zertifikat",
-    disk: "Festplatte",
-    load: "Load",
-    memory: "Arbeitsspeicher",
-    content: "Inhalt",
-    content_hash: "Inhalt Hash",
-    icecast_listeners: "Icecast",
+  var map = {
+    ping: "type_ping",
+    http: "type_http",
+    port: "type_port",
+    certificate: "type_certificate",
+    disk: "type_disk",
+    load: "type_load",
+    memory: "type_memory",
+    content: "type_content",
+    content_hash: "type_content_hash",
+    icecast_listeners: "type_icecast",
   };
-  return labels[type] || type;
+  return t(map[type] || type);
 }
 
 // Toast helper
@@ -172,19 +431,19 @@ function escHtml(str) {
 }
 
 function timeAgo(dateStr) {
-  if (!dateStr) return "never";
+  if (!dateStr) return t("never");
   var diff = (Date.now() - new Date(dateStr + "Z").getTime()) / 1000;
-  if (diff < 60) return Math.floor(diff) + "s ago";
-  if (diff < 3600) return Math.floor(diff / 60) + "m ago";
-  if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
-  return Math.floor(diff / 86400) + "d ago";
+  if (diff < 60) return Math.floor(diff) + t("s_ago");
+  if (diff < 3600) return Math.floor(diff / 60) + t("m_ago");
+  if (diff < 86400) return Math.floor(diff / 3600) + t("h_ago");
+  return Math.floor(diff / 86400) + t("d_ago");
 }
 
 function renderHostListItem(h) {
   var cs =
     h.checks && h.checks.length > 0
-      ? h.checks.length + " Check" + (h.checks.length > 1 ? "s" : "")
-      : "Keine Checks";
+      ? h.checks.length + " " + (h.checks.length > 1 ? t("checks") : t("check"))
+      : t("no_checks");
   var li = '<li class="swipeout" data-host-id="' + h.id + '">';
   li +=
     '<a href="#" class="item-link item-content swipeout-content host-link" data-host-id="' +
@@ -208,7 +467,9 @@ function renderHostListItem(h) {
   li +=
     '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-host color-red swipeout-close" data-host-id="' +
     h.id +
-    '">Löschen</a></div>';
+    '">' +
+    t("delete") +
+    "</a></div>";
   li += "</li>";
   return li;
 }
@@ -246,15 +507,19 @@ function loadDashboard(page) {
 
       var runnerEl = page.$el.find("#runner-status");
       if (data.runner_last_run) {
-        runnerEl.html("Runner: " + timeAgo(data.runner_last_run));
+        runnerEl.html(
+          t("runner_prefix") + ": " + timeAgo(data.runner_last_run),
+        );
       } else {
-        runnerEl.html("Runner: noch nicht gelaufen");
+        runnerEl.html(t("runner_prefix") + ": " + t("runner_never"));
       }
 
       var html = "";
       if (hosts.length === 0) {
         html =
-          '<div class="block text-align-center" style="color:gray; padding:2rem;">Keine Hosts konfiguriert.<br>Tippe + um einen Host hinzuzufügen.</div>';
+          '<div class="block text-align-center" style="color:gray; padding:2rem;">' +
+          t("no_hosts").replace("\n", "<br>") +
+          "</div>";
       } else {
         // Group hosts by topic
         var groups = {};
@@ -308,8 +573,8 @@ function loadDashboard(page) {
             html +=
               '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
               groupHosts.length +
-              " Host" +
-              (groupHosts.length > 1 ? "s" : "") +
+              " " +
+              (groupHosts.length > 1 ? t("hosts") : t("host")) +
               "</div>";
             html += "</div></div></a>";
             html += '<div class="accordion-item-content">';
@@ -343,12 +608,14 @@ function loadDashboard(page) {
               "</div>";
             html += '<div class="item-inner"><div class="item-title-row">';
             html +=
-              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">Allgemein</div>';
+              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
+              t("general") +
+              "</div>";
             html +=
               '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
               ungrouped.length +
-              " Host" +
-              (ungrouped.length > 1 ? "s" : "") +
+              " " +
+              (ungrouped.length > 1 ? t("hosts") : t("host")) +
               "</div>";
             html += "</div></div></a>";
             html += '<div class="accordion-item-content">';
@@ -374,19 +641,27 @@ function loadDashboard(page) {
         ev.preventDefault();
         var hostId = this.dataset.hostId;
         var li = this.closest("li");
-        app.dialog.confirm("Host wirklich löschen?", "Löschen", function () {
-          fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(function () {
-            app.swipeout.delete(li);
-            showToast("Host gelöscht");
-          });
-        });
+        app.dialog.confirm(
+          t("delete_host_confirm"),
+          t("delete_host_title"),
+          function () {
+            fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(
+              function () {
+                app.swipeout.delete(li);
+                showToast(t("host_deleted"));
+              },
+            );
+          },
+        );
       });
     })
     .catch(function (err) {
       page.$el
         .find("#host-list")
         .html(
-          '<div class="block text-align-center" style="color:red;">Fehler: ' +
+          '<div class="block text-align-center" style="color:red;">' +
+            t("error_prefix") +
+            ": " +
             err.message +
             "</div>",
         );
@@ -423,7 +698,9 @@ function loadHostDetail(page, hostId) {
       var html = "";
       if (checks.length === 0) {
         html =
-          '<div class="block text-align-center" style="color:gray;">Keine Checks konfiguriert.</div>';
+          '<div class="block text-align-center" style="color:gray;">' +
+          t("no_checks") +
+          "</div>";
       } else {
         html = '<div class="list media-list"><ul>';
         checks.forEach(function (c) {
@@ -470,7 +747,7 @@ function loadHostDetail(page, hostId) {
           html += '<div class="item-after">' + statusBadge(st) + "</div></div>";
           html +=
             '<div class="item-subtitle" style="color:gray; font-size:0.8rem;">';
-          html += lr ? escHtml(lr.message) : "Noch nicht geprüft";
+          html += lr ? escHtml(lr.message) : t("not_checked_yet");
           html += "</div>";
           if (lr) {
             html +=
@@ -483,11 +760,15 @@ function loadHostDetail(page, hostId) {
           html +=
             '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+            t("chart") +
+            "</a>";
           html +=
             '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">play_arrow</i> Prüfen</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">play_arrow</i> ' +
+            t("run") +
+            "</a>";
           html +=
             '<a href="#" class="button button-small button-outline edit-check" data-check-id="' +
             c.id +
@@ -508,7 +789,9 @@ function loadHostDetail(page, hostId) {
           html +=
             '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-check color-red swipeout-close" data-check-id="' +
             c.id +
-            '">Löschen</a></div>';
+            '">' +
+            t("delete") +
+            "</a></div>";
           html += "</li>";
         });
         html += "</ul></div>";
@@ -532,144 +815,156 @@ function renderConfigFields(page, type, cfg) {
   var fields = [];
   if (type === "ping") {
     fields = [
-      { key: "warning_ms", label: "Warning (ms)", val: cfg.warning_ms || 100 },
+      {
+        key: "warning_ms",
+        label: t("cfg_warning_ms"),
+        val: cfg.warning_ms || 100,
+      },
       {
         key: "critical_ms",
-        label: "Critical (ms)",
+        label: t("cfg_critical_ms"),
         val: cfg.critical_ms || 500,
       },
     ];
   } else if (type === "http") {
     fields = [
-      { key: "url", label: "Pfad", val: cfg.url || "/", t: "text" },
-      { key: "port", label: "Port", val: cfg.port || 443 },
+      { key: "url", label: t("cfg_path"), val: cfg.url || "/", t: "text" },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 443 },
       {
         key: "expected_status",
-        label: "Erwarteter Status",
+        label: t("cfg_expected_status"),
         val: cfg.expected_status || 200,
       },
       {
         key: "warning_ms",
-        label: "Warning (ms)",
+        label: t("cfg_warning_ms"),
         val: cfg.warning_ms || 1000,
       },
       {
         key: "critical_ms",
-        label: "Critical (ms)",
+        label: t("cfg_critical_ms"),
         val: cfg.critical_ms || 5000,
       },
     ];
   } else if (type === "port") {
     fields = [
-      { key: "port", label: "Port", val: cfg.port || 22 },
-      { key: "warning_ms", label: "Warning (ms)", val: cfg.warning_ms || 100 },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 22 },
+      {
+        key: "warning_ms",
+        label: t("cfg_warning_ms"),
+        val: cfg.warning_ms || 100,
+      },
       {
         key: "critical_ms",
-        label: "Critical (ms)",
+        label: t("cfg_critical_ms"),
         val: cfg.critical_ms || 500,
       },
     ];
   } else if (type === "certificate") {
     fields = [
-      { key: "port", label: "Port", val: cfg.port || 443 },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 443 },
       {
         key: "warning_days",
-        label: "Warning (Tage)",
+        label: t("cfg_warning_days"),
         val: cfg.warning_days || 30,
       },
       {
         key: "critical_days",
-        label: "Critical (Tage)",
+        label: t("cfg_critical_days"),
         val: cfg.critical_days || 7,
       },
     ];
   } else if (type === "disk") {
     fields = [
-      { key: "path", label: "Pfad", val: cfg.path || "/", t: "text" },
+      { key: "path", label: t("cfg_path"), val: cfg.path || "/", t: "text" },
       {
         key: "warning_pct",
-        label: "Warning (%)",
+        label: t("cfg_warning_pct"),
         val: cfg.warning_pct || 80,
       },
       {
         key: "critical_pct",
-        label: "Critical (%)",
+        label: t("cfg_critical_pct"),
         val: cfg.critical_pct || 95,
       },
     ];
   } else if (type === "load") {
     fields = [
-      { key: "warning", label: "Warning (Load)", val: cfg.warning || 2.0 },
-      { key: "critical", label: "Critical (Load)", val: cfg.critical || 5.0 },
+      { key: "warning", label: t("cfg_warning_load"), val: cfg.warning || 2.0 },
+      {
+        key: "critical",
+        label: t("cfg_critical_load"),
+        val: cfg.critical || 5.0,
+      },
     ];
   } else if (type === "memory") {
     fields = [
       {
         key: "warning_pct",
-        label: "Warning (%)",
+        label: t("cfg_warning_pct"),
         val: cfg.warning_pct || 80,
       },
       {
         key: "critical_pct",
-        label: "Critical (%)",
+        label: t("cfg_critical_pct"),
         val: cfg.critical_pct || 95,
       },
     ];
   } else if (type === "content") {
     fields = [
-      { key: "url", label: "Pfad", val: cfg.url || "/", t: "text" },
-      { key: "port", label: "Port", val: cfg.port || 443 },
+      { key: "url", label: t("cfg_path"), val: cfg.url || "/", t: "text" },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 443 },
       {
         key: "expected_status",
-        label: "Erwarteter Status",
+        label: t("cfg_expected_status"),
         val: cfg.expected_status || 200,
       },
       {
         key: "expected_content",
-        label: "Erwarteter Inhalt",
+        label: t("cfg_expected_content"),
         val: cfg.expected_content || "",
         t: "text",
       },
       {
         key: "unexpected_content",
-        label: "Unerwarteter Inhalt",
+        label: t("cfg_unexpected_content"),
         val: cfg.unexpected_content || "",
         t: "text",
       },
     ];
   } else if (type === "content_hash") {
     fields = [
-      { key: "url", label: "Pfad", val: cfg.url || "/", t: "text" },
-      { key: "port", label: "Port", val: cfg.port || 443 },
+      { key: "url", label: t("cfg_path"), val: cfg.url || "/", t: "text" },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 443 },
       {
         key: "expected_status",
-        label: "Erwarteter Status",
+        label: t("cfg_expected_status"),
         val: cfg.expected_status || 200,
       },
       {
         key: "selector",
-        label: "Regex-Selektor (optional)",
+        label: t("cfg_selector"),
         val: cfg.selector || "",
         t: "text",
       },
     ];
   } else if (type === "icecast_listeners") {
     fields = [
-      { key: "port", label: "Port", val: cfg.port || 443 },
+      { key: "port", label: t("cfg_port"), val: cfg.port || 443 },
       {
         key: "mount",
-        label: "Mountpoint",
+        label: t("cfg_mount"),
         val: cfg.mount || "/stream",
         t: "text",
       },
       {
         key: "warning_listeners",
-        label: "Warning unter (Listeners)",
+        label: t("cfg_warning_listeners"),
         val: cfg.warning_listeners || 0,
       },
       {
         key: "critical_listeners",
-        label: "Critical unter (Listeners)",
+        label: t("cfg_critical_listeners"),
         val: cfg.critical_listeners || 0,
       },
     ];
@@ -777,7 +1072,9 @@ function loadChart(checkId, range) {
 
       if (!data.length) {
         container.innerHTML =
-          '<div style="text-align:center; color:gray; padding:1rem; font-size:0.8rem;">Keine Daten im gewählten Zeitraum</div>';
+          '<div style="text-align:center; color:gray; padding:1rem; font-size:0.8rem;">' +
+          t("no_data") +
+          "</div>";
         return;
       }
 
@@ -906,7 +1203,7 @@ function loadChart(checkId, range) {
                 },
                 label: function (item) {
                   if (checkType === "content_hash") {
-                    return item.parsed.y === 1 ? "Geändert" : "Unverändert";
+                    return item.parsed.y === 1 ? t("changed") : t("unchanged");
                   }
                   return (
                     (item.parsed.y != null ? item.parsed.y : "-") +
@@ -943,9 +1240,9 @@ function loadChart(checkId, range) {
                       stepSize: 1,
                       callback: function (v) {
                         return v === 0
-                          ? "Unverändert"
+                          ? t("unchanged")
                           : v === 1
-                            ? "Geändert"
+                            ? t("changed")
                             : "";
                       },
                     },
@@ -1033,7 +1330,28 @@ var app = new Framework7({
       url: "/assets/js/pages/host-edit.html" + pageV,
       on: {
         pageInit: function (e, page) {
-          page.$el.find("#page-title").text("Neuer Host");
+          page.$el.find("#page-title").text(t("new_host"));
+          // i18n for host-edit template
+          page.$el.find('[for="host-name"], .item-label').eq(0).text(t("name"));
+          page.$el.find("#host-name").attr("placeholder", t("ph_name"));
+          page.$el.find("#host-address").attr("placeholder", t("ph_address"));
+          page.$el
+            .find("#host-description")
+            .attr("placeholder", t("ph_optional"));
+          page.$el.find("#host-topic").attr("placeholder", t("ph_topic"));
+          var labels = page.$el.find(".item-label");
+          if (labels.length >= 5) {
+            labels.eq(0).text(t("name"));
+            labels.eq(1).text(t("address"));
+            labels.eq(2).text(t("description"));
+            labels.eq(3).text(t("topic"));
+          }
+          page.$el
+            .find("#host-enabled")
+            .closest("li")
+            .find(".item-title")
+            .text(t("enabled"));
+          page.$el.find("#save-host").text(t("save"));
 
           page.$el.find("#save-host").on("click", function () {
             var name = page.$el.find("#host-name").val().trim();
@@ -1043,7 +1361,7 @@ var app = new Framework7({
             var enabled = page.$el.find("#host-enabled")[0].checked ? 1 : 0;
 
             if (!name || !address) {
-              app.dialog.alert("Name und Adresse sind Pflichtfelder.");
+              app.dialog.alert(t("required_fields"));
               return;
             }
 
@@ -1062,11 +1380,11 @@ var app = new Framework7({
                 return r.json();
               })
               .then(function (data) {
-                showToast("Host erstellt");
+                showToast(t("host_created"));
                 app.views.main.router.navigate("/hosts/" + data.id + "/");
               })
               .catch(function (err) {
-                app.dialog.alert("Fehler: " + err.message);
+                app.dialog.alert(t("error_prefix") + ": " + err.message);
               });
           });
         },
@@ -1090,15 +1408,24 @@ var app = new Framework7({
             ev.preventDefault();
             app.views.main.router.navigate("/hosts/" + hostId + "/checks/new/");
           });
+          // i18n for host-detail template
+          page.$el.find(".block-title span").first().text(t("checks"));
+          page.$el.find('.chart-range-btn[data-range="7d"]').text(t("7_days"));
+          page.$el
+            .find('.chart-range-btn[data-range="30d"]')
+            .text(t("30_days"));
+          page.$el.find("#add-check-btn").text(t("add_check"));
+          page.$el.find("#delete-host-btn").text(t("delete_host_btn"));
+
           page.$el.find("#delete-host-btn").on("click", function (ev) {
             ev.preventDefault();
             app.dialog.confirm(
-              "Host und alle Checks wirklich löschen?",
-              "Host löschen",
+              t("delete_host_confirm"),
+              t("delete_host_title"),
               function () {
                 fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(
                   function () {
-                    showToast("Host gelöscht");
+                    showToast(t("host_deleted"));
                     app.views.main.router.back("/");
                   },
                 );
@@ -1120,7 +1447,8 @@ var app = new Framework7({
               loadChart(checkId, currentChartRange);
               if (link.length)
                 link.html(
-                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Schließen',
+                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+                    t("close"),
                 );
             } else {
               container.style.display = "none";
@@ -1130,7 +1458,8 @@ var app = new Framework7({
               }
               if (link.length)
                 link.html(
-                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart',
+                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+                    t("chart"),
                 );
             }
           }
@@ -1161,13 +1490,13 @@ var app = new Framework7({
             app.preloader.show();
             fetch("/api/checks/" + checkId + "/run", { method: "POST" })
               .then(function () {
-                showToast("Check ausgeführt");
+                showToast(t("check_run"));
                 loadHostDetail(page, hostId);
                 app.preloader.hide();
               })
               .catch(function () {
                 app.preloader.hide();
-                showToast("Fehler beim Ausführen");
+                showToast(t("check_run_error"));
               });
           });
           page.$el.on("click", ".edit-check", function (ev) {
@@ -1182,12 +1511,12 @@ var app = new Framework7({
             ev.stopPropagation();
             var checkId = this.dataset.checkId;
             app.dialog.confirm(
-              "Check wirklich löschen?",
-              "Löschen",
+              t("delete_check_confirm"),
+              t("delete_check_title"),
               function () {
                 fetch("/api/checks/" + checkId, { method: "DELETE" }).then(
                   function () {
-                    showToast("Check gelöscht");
+                    showToast(t("check_deleted"));
                     loadHostDetail(page, hostId);
                   },
                 );
@@ -1199,13 +1528,13 @@ var app = new Framework7({
             var checkId = this.dataset.checkId;
             var li = this.closest("li");
             app.dialog.confirm(
-              "Check wirklich löschen?",
-              "Löschen",
+              t("delete_check_confirm"),
+              t("delete_check_title"),
               function () {
                 fetch("/api/checks/" + checkId, { method: "DELETE" }).then(
                   function () {
                     app.swipeout.delete(li);
-                    showToast("Check gelöscht");
+                    showToast(t("check_deleted"));
                   },
                 );
               },
@@ -1232,7 +1561,27 @@ var app = new Framework7({
       on: {
         pageInit: function (e, page) {
           var id = page.route.params.id;
-          page.$el.find("#page-title").text("Host bearbeiten");
+          page.$el.find("#page-title").text(t("edit_host"));
+          // i18n for host-edit template
+          var labels = page.$el.find(".item-label");
+          if (labels.length >= 4) {
+            labels.eq(0).text(t("name"));
+            labels.eq(1).text(t("address"));
+            labels.eq(2).text(t("description"));
+            labels.eq(3).text(t("topic"));
+          }
+          page.$el.find("#host-name").attr("placeholder", t("ph_name"));
+          page.$el.find("#host-address").attr("placeholder", t("ph_address"));
+          page.$el
+            .find("#host-description")
+            .attr("placeholder", t("ph_optional"));
+          page.$el.find("#host-topic").attr("placeholder", t("ph_topic"));
+          page.$el
+            .find("#host-enabled")
+            .closest("li")
+            .find(".item-title")
+            .text(t("enabled"));
+          page.$el.find("#save-host").text(t("save"));
 
           fetch("/api/hosts/" + id)
             .then(function (r) {
@@ -1254,7 +1603,7 @@ var app = new Framework7({
             var enabled = page.$el.find("#host-enabled")[0].checked ? 1 : 0;
 
             if (!name || !address) {
-              app.dialog.alert("Name und Adresse sind Pflichtfelder.");
+              app.dialog.alert(t("required_fields"));
               return;
             }
 
@@ -1273,11 +1622,11 @@ var app = new Framework7({
                 return r.json();
               })
               .then(function () {
-                showToast("Host gespeichert");
+                showToast(t("host_saved"));
                 app.views.main.router.back();
               })
               .catch(function (err) {
-                app.dialog.alert("Fehler: " + err.message);
+                app.dialog.alert(t("error_prefix") + ": " + err.message);
               });
           });
         },
@@ -1291,7 +1640,24 @@ var app = new Framework7({
       on: {
         pageInit: function (e, page) {
           var hostId = page.route.params.id;
-          page.$el.find("#page-title").text("Neuer Check");
+          page.$el.find("#page-title").text(t("new_check"));
+          // i18n for check-edit template
+          var labels = page.$el.find(".item-label");
+          if (labels.length >= 2) {
+            labels.eq(0).text(t("type"));
+            labels.eq(1).text(t("interval_seconds"));
+          }
+          page.$el
+            .find("#check-enabled")
+            .closest("li")
+            .find(".item-title")
+            .text(t("enabled"));
+          page.$el
+            .find("#config-list")
+            .closest(".list")
+            .prev(".block-title")
+            .text(t("configuration"));
+          page.$el.find("#save-check").text(t("save"));
           renderConfigFields(page, "ping", {});
 
           page.$el.find("#check-type").on("change", function () {
@@ -1322,14 +1688,14 @@ var app = new Framework7({
               .then(function (r) {
                 if (!r.ok) {
                   return r.json().then(function (d) {
-                    throw new Error(d.error || "Fehler beim Speichern");
+                    throw new Error(d.error || t("save_error"));
                   });
                 }
-                showToast("Check erstellt");
+                showToast(t("check_created"));
                 app.views.main.router.back();
               })
               .catch(function (err) {
-                app.dialog.alert("Fehler: " + err.message);
+                app.dialog.alert(t("error_prefix") + ": " + err.message);
               });
           });
         },
@@ -1343,7 +1709,24 @@ var app = new Framework7({
       on: {
         pageInit: function (e, page) {
           var checkId = page.route.params.id;
-          page.$el.find("#page-title").text("Check bearbeiten");
+          page.$el.find("#page-title").text(t("edit_check"));
+          // i18n for check-edit template
+          var labels = page.$el.find(".item-label");
+          if (labels.length >= 2) {
+            labels.eq(0).text(t("type"));
+            labels.eq(1).text(t("interval_seconds"));
+          }
+          page.$el
+            .find("#check-enabled")
+            .closest("li")
+            .find(".item-title")
+            .text(t("enabled"));
+          page.$el
+            .find("#config-list")
+            .closest(".list")
+            .prev(".block-title")
+            .text(t("configuration"));
+          page.$el.find("#save-check").text(t("save"));
 
           // Find the check data
           fetch("/api/hosts")
@@ -1404,14 +1787,14 @@ var app = new Framework7({
               .then(function (r) {
                 if (!r.ok) {
                   return r.json().then(function (d) {
-                    throw new Error(d.error || "Fehler beim Speichern");
+                    throw new Error(d.error || t("save_error"));
                   });
                 }
-                showToast("Check gespeichert");
+                showToast(t("check_saved"));
                 app.views.main.router.back();
               })
               .catch(function (err) {
-                app.dialog.alert("Fehler: " + err.message);
+                app.dialog.alert(t("error_prefix") + ": " + err.message);
               });
           });
         },
@@ -1424,6 +1807,64 @@ var app = new Framework7({
       url: "/assets/js/pages/settings.html" + pageV,
       on: {
         pageInit: function (e, page) {
+          // i18n for settings template
+          page.$el.find(".title").text(t("settings"));
+          var blockTitles = page.$el.find(".block-title");
+          blockTitles.eq(0).text(t("notifications"));
+          blockTitles.eq(1).text(t("appearance"));
+          blockTitles.eq(2).text(t("info"));
+          var itemTitles = page.$el.find(".item-title");
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Push Notifications";
+            })
+            .text(t("push_notifications"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Test-Benachrichtigung";
+            })
+            .text(t("test_notification"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Dark Mode";
+            })
+            .text(t("dark_mode"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Zeitformat";
+            })
+            .text(t("time_format"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Sprache";
+            })
+            .text(t("language"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Runner";
+            })
+            .text(t("runner"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Version";
+            })
+            .text(t("version"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Hosts";
+            })
+            .text(t("hosts"));
+          itemTitles
+            .filter(function () {
+              return this.textContent.trim() === "Checks";
+            })
+            .text(t("checks"));
+          page.$el.find("#push-test-btn").text(t("send"));
+          page.$el.find("#logout-btn").text(t("logout"));
+          page.$el.find('.darkmode-btn[data-mode="auto"]').text(t("auto"));
+          page.$el.find('.darkmode-btn[data-mode="off"]').text(t("off"));
+          page.$el.find('.darkmode-btn[data-mode="on"]').text(t("on"));
+
           // Dark mode segmented control
           page.$el.find(".darkmode-btn").each(function () {
             if (this.dataset.mode === darkModePref) {
@@ -1448,6 +1889,18 @@ var app = new Framework7({
             setTimeFormat(this.dataset.format);
           });
 
+          // Language segmented control
+          page.$el.find(".lang-btn").each(function () {
+            if (this.dataset.lang === langPref) {
+              this.classList.add("button-active");
+            }
+          });
+          page.$el.find(".lang-btn").on("click", function () {
+            page.$el.find(".lang-btn").removeClass("button-active");
+            this.classList.add("button-active");
+            setLang(this.dataset.lang);
+          });
+
           page.$el.find("#settings-version").text(APP_VERSION || "dev");
 
           fetch("/api/dashboard")
@@ -1465,7 +1918,9 @@ var app = new Framework7({
               page.$el
                 .find("#settings-runner")
                 .text(
-                  data.runner_last_run ? timeAgo(data.runner_last_run) : "nie",
+                  data.runner_last_run
+                    ? timeAgo(data.runner_last_run)
+                    : t("never"),
                 );
             });
 
@@ -1487,9 +1942,7 @@ var app = new Framework7({
                 Notification.requestPermission().then(function (permission) {
                   if (permission !== "granted") {
                     pushToggle.checked = false;
-                    app.dialog.alert(
-                      "Benachrichtigungen wurden vom Browser blockiert.",
-                    );
+                    app.dialog.alert(t("push_blocked"));
                     return;
                   }
                   fetch("/api/notifications/vapid-key")
@@ -1526,9 +1979,7 @@ var app = new Framework7({
                           })
                           .catch(function () {
                             pushToggle.checked = false;
-                            app.dialog.alert(
-                              "Push-Subscription fehlgeschlagen.",
-                            );
+                            app.dialog.alert(t("push_failed"));
                           });
                       });
                     });
@@ -1565,27 +2016,23 @@ var app = new Framework7({
               })
               .then(function (data) {
                 btn.disabled = false;
-                btn.textContent = "Senden";
+                btn.textContent = t("send");
                 if (data.sent > 0) {
                   app.dialog.alert(
-                    "Test gesendet an " + data.sent + " Gerät(e).",
+                    t("push_test_sent").replace("%d", data.sent),
                   );
                 } else if (data.failed > 0) {
                   app.dialog.alert(
-                    "Senden fehlgeschlagen (" + data.failed + " Fehler).",
+                    t("push_test_failed").replace("%d", data.failed),
                   );
                 } else {
-                  app.dialog.alert(
-                    "Keine aktiven Push-Subscriptions vorhanden.",
-                  );
+                  app.dialog.alert(t("push_no_subs"));
                 }
               })
               .catch(function () {
                 btn.disabled = false;
-                btn.textContent = "Senden";
-                app.dialog.alert(
-                  "Fehler beim Senden der Test-Benachrichtigung.",
-                );
+                btn.textContent = t("send");
+                app.dialog.alert(t("push_test_error"));
               });
           });
 

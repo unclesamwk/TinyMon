@@ -1,6 +1,9 @@
-<?php $loginTitle = "MiniMon"; ?>
+<?php
+$loginTitle = "MiniMon";
+$lang = $_COOKIE["lang"] ?? "en";
+?>
 <!DOCTYPE html>
-<html lang="de">
+<html lang="<?= $lang === "en" ? "en" : "de" ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -47,10 +50,14 @@
         <form method="POST" action="/backend/login">
             <?= \App\services\CsrfService::field() ?>
             <div class="form-group">
-                <label for="password">Passwort</label>
+                <label for="password"><?= $lang === "en"
+                    ? "Password"
+                    : "Passwort" ?></label>
                 <input type="password" id="password" name="password" required autofocus>
             </div>
-            <button type="submit" class="btn">Anmelden</button>
+            <button type="submit" class="btn"><?= $lang === "en"
+                ? "Log in"
+                : "Anmelden" ?></button>
         </form>
     </div>
 </body>
