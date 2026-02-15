@@ -7,6 +7,14 @@ ini_set("session.gc_maxlifetime", (string) (365 * 24 * 60 * 60));
 ini_set("session.cookie_lifetime", (string) (365 * 24 * 60 * 60));
 
 $config = require __DIR__ . "/config.php";
+
+// Persist sessions in data dir so they survive container restarts
+$sessionDir =
+    dirname(__DIR__, 2) . "/" . dirname($config["db"]["path"]) . "/sessions";
+if (!is_dir($sessionDir)) {
+    mkdir($sessionDir, 0700, true);
+}
+ini_set("session.save_path", $sessionDir);
 Flight::set("config", $config);
 
 if (empty($config["admin_password"])) {
