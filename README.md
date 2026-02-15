@@ -82,7 +82,9 @@ Alerts fire only on **status transitions** -- no repeated spam while something i
 - Multi-language (EN / DE)
 - PWA-ready, pull-to-refresh
 
-## Quickstart
+## Getting Started
+
+### Option A: Docker
 
 ```bash
 git clone https://github.com/your-org/TinyMon.git
@@ -94,15 +96,41 @@ docker compose up -d
 
 Open `http://localhost:8001/backend` and log in.
 
-### Runner (Pull Checks)
+Add a cronjob for the check runner (inside or outside the container):
 
-The runner executes due checks and sends alerts. Set up a cronjob:
+```bash
+# Outside
+* * * * * cd /path/to/TinyMon && docker compose exec -T app php bin/runner.php >> data/runner.log 2>&1
+
+# Or inside the container
+* * * * * php /var/www/html/bin/runner.php >> /var/www/html/data/runner.log 2>&1
+```
+
+### Option B: Shared Hosting / Bare Metal
+
+Requirements: PHP 8.3+, Composer, SQLite, Apache with `mod_rewrite`.
+
+```bash
+git clone https://github.com/your-org/TinyMon.git
+cd TinyMon
+cp .env.example .env
+# Edit .env
+composer install --no-dev --optimize-autoloader
+```
+
+Point your document root to the project root. The `.htaccess` handles routing to `public/` and blocks access to `app/`, `vendor/`, `data/`, and `.env`.
+
+On hosts where the document root must be `public/`, point it there directly -- the `public/.htaccess` handles the rest.
+
+Set up the runner cronjob:
 
 ```bash
 * * * * * cd /path/to/TinyMon && php bin/runner.php >> data/runner.log 2>&1
 ```
 
-### Push API
+Open `https://your-domain.com/backend` and log in.
+
+### Enable Push API
 
 Set `PUSH_API_KEY` in `.env`, then push results from anywhere:
 
