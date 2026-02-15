@@ -832,9 +832,9 @@ class CheckRunner
         }
 
         $status = "ok";
-        if ($criticalListeners > 0 && $listeners < $criticalListeners) {
+        if ($criticalListeners > 0 && $listeners >= $criticalListeners) {
             $status = "critical";
-        } elseif ($warningListeners > 0 && $listeners < $warningListeners) {
+        } elseif ($warningListeners > 0 && $listeners >= $warningListeners) {
             $status = "warning";
         }
 

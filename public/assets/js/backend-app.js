@@ -600,7 +600,6 @@ function getChartThresholds(type, config) {
       warning: config.warning_listeners,
       critical: config.critical_listeners,
       unit: "Listeners",
-      inverted: true,
     };
   }
   return { warning: null, critical: null, unit: "" };
