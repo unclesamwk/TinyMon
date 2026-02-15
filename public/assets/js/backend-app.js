@@ -725,6 +725,9 @@ function getChartThresholds(type, config) {
   if (type === "load") {
     return { warning: config.warning, critical: config.critical, unit: "Load" };
   }
+  if (type === "content_hash") {
+    return { warning: null, critical: null, unit: "" };
+  }
   if (type === "icecast_listeners") {
     return {
       warning: config.warning_listeners,
@@ -891,6 +894,9 @@ function loadChart(checkId, range) {
                   );
                 },
                 label: function (item) {
+                  if (checkType === "content_hash") {
+                    return item.parsed.y === 1 ? "Geändert" : "Unverändert";
+                  }
                   return (
                     (item.parsed.y != null ? item.parsed.y : "-") +
                     " " +
@@ -907,11 +913,33 @@ function loadChart(checkId, range) {
               ticks: { color: textColor, maxTicksLimit: 8 },
               grid: { color: gridColor },
             },
-            y: {
-              ticks: { color: textColor },
-              grid: { color: gridColor },
-              title: { display: true, text: thresholds.unit, color: textColor },
-            },
+            y:
+              checkType === "content_hash"
+                ? {
+                    min: -0.1,
+                    max: 1.1,
+                    ticks: {
+                      color: textColor,
+                      stepSize: 1,
+                      callback: function (v) {
+                        return v === 0
+                          ? "Unverändert"
+                          : v === 1
+                            ? "Geändert"
+                            : "";
+                      },
+                    },
+                    grid: { color: gridColor },
+                  }
+                : {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                    title: {
+                      display: true,
+                      text: thresholds.unit,
+                      color: textColor,
+                    },
+                  },
           },
         },
         plugins: [zonePlugin],

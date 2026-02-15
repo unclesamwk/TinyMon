@@ -553,7 +553,7 @@ class CheckRunner
         if ($prevHash === "") {
             return [
                 "status" => "ok",
-                "value" => $resp["elapsed_ms"],
+                "value" => 0,
                 "message" => sprintf("Initial hash recorded, hash:%s", $hash),
             ];
         }
@@ -561,14 +561,14 @@ class CheckRunner
         if ($hash !== $prevHash) {
             return [
                 "status" => "warning",
-                "value" => $resp["elapsed_ms"],
+                "value" => 1,
                 "message" => sprintf("Content changed! hash:%s", $hash),
             ];
         }
 
         return [
             "status" => "ok",
-            "value" => $resp["elapsed_ms"],
+            "value" => 0,
             "message" => sprintf("Content unchanged, hash:%s", $hash),
         ];
     }
