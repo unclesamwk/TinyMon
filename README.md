@@ -173,7 +173,13 @@ The database (`data/tinymon.sqlite`) is created automatically. No migrations.
 
 ## API
 
-Full OpenAPI docs at `/api/docs` (Swagger UI).
+Interactive API documentation is available via Swagger UI:
+
+```
+https://your-domain.com/api/docs
+```
+
+The OpenAPI spec is auto-generated from PHP attributes and always reflects the current code.
 
 | API | Auth | Endpoints |
 |-----|------|-----------|
