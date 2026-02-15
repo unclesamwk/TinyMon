@@ -1069,9 +1069,18 @@ var app = new Framework7({
                 enabled: enabled,
                 config: config,
               }),
-            }).then(function () {
-              app.views.main.router.back();
-            });
+            })
+              .then(function (r) {
+                if (!r.ok) {
+                  return r.json().then(function (d) {
+                    throw new Error(d.error || "Fehler beim Speichern");
+                  });
+                }
+                app.views.main.router.back();
+              })
+              .catch(function (err) {
+                app.dialog.alert("Fehler: " + err.message);
+              });
           });
         },
       },
@@ -1141,9 +1150,18 @@ var app = new Framework7({
                 enabled: enabled,
                 config: config,
               }),
-            }).then(function () {
-              app.views.main.router.back();
-            });
+            })
+              .then(function (r) {
+                if (!r.ok) {
+                  return r.json().then(function (d) {
+                    throw new Error(d.error || "Fehler beim Speichern");
+                  });
+                }
+                app.views.main.router.back();
+              })
+              .catch(function (err) {
+                app.dialog.alert("Fehler: " + err.message);
+              });
           });
         },
       },
