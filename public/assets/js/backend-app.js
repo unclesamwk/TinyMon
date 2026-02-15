@@ -549,7 +549,7 @@ function getSinceTimestamp(range) {
   else if (range === "7d") now.setDate(now.getDate() - 7);
   else if (range === "30d") now.setDate(now.getDate() - 30);
   else now.setHours(now.getHours() - 1);
-  return now.toISOString().replace("Z", "");
+  return now.toISOString().replace("T", " ").replace("Z", "").split(".")[0];
 }
 
 function getChartThresholds(type, config) {
