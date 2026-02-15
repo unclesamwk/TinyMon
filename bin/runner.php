@@ -52,7 +52,7 @@ foreach ($results as $result) {
 }
 
 $total = count($results);
-$timestamp = date("Y-m-d H:i:s");
+$timestamp = gmdate("Y-m-d H:i:s");
 
 // Store last run timestamp in settings
 $db->runQuery(
