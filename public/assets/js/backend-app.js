@@ -232,7 +232,8 @@ function loadDashboard(page) {
             html += '<div class="item-after">' + groupHosts.length + "</div>";
             html += "</div></a>";
             html += '<div class="accordion-item-content">';
-            html += '<div class="list media-list"><ul>';
+            html +=
+              '<div class="list media-list" style="margin-left:1rem;"><ul>';
             groupHosts.forEach(function (h) {
               html += renderHostListItem(h);
             });
@@ -248,7 +249,8 @@ function loadDashboard(page) {
             html += '<div class="item-after">' + ungrouped.length + "</div>";
             html += "</div></a>";
             html += '<div class="accordion-item-content">';
-            html += '<div class="list media-list"><ul>';
+            html +=
+              '<div class="list media-list" style="margin-left:1rem;"><ul>';
             ungrouped.forEach(function (h) {
               html += renderHostListItem(h);
             });
