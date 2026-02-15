@@ -100,6 +100,22 @@ function typeIcon(type) {
   return icons[type] || "monitor_heart";
 }
 
+function typeLabel(type) {
+  var labels = {
+    ping: "Ping",
+    http: "HTTP",
+    port: "Port",
+    certificate: "Zertifikat",
+    disk: "Festplatte",
+    load: "Load",
+    memory: "Arbeitsspeicher",
+    content: "Inhalt",
+    content_hash: "Inhalt Hash",
+    icecast_listeners: "Icecast",
+  };
+  return labels[type] || type;
+}
+
 function escHtml(str) {
   if (!str) return "";
   var div = document.createElement("div");
@@ -330,7 +346,7 @@ function loadHostDetail(page, hostId) {
             ';">' +
             typeIcon(c.type) +
             "</i></div>";
-          var checkLabel = c.type;
+          var checkTitle = typeLabel(c.type);
           if (c.type === "icecast_listeners") {
             var parsedCfg = {};
             try {
@@ -339,31 +355,44 @@ function loadHostDetail(page, hostId) {
                   ? JSON.parse(c.config || "{}")
                   : c.config || {};
             } catch (e) {}
-            checkLabel += " " + (parsedCfg.mount || "/stream");
+            checkTitle += " " + (parsedCfg.mount || "/stream");
+          }
+          var valueStr = "";
+          if (lr && lr.value != null) {
+            valueStr =
+              '<span style="font-weight:600; font-size:0.95rem;">' +
+              lr.value +
+              "</span> ";
           }
           html +=
-            '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="text-transform:uppercase; font-size:0.85rem;">' +
-            escHtml(checkLabel) +
+            '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="font-size:0.85rem; font-weight:600;">' +
+            escHtml(checkTitle) +
             "</div>";
           html += '<div class="item-after">' + statusBadge(st) + "</div></div>";
-          html += '<div class="item-subtitle" style="color:gray;">';
-          html += lr
-            ? escHtml(lr.message) + " &middot; " + timeAgo(lr.checked_at)
-            : "Noch nicht geprüft";
+          html +=
+            '<div class="item-subtitle" style="color:gray; font-size:0.8rem;">';
+          html += lr ? escHtml(lr.message) : "Noch nicht geprüft";
           html += "</div>";
-          html += '<div class="item-text">';
+          if (lr) {
+            html +=
+              '<div class="item-subtitle" style="color:gray; font-size:0.75rem; margin-top:2px;">';
+            html += timeAgo(lr.checked_at);
+            html += "</div>";
+          }
+          html +=
+            '<div class="item-text" style="display:flex; gap:0.75rem; margin-top:4px;">';
           html +=
             '<a href="#" class="run-check" data-check-id="' +
             c.id +
-            '" style="color:#007aff;">Jetzt prüfen</a>';
+            '" style="color:#007aff; font-size:0.8rem;">Prüfen</a>';
           html +=
-            ' &middot; <a href="#" class="edit-check" data-check-id="' +
+            '<a href="#" class="edit-check" data-check-id="' +
             c.id +
-            '" style="color:#007aff;">Bearbeiten</a>';
+            '" style="color:#007aff; font-size:0.8rem;">Bearbeiten</a>';
           html +=
-            ' &middot; <a href="#" class="delete-check" data-check-id="' +
+            '<a href="#" class="delete-check" data-check-id="' +
             c.id +
-            '" style="color:#ff3b30;">Löschen</a>';
+            '" style="color:#ff3b30; font-size:0.8rem;">Löschen</a>';
           html += "</div></div></div>";
           html +=
             '<div class="check-chart-container" id="chart-container-' +
