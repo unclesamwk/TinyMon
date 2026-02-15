@@ -470,23 +470,23 @@ function loadHostDetail(page, hostId) {
             html += "</div>";
           }
           html +=
-            '<div class="item-text" style="display:flex; gap:0.75rem; margin-top:4px; align-items:center;">';
+            '<div class="item-text" style="display:flex; gap:0.5rem; margin-top:6px; align-items:center;">';
           html +=
-            '<a href="#" class="toggle-chart" data-check-id="' +
+            '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
-            '" style="color:#007aff; font-size:0.8rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> Chart</a>';
           html +=
-            '<a href="#" class="run-check" data-check-id="' +
+            '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
             c.id +
-            '" style="color:#007aff; font-size:0.8rem;">Prüfen</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">play_arrow</i> Prüfen</a>';
           html +=
-            '<a href="#" class="edit-check" data-check-id="' +
+            '<a href="#" class="button button-small button-outline edit-check" data-check-id="' +
             c.id +
-            '" style="color:#007aff; font-size:0.8rem;">Bearbeiten</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">edit</i></a>';
           html +=
-            '<a href="#" class="delete-check" data-check-id="' +
+            '<a href="#" class="button button-small button-outline color-red delete-check" data-check-id="' +
             c.id +
-            '" style="color:#ff3b30; font-size:0.8rem;">Löschen</a>';
+            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">delete</i></a>';
           html += "</div></div></div>";
           html +=
             '<div class="check-chart-container" id="chart-container-' +
