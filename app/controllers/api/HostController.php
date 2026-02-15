@@ -196,7 +196,7 @@ class HostController
         $address = trim($data->address ?? "");
         $description = trim($data->description ?? "");
         $topic = trim($data->topic ?? "");
-        $enabled = (int) ($data->enabled ?? 1);
+        $enabled = (int) ($data->enabled ?? 1) ? 1 : 0;
 
         if ($name === "" || $address === "") {
             Flight::halt(
@@ -281,7 +281,7 @@ class HostController
         $address = trim($data->address ?? $host["address"]);
         $description = trim($data->description ?? $host["description"]);
         $topic = trim($data->topic ?? $host["topic"]);
-        $enabled = (int) ($data->enabled ?? $host["enabled"]);
+        $enabled = (int) ($data->enabled ?? $host["enabled"]) ? 1 : 0;
 
         $db->runQuery(
             "UPDATE hosts SET name = ?, address = ?, description = ?, topic = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",

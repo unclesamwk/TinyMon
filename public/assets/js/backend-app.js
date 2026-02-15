@@ -1,7 +1,18 @@
-// 401 → redirect to login, network error detection
+// 401 → redirect to login, network error detection, CSRF token injection
 (function () {
   var originalFetch = window.fetch;
   window.fetch = function (url, options) {
+    options = options || {};
+    var method = (options.method || "GET").toUpperCase();
+    if (
+      method !== "GET" &&
+      method !== "HEAD" &&
+      typeof url === "string" &&
+      url.indexOf("/api/") !== -1
+    ) {
+      options.headers = options.headers || {};
+      options.headers["X-CSRF-Token"] = CSRF_TOKEN;
+    }
     return originalFetch
       .call(this, url, options)
       .then(function (response) {
@@ -666,9 +677,7 @@ function loadDashboard(page) {
         .find("#host-list")
         .html(
           '<div class="block text-align-center" style="color:red;">' +
-            t("error_prefix") +
-            ": " +
-            err.message +
+            escHtml(t("error_prefix") + ": " + err.message) +
             "</div>",
         );
     });

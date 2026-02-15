@@ -68,7 +68,14 @@ class BackendController
             return;
         }
 
-        if (hash_equals($config["admin_password"], $password)) {
+        $storedPassword = $config["admin_password"];
+        $passwordValid =
+            str_starts_with($storedPassword, '$2y$') ||
+            str_starts_with($storedPassword, '$argon2')
+                ? password_verify($password, $storedPassword)
+                : hash_equals($storedPassword, $password);
+
+        if ($passwordValid) {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }

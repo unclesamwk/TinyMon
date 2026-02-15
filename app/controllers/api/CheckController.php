@@ -226,8 +226,8 @@ class CheckController
         $data = Flight::request()->data;
         $type = trim($data->type ?? "");
         $config = $data->config ?? "{}";
-        $interval = (int) ($data->interval_seconds ?? 300);
-        $enabled = (int) ($data->enabled ?? 1);
+        $interval = max(30, (int) ($data->interval_seconds ?? 300));
+        $enabled = (int) ($data->enabled ?? 1) ? 1 : 0;
 
         $validTypes = [
             "ping",
@@ -328,9 +328,28 @@ class CheckController
         $data = Flight::request()->data;
         $type = trim($data->type ?? $check["type"]);
         $config = $data->config ?? $check["config"];
-        $interval =
-            (int) ($data->interval_seconds ?? $check["interval_seconds"]);
-        $enabled = (int) ($data->enabled ?? $check["enabled"]);
+        $interval = max(
+            30,
+            (int) ($data->interval_seconds ?? $check["interval_seconds"]),
+        );
+        $enabled = (int) ($data->enabled ?? $check["enabled"]) ? 1 : 0;
+
+        $validTypes = [
+            "ping",
+            "http",
+            "port",
+            "certificate",
+            "content",
+            "content_hash",
+            "disk",
+            "load",
+            "memory",
+            "icecast_listeners",
+        ];
+        if (!in_array($type, $validTypes, true)) {
+            Flight::halt(400, json_encode(["error" => "Invalid check type"]));
+            return;
+        }
 
         if (is_array($config) || is_object($config)) {
             $config = json_encode($config);

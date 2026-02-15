@@ -114,7 +114,7 @@ class PushController
         $address = trim($data->address ?? "");
         $description = trim($data->description ?? "");
         $topic = trim($data->topic ?? "");
-        $enabled = (int) ($data->enabled ?? 1);
+        $enabled = (int) ($data->enabled ?? 1) ? 1 : 0;
 
         if ($address === "") {
             Flight::halt(400, json_encode(["error" => "address is required"]));
@@ -287,8 +287,8 @@ class PushController
         $hostAddress = trim($data->host_address ?? "");
         $type = trim($data->type ?? "");
         $config = $data->config ?? "{}";
-        $interval = (int) ($data->interval_seconds ?? 300);
-        $enabled = (int) ($data->enabled ?? 1);
+        $interval = max(30, (int) ($data->interval_seconds ?? 300));
+        $enabled = (int) ($data->enabled ?? 1) ? 1 : 0;
 
         if ($hostAddress === "" || $type === "") {
             Flight::halt(
@@ -302,10 +302,7 @@ class PushController
             $hostAddress,
         ]);
         if (!$host) {
-            Flight::halt(
-                404,
-                json_encode(["error" => "Host not found: " . $hostAddress]),
-            );
+            Flight::halt(404, json_encode(["error" => "Host not found"]));
             return;
         }
 
@@ -632,7 +629,7 @@ class PushController
             $hostAddress,
         ]);
         if (!$host) {
-            return ["error" => "Host not found: " . $hostAddress];
+            return ["error" => "Host not found"];
         }
 
         $check = $db->fetchRow(
@@ -640,10 +637,7 @@ class PushController
             [$host["id"], $checkType],
         );
         if (!$check) {
-            return [
-                "error" =>
-                    "Check not found: " . $checkType . " for " . $hostAddress,
-            ];
+            return ["error" => "Check not found"];
         }
 
         // Get previous status for change detection

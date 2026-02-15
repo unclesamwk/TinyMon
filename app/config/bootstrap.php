@@ -3,8 +3,14 @@
 ini_set("session.cookie_httponly", "1");
 ini_set("session.cookie_samesite", "Strict");
 ini_set("session.use_strict_mode", "1");
-ini_set("session.gc_maxlifetime", (string) (365 * 24 * 60 * 60));
-ini_set("session.cookie_lifetime", (string) (365 * 24 * 60 * 60));
+if (
+    !empty($_SERVER["HTTPS"]) ||
+    ($_SERVER["HTTP_X_FORWARDED_PROTO"] ?? "") === "https"
+) {
+    ini_set("session.cookie_secure", "1");
+}
+ini_set("session.gc_maxlifetime", (string) (30 * 24 * 60 * 60));
+ini_set("session.cookie_lifetime", (string) (30 * 24 * 60 * 60));
 
 $config = require __DIR__ . "/config.php";
 

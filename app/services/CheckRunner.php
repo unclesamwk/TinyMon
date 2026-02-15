@@ -99,8 +99,60 @@ class CheckRunner
         return $result;
     }
 
+    /**
+     * Safely run a regex with backtrack limit to prevent ReDoS.
+     * Returns the match array or null on failure/timeout.
+     */
+    private function safePreg(string $pattern, string $subject): ?array
+    {
+        // Validate pattern syntax first
+        if (@preg_match($pattern, "") === false) {
+            return null;
+        }
+
+        $prevLimit = ini_get("pcre.backtrack_limit");
+        ini_set("pcre.backtrack_limit", "10000");
+
+        $result = @preg_match($pattern, $subject, $m);
+
+        ini_set("pcre.backtrack_limit", $prevLimit);
+
+        if ($result === false || $result === 0) {
+            return null;
+        }
+
+        return $m;
+    }
+
+    private function isBlockedAddress(string $address): bool
+    {
+        $ips = gethostbynamel($address);
+        if ($ips === false) {
+            $ips = [$address];
+        }
+        foreach ($ips as $ip) {
+            if (
+                filter_var(
+                    $ip,
+                    FILTER_VALIDATE_IP,
+                    FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+                ) === false
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private function checkPing(string $address, array $config): array
     {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Blocked: private/reserved IP",
+            ];
+        }
         $warningMs = $config["warning_ms"] ?? 100;
         $criticalMs = $config["critical_ms"] ?? 500;
 
@@ -209,6 +261,13 @@ class CheckRunner
 
     private function checkHttp(string $address, array $config): array
     {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Blocked: private/reserved IP",
+            ];
+        }
         $port = $config["port"] ?? 443;
         $path = $config["url"] ?? "/";
         $expectedStatus = $config["expected_status"] ?? 200;
@@ -228,13 +287,14 @@ class CheckRunner
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_NOBODY => false,
             CURLOPT_HEADER => false,
             CURLOPT_SSL_VERIFYPEER => $verifySsl,
             CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
         $start = microtime(true);
@@ -282,6 +342,13 @@ class CheckRunner
 
     private function checkPort(string $address, array $config): array
     {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Blocked: private/reserved IP",
+            ];
+        }
         $port = $config["port"] ?? 22;
         $warningMs = $config["warning_ms"] ?? 100;
         $criticalMs = $config["critical_ms"] ?? 500;
@@ -317,6 +384,13 @@ class CheckRunner
 
     private function checkCertificate(string $address, array $config): array
     {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Blocked: private/reserved IP",
+            ];
+        }
         $port = $config["port"] ?? 443;
         $warningDays = $config["warning_days"] ?? 30;
         $criticalDays = $config["critical_days"] ?? 7;
@@ -384,6 +458,15 @@ class CheckRunner
 
     private function fetchUrl(string $address, array $config): array
     {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "body" => "",
+                "http_code" => 0,
+                "elapsed_ms" => 0,
+                "error" => "Blocked: private/reserved IP",
+                "url" => "",
+            ];
+        }
         $port = $config["port"] ?? 443;
         $path = $config["url"] ?? "/";
         $verifySsl = $config["verify_ssl"] ?? true;
@@ -400,12 +483,13 @@ class CheckRunner
         curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_SSL_VERIFYPEER => $verifySsl,
             CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
             CURLOPT_USERAGENT => "TinyMon/1.0",
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
         $start = microtime(true);
@@ -528,7 +612,8 @@ class CheckRunner
 
         // If selector is set, try to extract that portion via regex
         if ($selector !== "") {
-            if (preg_match($selector, $body, $m)) {
+            $m = $this->safePreg($selector, $body);
+            if ($m !== null) {
                 $body = $m[0];
             }
         }
@@ -605,7 +690,8 @@ class CheckRunner
         $body = $resp["body"] ?: "";
 
         if ($selector !== "") {
-            if (preg_match($selector, $body, $m)) {
+            $m = $this->safePreg($selector, $body);
+            if ($m !== null) {
                 $body = $m[0];
             }
         }
@@ -637,6 +723,16 @@ class CheckRunner
     private function checkDisk(array $config): array
     {
         $path = $config["path"] ?? "/";
+        if (
+            !preg_match('#^/[a-zA-Z0-9._/-]*$#', $path) ||
+            str_contains($path, "..")
+        ) {
+            return [
+                "status" => "unknown",
+                "value" => null,
+                "message" => "Invalid path",
+            ];
+        }
         $warningPct = $config["warning_pct"] ?? 80;
         $criticalPct = $config["critical_pct"] ?? 95;
 
@@ -796,6 +892,13 @@ class CheckRunner
         string $address,
         array $config,
     ): array {
+        if ($this->isBlockedAddress($address)) {
+            return [
+                "status" => "critical",
+                "value" => null,
+                "message" => "Blocked: private/reserved IP",
+            ];
+        }
         $port = $config["port"] ?? 443;
         $mount = $config["mount"] ?? "/stream";
         $warningListeners = $config["warning_listeners"] ?? 0;
@@ -815,8 +918,9 @@ class CheckRunner
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_USERAGENT => "TinyMon/1.0",
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
         $body = curl_exec($ch);

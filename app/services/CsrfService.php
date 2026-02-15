@@ -9,16 +9,18 @@ class CsrfService
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        if (empty($_SESSION["csrf_token"])) {
+            $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
         }
 
-        return $_SESSION['csrf_token'];
+        return $_SESSION["csrf_token"];
     }
 
     public static function field(): string
     {
-        return '<input type="hidden" name="_csrf_token" value="' . htmlspecialchars(self::token()) . '">';
+        return '<input type="hidden" name="_csrf_token" value="' .
+            htmlspecialchars(self::token()) .
+            '">';
     }
 
     public static function validateRequest(): bool
@@ -26,7 +28,7 @@ class CsrfService
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $token = $_POST['_csrf_token'] ?? '';
+        $token = $_POST["_csrf_token"] ?? ($_SERVER["HTTP_X_CSRF_TOKEN"] ?? "");
 
         return !empty($token) && hash_equals(self::token(), $token);
     }
