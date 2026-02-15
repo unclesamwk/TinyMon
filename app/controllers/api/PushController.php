@@ -60,6 +60,11 @@ class PushController
                             example: "Worker Node 1",
                         ),
                         new OA\Property(
+                            property: "topic",
+                            type: "string",
+                            example: "production/default/deployments",
+                        ),
+                        new OA\Property(
                             property: "enabled",
                             type: "integer",
                             enum: [0, 1],
@@ -108,6 +113,7 @@ class PushController
         $name = trim($data->name ?? "");
         $address = trim($data->address ?? "");
         $description = trim($data->description ?? "");
+        $topic = trim($data->topic ?? "");
         $enabled = (int) ($data->enabled ?? 1);
 
         if ($address === "") {
@@ -124,8 +130,8 @@ class PushController
 
         if ($existing) {
             $db->runQuery(
-                "UPDATE hosts SET name = ?, description = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",
-                [$name, $description, $enabled, $existing["id"]],
+                "UPDATE hosts SET name = ?, description = ?, topic = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",
+                [$name, $description, $topic, $enabled, $existing["id"]],
             );
             $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [
                 $existing["id"],
@@ -133,8 +139,8 @@ class PushController
             Flight::json($host);
         } else {
             $db->runQuery(
-                "INSERT INTO hosts (name, address, description, enabled) VALUES (?, ?, ?, ?)",
-                [$name, $address, $description, $enabled],
+                "INSERT INTO hosts (name, address, description, topic, enabled) VALUES (?, ?, ?, ?, ?)",
+                [$name, $address, $description, $topic, $enabled],
             );
             $id = $db->lastInsertId();
             $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [$id]);

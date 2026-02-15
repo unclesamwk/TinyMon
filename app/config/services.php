@@ -79,6 +79,13 @@ $pdo->exec("
     );
 ");
 
+// Add topic column to hosts (migration)
+$cols = $pdo->fetchAll("PRAGMA table_info(hosts)");
+$colNames = array_column($cols, "name");
+if (!in_array("topic", $colNames, true)) {
+    $pdo->exec("ALTER TABLE hosts ADD COLUMN topic TEXT DEFAULT ''");
+}
+
 // Cleanup old login attempts
 $pdo->exec(
     "DELETE FROM login_attempts WHERE attempted_at < datetime('now', '-1 hour')",

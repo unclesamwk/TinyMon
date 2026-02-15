@@ -115,6 +115,29 @@ function timeAgo(dateStr) {
   return Math.floor(diff / 86400) + "d ago";
 }
 
+function renderHostListItem(h) {
+  var cs =
+    h.checks && h.checks.length > 0
+      ? h.checks.length + " Check" + (h.checks.length > 1 ? "s" : "")
+      : "Keine Checks";
+  var li =
+    '<li><a href="#" class="item-link item-content host-link" data-host-id="' +
+    h.id +
+    '">';
+  li += '<div class="item-media">' + statusBadge(h.status) + "</div>";
+  li +=
+    '<div class="item-inner"><div class="item-title-row"><div class="item-title">' +
+    escHtml(h.name) +
+    "</div></div>";
+  li +=
+    '<div class="item-subtitle" style="color:gray;">' +
+    escHtml(h.address) +
+    "</div>";
+  li += '<div class="item-text">' + cs + "</div>";
+  li += "</div></a></li>";
+  return li;
+}
+
 // Dashboard loader
 function loadDashboard(page) {
   fetch("/api/dashboard")
@@ -158,29 +181,81 @@ function loadDashboard(page) {
         html =
           '<div class="block text-align-center" style="color:gray; padding:2rem;">Keine Hosts konfiguriert.<br>Tippe + um einen Host hinzuzufügen.</div>';
       } else {
-        html = '<div class="list media-list"><ul>';
+        // Group hosts by topic
+        var groups = {};
+        var ungrouped = [];
         hosts.forEach(function (h) {
-          var cs =
-            h.checks && h.checks.length > 0
-              ? h.checks.length + " Check" + (h.checks.length > 1 ? "s" : "")
-              : "Keine Checks";
-          html +=
-            '<li><a href="#" class="item-link item-content host-link" data-host-id="' +
-            h.id +
-            '">';
-          html += '<div class="item-media">' + statusBadge(h.status) + "</div>";
-          html +=
-            '<div class="item-inner"><div class="item-title-row"><div class="item-title">' +
-            escHtml(h.name) +
-            "</div></div>";
-          html +=
-            '<div class="item-subtitle" style="color:gray;">' +
-            escHtml(h.address) +
-            "</div>";
-          html += '<div class="item-text">' + cs + "</div>";
-          html += "</div></a></li>";
+          var t = (h.topic || "").trim();
+          if (t === "") {
+            ungrouped.push(h);
+          } else {
+            if (!groups[t]) groups[t] = [];
+            groups[t].push(h);
+          }
         });
-        html += "</ul></div>";
+        var topicNames = Object.keys(groups).sort();
+
+        if (topicNames.length === 0) {
+          // No topics at all – flat list like before
+          html = '<div class="list media-list"><ul>';
+          ungrouped.forEach(function (h) {
+            html += renderHostListItem(h);
+          });
+          html += "</ul></div>";
+        } else {
+          html = '<div class="list accordion-list media-list">';
+
+          topicNames.forEach(function (topic) {
+            var groupHosts = groups[topic];
+            var groupStatus = "unknown";
+            groupHosts.forEach(function (h) {
+              var s = h.status;
+              if (
+                s === "critical" ||
+                (groupStatus !== "critical" && s === "warning") ||
+                (groupStatus === "unknown" && s === "ok")
+              ) {
+                groupStatus = s;
+              }
+            });
+
+            html += '<li class="accordion-item accordion-item-opened">';
+            html += '<a class="item-link item-content" href="#">';
+            html +=
+              '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
+            html += '<div class="item-inner">';
+            html +=
+              '<div class="item-title" style="font-weight:600;">' +
+              escHtml(topic) +
+              "</div>";
+            html += '<div class="item-after">' + groupHosts.length + "</div>";
+            html += "</div></a>";
+            html += '<div class="accordion-item-content">';
+            html += '<div class="list media-list"><ul>';
+            groupHosts.forEach(function (h) {
+              html += renderHostListItem(h);
+            });
+            html += "</ul></div></div></li>";
+          });
+
+          if (ungrouped.length > 0) {
+            html += '<li class="accordion-item accordion-item-opened">';
+            html += '<a class="item-link item-content" href="#">';
+            html += '<div class="item-inner">';
+            html +=
+              '<div class="item-title" style="font-weight:600;">Allgemein</div>';
+            html += '<div class="item-after">' + ungrouped.length + "</div>";
+            html += "</div></a>";
+            html += '<div class="accordion-item-content">';
+            html += '<div class="list media-list"><ul>';
+            ungrouped.forEach(function (h) {
+              html += renderHostListItem(h);
+            });
+            html += "</ul></div></div></li>";
+          }
+
+          html += "</div>";
+        }
       }
       page.$el.find("#host-list").html(html);
 
@@ -713,6 +788,7 @@ var app = new Framework7({
             var name = page.$el.find("#host-name").val().trim();
             var address = page.$el.find("#host-address").val().trim();
             var description = page.$el.find("#host-description").val().trim();
+            var topic = page.$el.find("#host-topic").val().trim();
             var enabled = page.$el.find("#host-enabled")[0].checked ? 1 : 0;
 
             if (!name || !address) {
@@ -727,6 +803,7 @@ var app = new Framework7({
                 name: name,
                 address: address,
                 description: description,
+                topic: topic,
                 enabled: enabled,
               }),
             })
@@ -869,6 +946,7 @@ var app = new Framework7({
               page.$el.find("#host-name").val(data.name);
               page.$el.find("#host-address").val(data.address);
               page.$el.find("#host-description").val(data.description || "");
+              page.$el.find("#host-topic").val(data.topic || "");
               page.$el.find("#host-enabled")[0].checked = !!data.enabled;
             });
 
@@ -876,6 +954,7 @@ var app = new Framework7({
             var name = page.$el.find("#host-name").val().trim();
             var address = page.$el.find("#host-address").val().trim();
             var description = page.$el.find("#host-description").val().trim();
+            var topic = page.$el.find("#host-topic").val().trim();
             var enabled = page.$el.find("#host-enabled")[0].checked ? 1 : 0;
 
             if (!name || !address) {
@@ -890,6 +969,7 @@ var app = new Framework7({
                 name: name,
                 address: address,
                 description: description,
+                topic: topic,
                 enabled: enabled,
               }),
             })

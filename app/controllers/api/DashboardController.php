@@ -137,7 +137,7 @@ class DashboardController
         $db = Flight::db();
 
         $hosts = $db->fetchAll(
-            "SELECT * FROM hosts WHERE enabled = 1 ORDER BY name ASC",
+            "SELECT * FROM hosts WHERE enabled = 1 ORDER BY topic ASC, name ASC",
         );
 
         $summary = ["ok" => 0, "warning" => 0, "critical" => 0, "unknown" => 0];

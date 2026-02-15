@@ -13,6 +13,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: "name", type: "string"),
             new OA\Property(property: "address", type: "string"),
             new OA\Property(property: "description", type: "string"),
+            new OA\Property(property: "topic", type: "string"),
             new OA\Property(property: "enabled", type: "integer", enum: [0, 1]),
             new OA\Property(
                 property: "created_at",
@@ -164,6 +165,11 @@ class HostController
                             type: "string",
                         ),
                         new OA\Property(
+                            property: "topic",
+                            type: "string",
+                            example: "production/default/deployments",
+                        ),
+                        new OA\Property(
                             property: "enabled",
                             type: "integer",
                             enum: [0, 1],
@@ -189,6 +195,7 @@ class HostController
         $name = trim($data->name ?? "");
         $address = trim($data->address ?? "");
         $description = trim($data->description ?? "");
+        $topic = trim($data->topic ?? "");
         $enabled = (int) ($data->enabled ?? 1);
 
         if ($name === "" || $address === "") {
@@ -201,8 +208,8 @@ class HostController
 
         $db = Flight::db();
         $db->runQuery(
-            "INSERT INTO hosts (name, address, description, enabled) VALUES (?, ?, ?, ?)",
-            [$name, $address, $description, $enabled],
+            "INSERT INTO hosts (name, address, description, topic, enabled) VALUES (?, ?, ?, ?, ?)",
+            [$name, $address, $description, $topic, $enabled],
         );
 
         $id = $db->lastInsertId();
@@ -233,6 +240,7 @@ class HostController
                             property: "description",
                             type: "string",
                         ),
+                        new OA\Property(property: "topic", type: "string"),
                         new OA\Property(
                             property: "enabled",
                             type: "integer",
@@ -272,11 +280,12 @@ class HostController
         $name = trim($data->name ?? $host["name"]);
         $address = trim($data->address ?? $host["address"]);
         $description = trim($data->description ?? $host["description"]);
+        $topic = trim($data->topic ?? $host["topic"]);
         $enabled = (int) ($data->enabled ?? $host["enabled"]);
 
         $db->runQuery(
-            "UPDATE hosts SET name = ?, address = ?, description = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",
-            [$name, $address, $description, $enabled, $id],
+            "UPDATE hosts SET name = ?, address = ?, description = ?, topic = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",
+            [$name, $address, $description, $topic, $enabled, $id],
         );
 
         $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [$id]);
