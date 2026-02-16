@@ -533,281 +533,300 @@ function renderHostListItem(h) {
 }
 
 // Dashboard loader
+var dashboardFilter = null;
+var dashboardData = null;
+
+function renderDashboard(page) {
+  if (!dashboardData) return;
+  var data = dashboardData;
+  var summary = data.summary || {};
+  var hosts = data.hosts || [];
+
+  function filterBadge(status, count, color, label) {
+    var active = dashboardFilter === status;
+    var opacity = dashboardFilter && !active ? "0.4" : "1";
+    var border = active
+      ? "border-bottom:2px solid " + color
+      : "border-bottom:2px solid transparent";
+    return (
+      '<div class="status-filter" data-status="' +
+      status +
+      '" style="cursor:pointer; padding:0.25rem 0.5rem; ' +
+      border +
+      "; opacity:" +
+      opacity +
+      ';">' +
+      '<div style="font-size:2rem; font-weight:bold; color:' +
+      color +
+      ';">' +
+      (count || 0) +
+      "</div>" +
+      '<div style="font-size:0.75rem; color:gray;">' +
+      label +
+      "</div></div>"
+    );
+  }
+
+  var s =
+    '<div style="display:flex; justify-content:space-around; text-align:center; margin:1rem 0; padding:0 1rem;">';
+  s += filterBadge("ok", summary.ok, "#4cd964", "OK");
+  s += filterBadge("warning", summary.warning, "#ff9500", "Warning");
+  s += filterBadge("critical", summary.critical, "#ff3b30", "Critical");
+  s += filterBadge("unknown", summary.unknown, "#8e8e93", "Unknown");
+  s += "</div>";
+  page.$el.find("#dashboard-summary").html(s);
+
+  page.$el.find(".status-filter").on("click", function () {
+    var clicked = this.dataset.status;
+    dashboardFilter = dashboardFilter === clicked ? null : clicked;
+    renderDashboard(page);
+  });
+
+  if (dashboardFilter) {
+    hosts = hosts.filter(function (h) {
+      return h.status === dashboardFilter;
+    });
+  }
+
+  var runnerEl = page.$el.find("#runner-status");
+  if (data.runner_last_run) {
+    runnerEl.html(t("runner_prefix") + ": " + timeAgo(data.runner_last_run));
+  } else {
+    runnerEl.html(t("runner_prefix") + ": " + t("runner_never"));
+  }
+
+  var html = "";
+  if (hosts.length === 0) {
+    html =
+      '<div class="block text-align-center" style="color:gray; padding:2rem;">' +
+      t("no_hosts").replace("\n", "<br>") +
+      "</div>";
+  } else {
+    function buildTopicTree(hosts) {
+      var root = { children: {}, hosts: [] };
+      hosts.forEach(function (h) {
+        var topic = (h.topic || "").trim();
+        if (topic === "") {
+          root.hosts.push(h);
+        } else {
+          var parts = topic.split("/");
+          var node = root;
+          parts.forEach(function (part) {
+            if (!node.children[part]) {
+              node.children[part] = { children: {}, hosts: [] };
+            }
+            node = node.children[part];
+          });
+          node.hosts.push(h);
+        }
+      });
+      return root;
+    }
+
+    function treeStatus(node) {
+      var status = "unknown";
+      node.hosts.forEach(function (h) {
+        var s = h.status;
+        if (
+          s === "critical" ||
+          (status !== "critical" && s === "warning") ||
+          (status === "unknown" && s === "ok")
+        ) {
+          status = s;
+        }
+      });
+      Object.keys(node.children).forEach(function (key) {
+        var s = treeStatus(node.children[key]);
+        if (
+          s === "critical" ||
+          (status !== "critical" && s === "warning") ||
+          (status === "unknown" && s === "ok")
+        ) {
+          status = s;
+        }
+      });
+      return status;
+    }
+
+    function countHosts(node) {
+      var count = node.hosts.length;
+      Object.keys(node.children).forEach(function (key) {
+        count += countHosts(node.children[key]);
+      });
+      return count;
+    }
+
+    function collapsePath(node) {
+      var groups = [];
+      var childKeys = Object.keys(node.children).sort();
+
+      childKeys.forEach(function (key) {
+        var child = node.children[key];
+        var label = key;
+        var current = child;
+
+        while (
+          current.hosts.length === 0 &&
+          Object.keys(current.children).length === 1
+        ) {
+          var nextKey = Object.keys(current.children)[0];
+          label += " / " + nextKey;
+          current = current.children[nextKey];
+        }
+
+        groups.push({ label: label, node: current });
+      });
+
+      return groups;
+    }
+
+    function renderTree(node, depth) {
+      var out = "";
+      var groups = collapsePath(node);
+      depth = depth || 0;
+      var indent = depth * 0.75;
+
+      groups.forEach(function (group) {
+        var child = group.node;
+        var groupStatus = treeStatus(child);
+        var hostCount = countHosts(child);
+        var subGroups = collapsePath(child);
+        var hasSubGroups = subGroups.length > 0;
+
+        out += '<li class="accordion-item accordion-item-opened">';
+        out +=
+          '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
+          indent +
+          'rem;">';
+        out += '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
+        out += '<div class="item-inner"><div class="item-title-row">';
+        out +=
+          '<div class="item-title" style="font-weight:700; font-size:' +
+          (depth === 0 ? "0.9rem" : "0.85rem") +
+          '; text-transform:uppercase; letter-spacing:0.5px;">' +
+          escHtml(group.label) +
+          "</div>";
+        out +=
+          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          hostCount +
+          " " +
+          (hostCount > 1 ? t("hosts") : t("host")) +
+          "</div>";
+        out += "</div></div></a>";
+        out += '<div class="accordion-item-content">';
+
+        if (child.hosts.length > 0) {
+          out +=
+            '<div class="list media-list" style="padding-left:' +
+            indent +
+            'rem;"><ul>';
+          child.hosts.forEach(function (h) {
+            out += renderHostListItem(h);
+          });
+          out += "</ul></div>";
+        }
+
+        if (hasSubGroups) {
+          out += '<div class="list accordion-list media-list"><ul>';
+          out += renderTree(child, depth + 1);
+          out += "</ul></div>";
+        }
+
+        out += "</div></li>";
+      });
+
+      if (node.hosts.length > 0 && groups.length > 0) {
+        var ungroupedStatus = "unknown";
+        node.hosts.forEach(function (h) {
+          var s = h.status;
+          if (
+            s === "critical" ||
+            (ungroupedStatus !== "critical" && s === "warning") ||
+            (ungroupedStatus === "unknown" && s === "ok")
+          ) {
+            ungroupedStatus = s;
+          }
+        });
+        out += '<li class="accordion-item accordion-item-opened">';
+        out +=
+          '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
+          indent +
+          'rem;">';
+        out +=
+          '<div class="item-media">' + statusBadge(ungroupedStatus) + "</div>";
+        out += '<div class="item-inner"><div class="item-title-row">';
+        out +=
+          '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
+          t("general") +
+          "</div>";
+        out +=
+          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          node.hosts.length +
+          " " +
+          (node.hosts.length > 1 ? t("hosts") : t("host")) +
+          "</div>";
+        out += "</div></div></a>";
+        out += '<div class="accordion-item-content">';
+        out +=
+          '<div class="list media-list" style="padding-left:' +
+          indent +
+          'rem;"><ul>';
+        node.hosts.forEach(function (h) {
+          out += renderHostListItem(h);
+        });
+        out += "</ul></div></div></li>";
+      }
+
+      return out;
+    }
+
+    var tree = buildTopicTree(hosts);
+    var childKeys = Object.keys(tree.children);
+
+    if (childKeys.length === 0 && tree.hosts.length > 0) {
+      html = '<div class="list media-list"><ul>';
+      tree.hosts.forEach(function (h) {
+        html += renderHostListItem(h);
+      });
+      html += "</ul></div>";
+    } else {
+      html = '<div class="list accordion-list media-list"><ul>';
+      html += renderTree(tree, 0);
+      html += "</ul></div>";
+    }
+  }
+  page.$el.find("#host-list").html(html);
+
+  page.$el.find(".host-link").on("click", function (ev) {
+    ev.preventDefault();
+    app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
+  });
+
+  page.$el.find(".swipeout-delete-host").on("click", function (ev) {
+    ev.preventDefault();
+    var hostId = this.dataset.hostId;
+    var li = this.closest("li");
+    app.dialog.confirm(
+      t("delete_host_confirm"),
+      t("delete_host_title"),
+      function () {
+        fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(function () {
+          app.swipeout.delete(li);
+          showToast(t("host_deleted"));
+        });
+      },
+    );
+  });
+}
+
 function loadDashboard(page) {
   fetch("/api/dashboard")
     .then(function (r) {
       return r.json();
     })
     .then(function (data) {
-      var summary = data.summary || {};
-      var hosts = data.hosts || [];
-
-      var s =
-        '<div style="display:flex; justify-content:space-around; text-align:center; margin:1rem 0; padding:0 1rem;">';
-      s +=
-        '<div><div style="font-size:2rem; font-weight:bold; color:#4cd964;">' +
-        (summary.ok || 0) +
-        '</div><div style="font-size:0.75rem; color:gray;">OK</div></div>';
-      s +=
-        '<div><div style="font-size:2rem; font-weight:bold; color:#ff9500;">' +
-        (summary.warning || 0) +
-        '</div><div style="font-size:0.75rem; color:gray;">Warning</div></div>';
-      s +=
-        '<div><div style="font-size:2rem; font-weight:bold; color:#ff3b30;">' +
-        (summary.critical || 0) +
-        '</div><div style="font-size:0.75rem; color:gray;">Critical</div></div>';
-      s +=
-        '<div><div style="font-size:2rem; font-weight:bold; color:#8e8e93;">' +
-        (summary.unknown || 0) +
-        '</div><div style="font-size:0.75rem; color:gray;">Unknown</div></div>';
-      s += "</div>";
-      page.$el.find("#dashboard-summary").html(s);
-
-      var runnerEl = page.$el.find("#runner-status");
-      if (data.runner_last_run) {
-        runnerEl.html(
-          t("runner_prefix") + ": " + timeAgo(data.runner_last_run),
-        );
-      } else {
-        runnerEl.html(t("runner_prefix") + ": " + t("runner_never"));
-      }
-
-      var html = "";
-      if (hosts.length === 0) {
-        html =
-          '<div class="block text-align-center" style="color:gray; padding:2rem;">' +
-          t("no_hosts").replace("\n", "<br>") +
-          "</div>";
-      } else {
-        // Build topic tree from slash-separated topics
-        function buildTopicTree(hosts) {
-          var root = { children: {}, hosts: [] };
-          hosts.forEach(function (h) {
-            var topic = (h.topic || "").trim();
-            if (topic === "") {
-              root.hosts.push(h);
-            } else {
-              var parts = topic.split("/");
-              var node = root;
-              parts.forEach(function (part) {
-                if (!node.children[part]) {
-                  node.children[part] = { children: {}, hosts: [] };
-                }
-                node = node.children[part];
-              });
-              node.hosts.push(h);
-            }
-          });
-          return root;
-        }
-
-        function treeStatus(node) {
-          var status = "unknown";
-          node.hosts.forEach(function (h) {
-            var s = h.status;
-            if (
-              s === "critical" ||
-              (status !== "critical" && s === "warning") ||
-              (status === "unknown" && s === "ok")
-            ) {
-              status = s;
-            }
-          });
-          Object.keys(node.children).forEach(function (key) {
-            var s = treeStatus(node.children[key]);
-            if (
-              s === "critical" ||
-              (status !== "critical" && s === "warning") ||
-              (status === "unknown" && s === "ok")
-            ) {
-              status = s;
-            }
-          });
-          return status;
-        }
-
-        function countHosts(node) {
-          var count = node.hosts.length;
-          Object.keys(node.children).forEach(function (key) {
-            count += countHosts(node.children[key]);
-          });
-          return count;
-        }
-
-        // Collapse single-child paths into one label
-        // e.g. Kubernetes > home-prod > Ingress > ns becomes "Kubernetes / home-prod / Ingress / ns"
-        // Stop collapsing when a node has hosts, multiple children, or is a leaf
-        function collapsePath(node) {
-          var groups = [];
-          var childKeys = Object.keys(node.children).sort();
-
-          childKeys.forEach(function (key) {
-            var child = node.children[key];
-            var label = key;
-            var current = child;
-
-            // Collapse chain: single child, no hosts at this level
-            while (
-              current.hosts.length === 0 &&
-              Object.keys(current.children).length === 1
-            ) {
-              var nextKey = Object.keys(current.children)[0];
-              label += " / " + nextKey;
-              current = current.children[nextKey];
-            }
-
-            groups.push({ label: label, node: current });
-          });
-
-          return groups;
-        }
-
-        function renderTree(node, depth) {
-          var out = "";
-          var groups = collapsePath(node);
-          depth = depth || 0;
-          var indent = depth * 0.75;
-
-          groups.forEach(function (group) {
-            var child = group.node;
-            var groupStatus = treeStatus(child);
-            var hostCount = countHosts(child);
-            var subGroups = collapsePath(child);
-            var hasSubGroups = subGroups.length > 0;
-
-            out += '<li class="accordion-item accordion-item-opened">';
-            out +=
-              '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
-              indent +
-              'rem;">';
-            out +=
-              '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
-            out += '<div class="item-inner"><div class="item-title-row">';
-            out +=
-              '<div class="item-title" style="font-weight:700; font-size:' +
-              (depth === 0 ? "0.9rem" : "0.85rem") +
-              '; text-transform:uppercase; letter-spacing:0.5px;">' +
-              escHtml(group.label) +
-              "</div>";
-            out +=
-              '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
-              hostCount +
-              " " +
-              (hostCount > 1 ? t("hosts") : t("host")) +
-              "</div>";
-            out += "</div></div></a>";
-            out += '<div class="accordion-item-content">';
-
-            // Render hosts at this level
-            if (child.hosts.length > 0) {
-              out +=
-                '<div class="list media-list" style="padding-left:' +
-                indent +
-                'rem;"><ul>';
-              child.hosts.forEach(function (h) {
-                out += renderHostListItem(h);
-              });
-              out += "</ul></div>";
-            }
-
-            // Render sub-groups recursively
-            if (hasSubGroups) {
-              out += '<div class="list accordion-list media-list"><ul>';
-              out += renderTree(child, depth + 1);
-              out += "</ul></div>";
-            }
-
-            out += "</div></li>";
-          });
-
-          // Ungrouped hosts at root level
-          if (node.hosts.length > 0 && groups.length > 0) {
-            var ungroupedStatus = "unknown";
-            node.hosts.forEach(function (h) {
-              var s = h.status;
-              if (
-                s === "critical" ||
-                (ungroupedStatus !== "critical" && s === "warning") ||
-                (ungroupedStatus === "unknown" && s === "ok")
-              ) {
-                ungroupedStatus = s;
-              }
-            });
-            out += '<li class="accordion-item accordion-item-opened">';
-            out +=
-              '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
-              indent +
-              'rem;">';
-            out +=
-              '<div class="item-media">' +
-              statusBadge(ungroupedStatus) +
-              "</div>";
-            out += '<div class="item-inner"><div class="item-title-row">';
-            out +=
-              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
-              t("general") +
-              "</div>";
-            out +=
-              '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
-              node.hosts.length +
-              " " +
-              (node.hosts.length > 1 ? t("hosts") : t("host")) +
-              "</div>";
-            out += "</div></div></a>";
-            out += '<div class="accordion-item-content">';
-            out +=
-              '<div class="list media-list" style="padding-left:' +
-              indent +
-              'rem;"><ul>';
-            node.hosts.forEach(function (h) {
-              out += renderHostListItem(h);
-            });
-            out += "</ul></div></div></li>";
-          }
-
-          return out;
-        }
-
-        var tree = buildTopicTree(hosts);
-        var childKeys = Object.keys(tree.children);
-
-        if (childKeys.length === 0 && tree.hosts.length > 0) {
-          // No topics at all – flat list
-          html = '<div class="list media-list"><ul>';
-          tree.hosts.forEach(function (h) {
-            html += renderHostListItem(h);
-          });
-          html += "</ul></div>";
-        } else {
-          html = '<div class="list accordion-list media-list"><ul>';
-          html += renderTree(tree, 0);
-          html += "</ul></div>";
-        }
-      }
-      page.$el.find("#host-list").html(html);
-
-      page.$el.find(".host-link").on("click", function (ev) {
-        ev.preventDefault();
-        app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
-      });
-
-      page.$el.find(".swipeout-delete-host").on("click", function (ev) {
-        ev.preventDefault();
-        var hostId = this.dataset.hostId;
-        var li = this.closest("li");
-        app.dialog.confirm(
-          t("delete_host_confirm"),
-          t("delete_host_title"),
-          function () {
-            fetch("/api/hosts/" + hostId, { method: "DELETE" }).then(
-              function () {
-                app.swipeout.delete(li);
-                showToast(t("host_deleted"));
-              },
-            );
-          },
-        );
-      });
+      dashboardData = data;
+      renderDashboard(page);
     })
     .catch(function (err) {
       page.$el
