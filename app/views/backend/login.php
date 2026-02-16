@@ -20,7 +20,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
     <title><?= htmlspecialchars($loginTitle) ?></title>
     <link rel="manifest" href="/backend/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
-    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="/assets/images/logo.svg">
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
