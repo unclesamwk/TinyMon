@@ -14,6 +14,7 @@ var CDN_URLS = [
   "https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.js",
   "https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js",
   "https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js",
+  "https://cdn.jsdelivr.net/npm/framework7-icons@5.0.5/css/framework7-icons.css",
   "https://fonts.googleapis.com/icon?family=Material+Icons",
 ];
 

@@ -2,16 +2,28 @@
     <div class="navbar">
         <div class="navbar-bg"></div>
         <div class="navbar-inner">
-            <div class="left"></div>
+            <div class="left">
+                <a href="#" class="link">
+                    <img
+                        src="/assets/images/logo.svg"
+                        alt="TinyMon"
+                        style="height: 24px"
+                    />
+                </a>
+            </div>
             <div class="title">TinyMon</div>
             <div class="right">
                 <a href="#" class="link" id="toggle-dark">
-                    <i class="icon material-icons" id="dark-mode-icon"
+                    <i class="icon f7-icons if-ios" id="dark-mode-icon"
+                        >moon_fill</i
+                    >
+                    <i class="icon material-icons if-md" id="dark-mode-icon-md"
                         >dark_mode</i
                     >
                 </a>
                 <a href="#" class="link" id="nav-settings">
-                    <i class="icon material-icons">settings</i>
+                    <i class="icon f7-icons if-ios">gear_alt_fill</i>
+                    <i class="icon material-icons if-md">settings</i>
                 </a>
             </div>
         </div>
@@ -38,7 +50,8 @@
         </div>
         <div class="fab fab-right-bottom">
             <a href="#" id="fab-add-host"
-                ><i class="icon material-icons">add</i></a
+                ><i class="icon f7-icons if-ios">plus</i
+                ><i class="icon material-icons if-md">add</i></a
             >
         </div>
     </div>

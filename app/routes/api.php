@@ -41,6 +41,14 @@ Flight::route("GET /api/docs/openapi.yaml", function () {
     echo $openapi->toYaml();
 });
 
+// Version
+Flight::route("GET /api/version", function () {
+    $version = file_exists(__DIR__ . "/../../VERSION")
+        ? trim(file_get_contents(__DIR__ . "/../../VERSION"))
+        : "dev";
+    Flight::json(["version" => $version]);
+});
+
 // Dashboard
 Flight::route("GET /api/dashboard", [DashboardController::class, "index"]);
 

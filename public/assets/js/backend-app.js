@@ -176,6 +176,9 @@ var translations = {
     auto: "Auto",
     off: "Aus",
     on: "An",
+    theme: "Theme",
+    ios: "iOS",
+    android: "Android",
     time_format: "Zeitformat",
     language: "Sprache",
     info: "Info",
@@ -298,6 +301,9 @@ var translations = {
     auto: "Auto",
     off: "Off",
     on: "On",
+    theme: "Theme",
+    ios: "iOS",
+    android: "Android",
     time_format: "Time format",
     language: "Language",
     info: "Info",
@@ -347,9 +353,28 @@ function isDarkActive() {
   return document.documentElement.classList.contains("dark");
 }
 
+function iconHtml(iosName, mdName, style) {
+  var isIos = app.theme === "ios";
+  var cls = isIos ? "f7-icons" : "material-icons";
+  var name = isIos ? iosName : mdName;
+  var s = style ? ' style="' + style + '"' : "";
+  return '<i class="icon ' + cls + '"' + s + ">" + name + "</i>";
+}
+
+function iconName(iosName, mdName) {
+  return app.theme === "ios" ? iosName : mdName;
+}
+
+function iconClass() {
+  return app.theme === "ios" ? "f7-icons" : "material-icons";
+}
+
 function updateDarkModeIcon() {
-  var icon = document.querySelector("#dark-mode-icon");
-  if (icon) icon.textContent = isDarkActive() ? "light_mode" : "dark_mode";
+  var iosIcon = document.querySelector("#dark-mode-icon");
+  var mdIcon = document.querySelector("#dark-mode-icon-md");
+  if (iosIcon)
+    iosIcon.textContent = isDarkActive() ? "sun_max_fill" : "moon_fill";
+  if (mdIcon) mdIcon.textContent = isDarkActive() ? "light_mode" : "dark_mode";
 }
 
 function setDarkModePreference(pref) {
@@ -383,17 +408,20 @@ var statusColors = {
   unknown: "#8e8e93",
 };
 var statusIcons = {
-  ok: "check_circle",
-  warning: "warning",
-  critical: "error",
-  unknown: "help",
+  ok: { ios: "checkmark_circle_fill", md: "check_circle" },
+  warning: { ios: "exclamationmark_triangle_fill", md: "warning" },
+  critical: { ios: "xmark_circle_fill", md: "error" },
+  unknown: { ios: "question_circle_fill", md: "help" },
 };
 
 function statusBadge(status) {
   var color = statusColors[status] || statusColors.unknown;
-  var icon = statusIcons[status] || statusIcons.unknown;
+  var entry = statusIcons[status] || statusIcons.unknown;
+  var icon = app.theme === "ios" ? entry.ios : entry.md;
   return (
-    '<i class="icon material-icons" style="color:' +
+    '<i class="icon ' +
+    iconClass() +
+    '" style="color:' +
     color +
     '; font-size:20px;">' +
     icon +
@@ -403,18 +431,19 @@ function statusBadge(status) {
 
 function typeIcon(type) {
   var icons = {
-    ping: "network_ping",
-    http: "language",
-    port: "power",
-    certificate: "verified_user",
-    disk: "storage",
-    load: "speed",
-    memory: "memory",
-    content: "article",
-    content_hash: "fingerprint",
-    icecast_listeners: "radio",
+    ping: { ios: "wifi", md: "network_ping" },
+    http: { ios: "globe", md: "language" },
+    port: { ios: "bolt", md: "power" },
+    certificate: { ios: "checkmark_seal_fill", md: "verified_user" },
+    disk: { ios: "internaldrive", md: "storage" },
+    load: { ios: "speedometer", md: "speed" },
+    memory: { ios: "memorychip", md: "memory" },
+    content: { ios: "doc_text", md: "article" },
+    content_hash: { ios: "number", md: "fingerprint" },
+    icecast_listeners: { ios: "antenna_radiowaves_left_right", md: "radio" },
   };
-  return icons[type] || "monitor_heart";
+  var entry = icons[type] || { ios: "waveform_path_ecg", md: "monitor_heart" };
+  return app.theme === "ios" ? entry.ios : entry.md;
 }
 
 function typeLabel(type) {
@@ -732,7 +761,9 @@ function loadHostDetail(page, hostId) {
             c.id +
             '" style="cursor:pointer;">';
           html +=
-            '<div class="item-media"><i class="icon material-icons" style="color:' +
+            '<div class="item-media"><i class="icon ' +
+            iconClass() +
+            '" style="color:' +
             color +
             ';">' +
             typeIcon(c.type) +
@@ -775,31 +806,61 @@ function loadHostDetail(page, hostId) {
           html +=
             '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+            '" style="font-size:0.75rem;">' +
+            iconHtml(
+              "chart_bar",
+              "show_chart",
+              "font-size:14px; vertical-align:middle",
+            ) +
+            " " +
             t("chart") +
             "</a>";
           html +=
             '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">play_arrow</i> ' +
+            '" style="font-size:0.75rem;">' +
+            iconHtml(
+              "play_fill",
+              "play_arrow",
+              "font-size:14px; vertical-align:middle",
+            ) +
+            " " +
             t("run") +
             "</a>";
           if (c.type === "content_hash" && lr && lr.status === "warning") {
             html +=
               '<a href="#" class="button button-small button-outline accept-hash" data-check-id="' +
               c.id +
-              '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">check</i> ' +
+              '" style="font-size:0.75rem;">' +
+              iconHtml(
+                "checkmark",
+                "check",
+                "font-size:14px; vertical-align:middle",
+              ) +
+              " " +
               t("accept_hash") +
               "</a>";
           }
           html +=
             '<a href="#" class="button button-small button-outline edit-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">edit</i></a>';
+            '" style="font-size:0.75rem;">' +
+            iconHtml(
+              "pencil",
+              "edit",
+              "font-size:14px; vertical-align:middle",
+            ) +
+            "</a>";
           html +=
             '<a href="#" class="button button-small button-outline color-red delete-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;"><i class="icon material-icons" style="font-size:14px; vertical-align:middle;">delete</i></a>';
+            '" style="font-size:0.75rem;">' +
+            iconHtml(
+              "trash",
+              "delete",
+              "font-size:14px; vertical-align:middle",
+            ) +
+            "</a>";
           html += "</div></div></div>";
           html +=
             '<div class="check-chart-container" id="chart-container-' +
@@ -1296,16 +1357,67 @@ function reloadVisibleCharts() {
   });
 }
 
+// Force full reload: unregister SW, clear caches, redirect
+function forceReload() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then(function (regs) {
+        return Promise.all(
+          regs.map(function (r) {
+            return r.unregister();
+          }),
+        );
+      })
+      .then(function () {
+        return caches.keys();
+      })
+      .then(function (names) {
+        return Promise.all(
+          names.map(function (n) {
+            return caches.delete(n);
+          }),
+        );
+      })
+      .then(function () {
+        window.location.href = "/backend";
+      });
+  } else {
+    window.location.href = "/backend";
+  }
+}
+
+// Check server version, forceReload if changed. Returns true if update triggered.
+function checkForUpdate(callback) {
+  fetch("/api/version")
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (data) {
+      if (data.version && data.version !== APP_VERSION) {
+        forceReload();
+      } else if (callback) {
+        callback();
+      }
+    })
+    .catch(function () {
+      if (callback) callback();
+    });
+}
+
 // Cache buster for SPA page templates
 var pageV = "?v=" + (APP_VERSION || Date.now());
+
+// Theme preference (auto / ios / md)
+var themePref = localStorage.getItem("themePreference") || "auto";
 
 // App
 var app = new Framework7({
   el: "#app",
   name: "TinyMon",
-  theme: "ios",
+  theme: themePref === "auto" ? "auto" : themePref,
   darkMode: initialDarkMode,
-  view: { iosSwipeBack: true },
+  view: { iosSwipeBack: true, mdSwipeBack: true },
   routes: [
     // Home / Dashboard
     {
@@ -1328,13 +1440,17 @@ var app = new Framework7({
             app.views.main.router.navigate("/hosts/new/");
           });
           page.$el.find(".ptr-content").on("ptr:refresh", function () {
-            loadDashboard(page);
-            app.ptr.done();
+            checkForUpdate(function () {
+              loadDashboard(page);
+              app.ptr.done();
+            });
           });
 
-          // Auto-refresh every 60s
+          // Auto-refresh every 60s, with version check
           page.dashboardInterval = setInterval(function () {
-            loadDashboard(page);
+            checkForUpdate(function () {
+              loadDashboard(page);
+            });
           }, 60000);
         },
         pageBeforeIn: function (e, page) {
@@ -1457,7 +1573,12 @@ var app = new Framework7({
               loadChart(checkId, currentChartRange);
               if (link.length)
                 link.html(
-                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+                  iconHtml(
+                    "chart_bar",
+                    "show_chart",
+                    "font-size:14px; vertical-align:middle",
+                  ) +
+                    " " +
                     t("close"),
                 );
             } else {
@@ -1468,7 +1589,12 @@ var app = new Framework7({
               }
               if (link.length)
                 link.html(
-                  '<i class="icon material-icons" style="font-size:14px; vertical-align:middle;">show_chart</i> ' +
+                  iconHtml(
+                    "chart_bar",
+                    "show_chart",
+                    "font-size:14px; vertical-align:middle",
+                  ) +
+                    " " +
                     t("chart"),
                 );
             }
@@ -1824,6 +1950,25 @@ var app = new Framework7({
             page.$el.find(".darkmode-btn").removeClass("button-active");
             this.classList.add("button-active");
             setDarkModePreference(this.dataset.mode);
+          });
+
+          // Theme segmented control
+          page.$el.find('.theme-btn[data-theme="auto"]').text(t("auto"));
+          page.$el.find('.theme-btn[data-theme="ios"]').text(t("ios"));
+          page.$el.find('.theme-btn[data-theme="md"]').text(t("android"));
+          page.$el.find(".theme-btn").each(function () {
+            if (this.dataset.theme === themePref) {
+              this.classList.add("button-active");
+            }
+          });
+          page.$el.find(".theme-btn").on("click", function () {
+            var newTheme = this.dataset.theme;
+            if (newTheme === themePref) return;
+            page.$el.find(".theme-btn").removeClass("button-active");
+            this.classList.add("button-active");
+            themePref = newTheme;
+            localStorage.setItem("themePreference", themePref);
+            forceReload();
           });
 
           // Time format segmented control

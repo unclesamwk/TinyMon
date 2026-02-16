@@ -47,13 +47,14 @@ $lang = $_COOKIE["lang"] ?? "en";
         <?php if (!empty($error)): ?>
             <div class="alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        <form method="POST" action="/backend/login">
+        <form method="POST" action="/backend/login" autocomplete="on">
             <?= \App\services\CsrfService::field() ?>
+            <input type="text" name="username" autocomplete="username" value="admin" style="position:absolute;left:-9999px;opacity:0;" tabindex="-1" aria-hidden="true">
             <div class="form-group">
                 <label for="password"><?= $lang === "en"
                     ? "Password"
                     : "Passwort" ?></label>
-                <input type="password" id="password" name="password" required autofocus>
+                <input type="password" id="password" name="password" autocomplete="current-password" required autofocus>
             </div>
             <button type="submit" class="btn"><?= $lang === "en"
                 ? "Log in"
