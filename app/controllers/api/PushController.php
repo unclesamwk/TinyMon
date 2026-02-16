@@ -310,17 +310,21 @@ class PushController
             $config = json_encode($config);
         }
 
+        // Match by exact config first, then by host_id + type as fallback
         $existing = $db->fetchRow(
             "SELECT * FROM checks WHERE host_id = ? AND type = ? AND config = ?",
             [$host["id"], $type, $config],
         );
 
         if (!$existing) {
-            // Fallback: match by host_id + type only (for checks without config)
-            $existing = $db->fetchRow(
-                "SELECT * FROM checks WHERE host_id = ? AND type = ? AND (config IS NULL OR config = '{}' OR config = '')",
+            // Fallback: match by host_id + type when only one check of this type exists
+            $candidates = $db->fetchAll(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ?",
                 [$host["id"], $type],
             );
+            if (count($candidates) === 1) {
+                $existing = $candidates[0];
+            }
         }
 
         if ($existing) {
