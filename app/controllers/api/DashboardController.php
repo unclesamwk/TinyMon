@@ -167,6 +167,7 @@ class DashboardController
                 $hostChecks[] = $check;
 
                 $s = $lastResult["status"] ?? "unknown";
+                $summary[$s] = ($summary[$s] ?? 0) + 1;
                 $p = $prio[$s] ?? 1;
                 if ($p > $worstPrio) {
                     $worstPrio = $p;
@@ -176,7 +177,6 @@ class DashboardController
 
             $host["status"] = $hostStatus;
             $host["checks"] = $hostChecks;
-            $summary[$hostStatus]++;
         }
 
         $runnerLastRun = $db->fetchRow(
