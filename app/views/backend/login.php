@@ -76,22 +76,15 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
     <script>
     (function() {
         var startY = 0;
-        var pulling = false;
         document.addEventListener('touchstart', function(e) {
-            if (window.scrollY === 0) {
-                startY = e.touches[0].pageY;
-                pulling = true;
+            startY = e.touches[0].pageY;
+        }, { passive: true });
+        document.addEventListener('touchend', function(e) {
+            var dy = e.changedTouches[0].pageY - startY;
+            if (dy > 80) {
+                window.location.href = window.location.pathname + '?r=' + Date.now();
             }
         }, { passive: true });
-        document.addEventListener('touchmove', function(e) {
-            if (!pulling) return;
-            var dy = e.touches[0].pageY - startY;
-            if (dy > 120) {
-                pulling = false;
-                window.location.reload();
-            }
-        }, { passive: true });
-        document.addEventListener('touchend', function() { pulling = false; }, { passive: true });
     })();
     </script>
 </body>
