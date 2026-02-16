@@ -13,6 +13,10 @@
 
 TinyMon monitors your servers and services without the complexity of a full monitoring stack. It combines **pull-based checks** (ping, HTTP, certificates, ...) with a **push API** for external systems like Kubernetes, cronjobs, or CI pipelines -- all in a single lightweight application.
 
+## Why PHP?
+
+TinyMon is written in PHP on purpose. It runs on any cheap shared hosting provider -- no Docker, no VPS, no Node.js runtime required. A 3 EUR/month PHP hoster with SQLite and a cronjob is all you need. That makes it the cheapest possible monitoring setup for small teams, freelancers, and side projects.
+
 ## Why not Prometheus, Zabbix, or Nagios?
 
 | | Prometheus | Zabbix | Nagios | **TinyMon** |
@@ -24,7 +28,7 @@ TinyMon monitors your servers and services without the complexity of a full moni
 | Push support | Pushgateway (extra component) | Active checks | NSCA (extra daemon) | **Built-in REST API** |
 | Alerting | Alertmanager (extra component) | Built-in (complex) | Config files | **Built-in (email + browser push)** |
 
-TinyMon is not a replacement for enterprise monitoring. It is the right tool when a full stack is overkill -- for small teams, homelabs, side projects, freelancers, and shared hosting.
+TinyMon is not a replacement for enterprise monitoring. It is designed for a manageable number of hosts and checks -- not for hundreds of targets with high-frequency scraping. If you need that, Prometheus or Zabbix are the right choice. TinyMon is the right tool when a full stack is overkill -- for small teams, homelabs, side projects, freelancers, and shared hosting.
 
 ## Pull & Push -- One Dashboard
 
