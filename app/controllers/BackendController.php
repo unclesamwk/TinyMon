@@ -110,9 +110,9 @@ class BackendController
             "theme_color" => "#007aff",
             "icons" => [
                 [
-                    "src" => "/assets/images/logo.svg" . $v,
-                    "sizes" => "any",
-                    "type" => "image/svg+xml",
+                    "src" => "/assets/images/apple-touch-icon.png" . $v,
+                    "sizes" => "180x180",
+                    "type" => "image/png",
                     "purpose" => "any",
                 ],
                 [
