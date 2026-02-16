@@ -609,6 +609,7 @@ class PushController
                 "status" => $item["status"] ?? "",
                 "value" => $item["value"] ?? null,
                 "message" => $item["message"] ?? "",
+                "config" => $item["config"] ?? null,
             ]);
         }
 
@@ -622,6 +623,7 @@ class PushController
         $status = trim($input["status"] ?? "");
         $value = $input["value"];
         $message = trim($input["message"] ?? "");
+        $config = $input["config"] ?? null;
 
         if ($hostAddress === "" || $checkType === "" || $status === "") {
             return [
@@ -644,10 +646,44 @@ class PushController
             return ["error" => "Host not found"];
         }
 
-        $check = $db->fetchRow(
-            "SELECT id FROM checks WHERE host_id = ? AND type = ?",
-            [$host["id"], $checkType],
-        );
+        $configJson = null;
+        if ($config !== null) {
+            $configJson = is_string($config) ? $config : json_encode($config);
+        }
+
+        $check = null;
+        if ($configJson !== null) {
+            // Match by host_id + type + config
+            $check = $db->fetchRow(
+                "SELECT id FROM checks WHERE host_id = ? AND type = ? AND config = ?",
+                [$host["id"], $checkType, $configJson],
+            );
+        }
+        if (!$check) {
+            // Fallback: match by host_id + type (single check)
+            $candidates = $db->fetchAll(
+                "SELECT id FROM checks WHERE host_id = ? AND type = ?",
+                [$host["id"], $checkType],
+            );
+            if (count($candidates) === 1) {
+                $check = $candidates[0];
+                // Update config if provided
+                if ($configJson !== null) {
+                    $db->runQuery("UPDATE checks SET config = ? WHERE id = ?", [
+                        $configJson,
+                        $check["id"],
+                    ]);
+                }
+            }
+        }
+        if (!$check && $configJson !== null) {
+            // Auto-create check with config
+            $db->runQuery(
+                "INSERT INTO checks (host_id, type, config, interval_seconds, enabled) VALUES (?, ?, ?, 60, 1)",
+                [$host["id"], $checkType, $configJson],
+            );
+            $check = ["id" => $db->lastInsertId()];
+        }
         if (!$check) {
             return ["error" => "Check not found"];
         }
