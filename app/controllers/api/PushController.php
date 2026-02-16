@@ -2,6 +2,8 @@
 
 namespace App\controllers\api;
 
+use App\services\WebPushService;
+use App\services\AlertService;
 use Flight;
 use OpenApi\Attributes as OA;
 
@@ -745,11 +747,40 @@ class PushController
             [$check["id"], $status, $value, $message],
         );
 
+        $statusChanged = $prevStatus !== null && $prevStatus !== $status;
+
+        // Send notifications on status change
+        if ($statusChanged) {
+            $hostRow = $db->fetchRow("SELECT name FROM hosts WHERE id = ?", [
+                $host["id"],
+            ]);
+            $alertData = [
+                "check_id" => $check["id"],
+                "host_name" => $hostRow["name"] ?? $hostAddress,
+                "type" => $checkType,
+                "status" => $status,
+                "previous_status" => $prevStatus,
+                "value" => $value,
+                "message" => $message,
+            ];
+
+            $config = Flight::get("config");
+
+            $pushService = new WebPushService($db, $config);
+            $pushService->sendAll($alertData);
+
+            $alertService = new AlertService(
+                $config["smtp"],
+                $config["alert_recipients"],
+            );
+            $alertService->sendAlert($alertData);
+        }
+
         return [
             "check_id" => $check["id"],
             "status" => $status,
             "value" => $value,
-            "status_changed" => $prevStatus !== null && $prevStatus !== $status,
+            "status_changed" => $statusChanged,
             "previous_status" => $prevStatus,
         ];
     }
