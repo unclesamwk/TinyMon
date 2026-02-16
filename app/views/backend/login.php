@@ -1,6 +1,9 @@
 <?php
 $loginTitle = "TinyMon";
 $lang = $_COOKIE["lang"] ?? "en";
+$appVersion = file_exists(__DIR__ . "/../../../VERSION")
+    ? trim(file_get_contents(__DIR__ . "/../../../VERSION"))
+    : "dev";
 ?>
 <!DOCTYPE html>
 <html lang="<?= $lang === "en" ? "en" : "de" ?>">
@@ -60,6 +63,9 @@ $lang = $_COOKIE["lang"] ?? "en";
                 ? "Log in"
                 : "Anmelden" ?></button>
         </form>
+        <div style="text-align:center; margin-top:1rem; font-size:0.7rem; color:gray;"><?= htmlspecialchars(
+            $appVersion,
+        ) ?></div>
     </div>
 </body>
 </html>
