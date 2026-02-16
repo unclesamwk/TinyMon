@@ -265,6 +265,11 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 - **API Docs:** zircote/swagger-php (OpenAPI 3)
 - **Deploy:** Docker or bare metal / shared hosting
 
+## Ideas
+
+- **SSH Checks** -- Connect to remote hosts via SSH and run checks there (disk, load, memory, custom scripts). No agent required, just SSH access. Extends the pull model to remote systems.
+- **TinyMon Agent** -- A lightweight agent (Go binary) that runs on the target host and pushes check results via the Push API. Works behind firewalls and NAT, configurable via local YAML or centrally from the server.
+
 ## Contributing
 
 TinyMon is built to stay simple -- but there is always room to make it better. If you have an idea, found a bug, or want to suggest a feature, open an issue on GitHub. Pull requests are welcome too.
