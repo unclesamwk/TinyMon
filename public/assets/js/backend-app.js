@@ -662,9 +662,11 @@ function loadDashboard(page) {
           return groups;
         }
 
-        function renderTree(node) {
+        function renderTree(node, depth) {
           var out = "";
           var groups = collapsePath(node);
+          depth = depth || 0;
+          var indent = depth * 0.75;
 
           groups.forEach(function (group) {
             var child = group.node;
@@ -674,12 +676,17 @@ function loadDashboard(page) {
             var hasSubGroups = subGroups.length > 0;
 
             out += '<li class="accordion-item accordion-item-opened">';
-            out += '<a class="item-link item-content topic-header" href="#">';
+            out +=
+              '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
+              indent +
+              'rem;">';
             out +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
             out += '<div class="item-inner"><div class="item-title-row">';
             out +=
-              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
+              '<div class="item-title" style="font-weight:700; font-size:' +
+              (depth === 0 ? "0.9rem" : "0.85rem") +
+              '; text-transform:uppercase; letter-spacing:0.5px;">' +
               escHtml(group.label) +
               "</div>";
             out +=
@@ -693,7 +700,10 @@ function loadDashboard(page) {
 
             // Render hosts at this level
             if (child.hosts.length > 0) {
-              out += '<div class="list media-list"><ul>';
+              out +=
+                '<div class="list media-list" style="padding-left:' +
+                indent +
+                'rem;"><ul>';
               child.hosts.forEach(function (h) {
                 out += renderHostListItem(h);
               });
@@ -703,7 +713,7 @@ function loadDashboard(page) {
             // Render sub-groups recursively
             if (hasSubGroups) {
               out += '<div class="list accordion-list media-list"><ul>';
-              out += renderTree(child);
+              out += renderTree(child, depth + 1);
               out += "</ul></div>";
             }
 
@@ -724,7 +734,10 @@ function loadDashboard(page) {
               }
             });
             out += '<li class="accordion-item accordion-item-opened">';
-            out += '<a class="item-link item-content topic-header" href="#">';
+            out +=
+              '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
+              indent +
+              'rem;">';
             out +=
               '<div class="item-media">' +
               statusBadge(ungroupedStatus) +
@@ -742,7 +755,10 @@ function loadDashboard(page) {
               "</div>";
             out += "</div></div></a>";
             out += '<div class="accordion-item-content">';
-            out += '<div class="list media-list"><ul>';
+            out +=
+              '<div class="list media-list" style="padding-left:' +
+              indent +
+              'rem;"><ul>';
             node.hosts.forEach(function (h) {
               out += renderHostListItem(h);
             });
@@ -764,7 +780,7 @@ function loadDashboard(page) {
           html += "</ul></div>";
         } else {
           html = '<div class="list accordion-list media-list"><ul>';
-          html += renderTree(tree);
+          html += renderTree(tree, 0);
           html += "</ul></div>";
         }
       }
