@@ -943,16 +943,23 @@ function loadHostDetail(page, hostId) {
             " " +
             t("chart") +
             "</a>";
-          html +=
-            '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
-            c.id +
-            '" style="' +
-            btnStyle +
-            '">' +
-            iconHtml("play_fill", "play_arrow", icoStyle) +
-            " " +
-            t("run") +
-            "</a>";
+          var isPushOnly =
+            c.type === "status" ||
+            (data.address.indexOf("k8s://") === 0 &&
+              c.type !== "http" &&
+              c.type !== "certificate");
+          if (!isPushOnly) {
+            html +=
+              '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
+              c.id +
+              '" style="' +
+              btnStyle +
+              '">' +
+              iconHtml("play_fill", "play_arrow", icoStyle) +
+              " " +
+              t("run") +
+              "</a>";
+          }
           if (c.type === "content_hash" && lr && lr.status === "warning") {
             html +=
               '<a href="#" class="button button-small button-outline accept-hash" data-check-id="' +
