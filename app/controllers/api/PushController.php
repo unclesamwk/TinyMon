@@ -324,6 +324,15 @@ class PushController
             );
             if (count($candidates) === 1) {
                 $existing = $candidates[0];
+            } elseif (
+                count($candidates) > 1 &&
+                ($config === "{}" || $config === "" || $config === null)
+            ) {
+                // Empty config upsert but config-specific checks already exist —
+                // don't create an orphan, just return the first existing check
+                $existing = $candidates[0];
+                // Don't overwrite its config with empty
+                $config = $existing["config"];
             }
         }
 
