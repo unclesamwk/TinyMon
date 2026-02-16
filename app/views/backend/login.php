@@ -73,25 +73,30 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
             $appVersion,
         ) ?></div>
     </div>
-    <div id="ptr-indicator" style="display:none; position:fixed; top:0; left:0; right:0; text-align:center; padding:12px; font-size:0.85rem; color:#007aff; background:rgba(245,245,245,0.95); z-index:9999;">&#x21bb; Reload…</div>
+    <div id="ptr-spinner" style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999;">
+        <svg width="24" height="24" viewBox="0 0 24 24" style="animation:ptr-spin 0.8s linear infinite;">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#999" stroke-width="2.5" stroke-dasharray="47" stroke-dashoffset="15" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <style>@keyframes ptr-spin { to { transform: rotate(360deg); } }</style>
     <script>
     (function() {
         var startY = 0;
-        var indicator = document.getElementById('ptr-indicator');
+        var spinner = document.getElementById('ptr-spinner');
         document.addEventListener('touchstart', function(e) {
             startY = e.touches[0].pageY;
         }, { passive: true });
         document.addEventListener('touchmove', function(e) {
             var dy = e.touches[0].pageY - startY;
-            indicator.style.display = dy > 40 ? 'block' : 'none';
+            spinner.style.display = dy > 40 ? 'block' : 'none';
         }, { passive: true });
         document.addEventListener('touchend', function(e) {
             var dy = e.changedTouches[0].pageY - startY;
             if (dy > 80) {
-                indicator.style.display = 'block';
+                spinner.style.display = 'block';
                 window.location.href = window.location.pathname + '?r=' + Date.now();
             } else {
-                indicator.style.display = 'none';
+                spinner.style.display = 'none';
             }
         }, { passive: true });
     })();
