@@ -1406,7 +1406,7 @@ function checkForUpdate(callback) {
 }
 
 // Cache buster for SPA page templates
-var pageV = "?v=" + (APP_VERSION || Date.now());
+var pageV = "?v=" + (APP_CACHE_BUSTER || APP_VERSION || Date.now());
 
 // Theme preference (auto / ios / md)
 var themePref = localStorage.getItem("themePreference") || "auto";

@@ -89,7 +89,8 @@ $isDebug = !empty($debug);
 
     <script>
         var APP_DEBUG = <?= $isDebug ? "true" : "false" ?>;
-        var APP_VERSION = <?= json_encode((string) $cacheBuster) ?>;
+        var APP_VERSION = <?= json_encode((string) $appVersion) ?>;
+        var APP_CACHE_BUSTER = <?= json_encode((string) $cacheBuster) ?>;
         var CSRF_TOKEN = <?= json_encode(\App\services\CsrfService::token()) ?>;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.js"></script>
