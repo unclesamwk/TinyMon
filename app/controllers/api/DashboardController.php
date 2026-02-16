@@ -148,8 +148,15 @@ class DashboardController
                 [$host["id"]],
             );
 
-            $hostStatus = "unknown";
             $hostChecks = [];
+            $prio = [
+                "ok" => 0,
+                "unknown" => 1,
+                "warning" => 2,
+                "critical" => 3,
+            ];
+            $worstPrio = -1;
+            $hostStatus = "unknown";
 
             foreach ($checks as $check) {
                 $lastResult = $db->fetchRow(
@@ -160,19 +167,11 @@ class DashboardController
                 $hostChecks[] = $check;
 
                 $s = $lastResult["status"] ?? "unknown";
-                $prio = [
-                    "ok" => 0,
-                    "unknown" => 1,
-                    "warning" => 2,
-                    "critical" => 3,
-                ];
-                if (($prio[$s] ?? 1) > ($prio[$hostStatus] ?? 1)) {
+                $p = $prio[$s] ?? 1;
+                if ($p > $worstPrio) {
+                    $worstPrio = $p;
                     $hostStatus = $s;
                 }
-            }
-
-            if (empty($checks)) {
-                $hostStatus = "unknown";
             }
 
             $host["status"] = $hostStatus;

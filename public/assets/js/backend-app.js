@@ -633,13 +633,18 @@ function renderDashboard(page) {
     }
 
     function treeStatus(node) {
-      var status = "unknown";
+      var statuses = [];
       node.hosts.forEach(function (h) {
-        status = worseStatus(status, h.status);
+        statuses.push(h.status);
       });
       Object.keys(node.children).forEach(function (key) {
-        status = worseStatus(status, treeStatus(node.children[key]));
+        statuses.push(treeStatus(node.children[key]));
       });
+      if (statuses.length === 0) return "unknown";
+      var status = statuses[0];
+      for (var i = 1; i < statuses.length; i++) {
+        status = worseStatus(status, statuses[i]);
+      }
       return status;
     }
 
@@ -731,10 +736,11 @@ function renderDashboard(page) {
       });
 
       if (node.hosts.length > 0 && groups.length > 0) {
-        var ungroupedStatus = "unknown";
-        node.hosts.forEach(function (h) {
-          ungroupedStatus = worseStatus(ungroupedStatus, h.status);
-        });
+        var ungroupedStatus =
+          node.hosts.length > 0 ? node.hosts[0].status : "unknown";
+        for (var i = 1; i < node.hosts.length; i++) {
+          ungroupedStatus = worseStatus(ungroupedStatus, node.hosts[i].status);
+        }
         out += '<li class="accordion-item accordion-item-opened">';
         out +=
           '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
