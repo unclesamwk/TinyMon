@@ -357,8 +357,16 @@ function iconHtml(iosName, mdName, style) {
   var isIos = app.theme === "ios";
   var cls = isIos ? "f7-icons" : "material-icons";
   var name = isIos ? iosName : mdName;
-  var s = style ? ' style="' + style + '"' : "";
-  return '<i class="icon ' + cls + '"' + s + ">" + name + "</i>";
+  var base = style ? style + "; " : "";
+  return (
+    '<i class="icon ' +
+    cls +
+    '" style="' +
+    base +
+    'margin-right:4px;">' +
+    name +
+    "</i>"
+  );
 }
 
 function iconName(iosName, mdName) {
