@@ -23,7 +23,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
     <link rel="apple-touch-icon" href="/assets/images/logo.svg">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 1px 0 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: calc(100vh + 1px); overflow-y: scroll; -webkit-overflow-scrolling: touch; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         .login-card { background: white; border-radius: 8px; padding: 2rem; width: 100%; max-width: 360px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .login-card h1 { margin: 0 0 1.5rem; font-size: 1.4rem; text-align: center; color: inherit; }
         .form-group { margin-bottom: 1rem; }
@@ -73,5 +73,26 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
             $appVersion,
         ) ?></div>
     </div>
+    <script>
+    (function() {
+        var startY = 0;
+        var pulling = false;
+        document.addEventListener('touchstart', function(e) {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].pageY;
+                pulling = true;
+            }
+        }, { passive: true });
+        document.addEventListener('touchmove', function(e) {
+            if (!pulling) return;
+            var dy = e.touches[0].pageY - startY;
+            if (dy > 120) {
+                pulling = false;
+                window.location.reload();
+            }
+        }, { passive: true });
+        document.addEventListener('touchend', function() { pulling = false; }, { passive: true });
+    })();
+    </script>
 </body>
 </html>
