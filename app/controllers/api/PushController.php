@@ -35,6 +35,156 @@ use OpenApi\Attributes as OA;
 class PushController
 {
     #[
+        OA\Get(
+            path: "/api/push/hosts",
+            summary: "Host abfragen (by address)",
+            tags: ["Push: Hosts"],
+            security: [["bearerAuth" => []]],
+            parameters: [
+                new OA\Parameter(
+                    name: "address",
+                    in: "query",
+                    required: true,
+                    schema: new OA\Schema(type: "string"),
+                ),
+            ],
+            responses: [
+                new OA\Response(
+                    response: 200,
+                    description: "Host gefunden",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Host",
+                    ),
+                ),
+                new OA\Response(
+                    response: 404,
+                    description: "Host nicht gefunden",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Error",
+                    ),
+                ),
+            ],
+        ),
+    ]
+    public static function getHost(): void
+    {
+        $db = Flight::db();
+        $address = trim(Flight::request()->query->address ?? "");
+
+        if ($address === "") {
+            Flight::halt(
+                400,
+                json_encode(["error" => "address query parameter is required"]),
+            );
+            return;
+        }
+
+        $host = $db->fetchRow("SELECT * FROM hosts WHERE address = ?", [
+            $address,
+        ]);
+        if (!$host) {
+            Flight::halt(404, json_encode(["error" => "Host not found"]));
+            return;
+        }
+
+        Flight::json($host);
+    }
+
+    #[
+        OA\Get(
+            path: "/api/push/checks",
+            summary: "Check abfragen (by host_address + type + optional config)",
+            tags: ["Push: Checks"],
+            security: [["bearerAuth" => []]],
+            parameters: [
+                new OA\Parameter(
+                    name: "host_address",
+                    in: "query",
+                    required: true,
+                    schema: new OA\Schema(type: "string"),
+                ),
+                new OA\Parameter(
+                    name: "type",
+                    in: "query",
+                    required: true,
+                    schema: new OA\Schema(type: "string"),
+                ),
+                new OA\Parameter(
+                    name: "config",
+                    in: "query",
+                    required: false,
+                    schema: new OA\Schema(type: "string"),
+                ),
+            ],
+            responses: [
+                new OA\Response(
+                    response: 200,
+                    description: "Check gefunden",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Check",
+                    ),
+                ),
+                new OA\Response(
+                    response: 404,
+                    description: "Host oder Check nicht gefunden",
+                    content: new OA\JsonContent(
+                        ref: "#/components/schemas/Error",
+                    ),
+                ),
+            ],
+        ),
+    ]
+    public static function getCheck(): void
+    {
+        $db = Flight::db();
+        $hostAddress = trim(Flight::request()->query->host_address ?? "");
+        $type = trim(Flight::request()->query->type ?? "");
+        $config = Flight::request()->query->config ?? null;
+
+        if ($hostAddress === "" || $type === "") {
+            Flight::halt(
+                400,
+                json_encode([
+                    "error" =>
+                        "host_address and type query parameters are required",
+                ]),
+            );
+            return;
+        }
+
+        $host = $db->fetchRow("SELECT * FROM hosts WHERE address = ?", [
+            $hostAddress,
+        ]);
+        if (!$host) {
+            Flight::halt(404, json_encode(["error" => "Host not found"]));
+            return;
+        }
+
+        if ($config !== null && $config !== "") {
+            $check = $db->fetchRow(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ? AND config = ?",
+                [$host["id"], $type, $config],
+            );
+        } else {
+            $candidates = $db->fetchAll(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ?",
+                [$host["id"], $type],
+            );
+            $check =
+                count($candidates) === 1
+                    ? $candidates[0]
+                    : $candidates[0] ?? null;
+        }
+
+        if (!$check) {
+            Flight::halt(404, json_encode(["error" => "Check not found"]));
+            return;
+        }
+
+        Flight::json($check);
+    }
+
+    #[
         OA\Post(
             path: "/api/push/hosts",
             summary: "Host anlegen oder aktualisieren (Upsert)",
