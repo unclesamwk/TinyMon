@@ -890,7 +890,11 @@ function loadHostDetail(page, hostId) {
             typeIcon(c.type) +
             "</i></div>";
           var checkTitle = typeLabel(c.type);
-          if (c.type === "icecast_listeners") {
+          if (
+            c.type === "icecast_listeners" ||
+            c.type === "disk" ||
+            c.type === "disk_health"
+          ) {
             var parsedCfg = {};
             try {
               parsedCfg =
@@ -898,7 +902,13 @@ function loadHostDetail(page, hostId) {
                   ? JSON.parse(c.config || "{}")
                   : c.config || {};
             } catch (e) {}
-            checkTitle += " " + (parsedCfg.mount || "/stream");
+            if (c.type === "icecast_listeners") {
+              checkTitle += " " + (parsedCfg.mount || "/stream");
+            } else if (parsedCfg.mount) {
+              checkTitle += " " + parsedCfg.mount;
+            } else if (parsedCfg.device) {
+              checkTitle += " " + parsedCfg.device;
+            }
           }
           var valueStr = "";
           if (lr && lr.value != null) {
