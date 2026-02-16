@@ -37,6 +37,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
             body { background: #1c1c1e; color: #f2f2f7; }
             .login-card { background: #2c2c2e; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
             .form-group input { background: #3a3a3c; color: #f2f2f7; border-color: #555; }
+            .form-group input[readonly] { background: #2a2a2c; }
             .alert-error { background: #3a1c1e; color: #ff6b6b; border-color: #5a2c2e; }
         }
     </style>
@@ -52,7 +53,12 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
         <?php endif; ?>
         <form method="POST" action="/backend/login" autocomplete="on">
             <?= \App\services\CsrfService::field() ?>
-            <input type="text" name="username" autocomplete="username" value="admin" style="position:absolute;left:-9999px;opacity:0;" tabindex="-1" aria-hidden="true">
+            <div class="form-group">
+                <label for="username"><?= $lang === "en"
+                    ? "User"
+                    : "Benutzer" ?></label>
+                <input type="text" id="username" name="username" autocomplete="username" value="admin" readonly style="background:#eee; cursor:default;">
+            </div>
             <div class="form-group">
                 <label for="password"><?= $lang === "en"
                     ? "Password"
