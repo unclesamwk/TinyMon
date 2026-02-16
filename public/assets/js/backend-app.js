@@ -579,74 +579,127 @@ function loadDashboard(page) {
           t("no_hosts").replace("\n", "<br>") +
           "</div>";
       } else {
-        // Group hosts by topic
-        var groups = {};
-        var ungrouped = [];
-        hosts.forEach(function (h) {
-          var t = (h.topic || "").trim();
-          if (t === "") {
-            ungrouped.push(h);
-          } else {
-            if (!groups[t]) groups[t] = [];
-            groups[t].push(h);
-          }
-        });
-        var topicNames = Object.keys(groups).sort();
-
-        if (topicNames.length === 0) {
-          // No topics at all – flat list like before
-          html = '<div class="list media-list"><ul>';
-          ungrouped.forEach(function (h) {
-            html += renderHostListItem(h);
+        // Build topic tree from slash-separated topics
+        function buildTopicTree(hosts) {
+          var root = { children: {}, hosts: [] };
+          hosts.forEach(function (h) {
+            var topic = (h.topic || "").trim();
+            if (topic === "") {
+              root.hosts.push(h);
+            } else {
+              var parts = topic.split("/");
+              var node = root;
+              parts.forEach(function (part) {
+                if (!node.children[part]) {
+                  node.children[part] = { children: {}, hosts: [] };
+                }
+                node = node.children[part];
+              });
+              node.hosts.push(h);
+            }
           });
-          html += "</ul></div>";
-        } else {
-          html = '<div class="list accordion-list media-list">';
+          return root;
+        }
 
-          topicNames.forEach(function (topic) {
-            var groupHosts = groups[topic];
-            var groupStatus = "unknown";
-            groupHosts.forEach(function (h) {
-              var s = h.status;
-              if (
-                s === "critical" ||
-                (groupStatus !== "critical" && s === "warning") ||
-                (groupStatus === "unknown" && s === "ok")
-              ) {
-                groupStatus = s;
-              }
-            });
+        function treeStatus(node) {
+          var status = "unknown";
+          node.hosts.forEach(function (h) {
+            var s = h.status;
+            if (
+              s === "critical" ||
+              (status !== "critical" && s === "warning") ||
+              (status === "unknown" && s === "ok")
+            ) {
+              status = s;
+            }
+          });
+          Object.keys(node.children).forEach(function (key) {
+            var s = treeStatus(node.children[key]);
+            if (
+              s === "critical" ||
+              (status !== "critical" && s === "warning") ||
+              (status === "unknown" && s === "ok")
+            ) {
+              status = s;
+            }
+          });
+          return status;
+        }
 
-            html +=
-              '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
-            html +=
-              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;">';
-            html +=
+        function countHosts(node) {
+          var count = node.hosts.length;
+          Object.keys(node.children).forEach(function (key) {
+            count += countHosts(node.children[key]);
+          });
+          return count;
+        }
+
+        function renderTree(node, depth) {
+          var out = "";
+          var childKeys = Object.keys(node.children).sort();
+          var indent = depth * 1;
+
+          childKeys.forEach(function (key) {
+            var child = node.children[key];
+            var groupStatus = treeStatus(child);
+            var hostCount = countHosts(child);
+
+            out +=
+              '<li class="accordion-item accordion-item-opened" style="margin-top:' +
+              (depth === 0 ? "0.75rem" : "0.25rem") +
+              ';">';
+            out +=
+              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;padding-left:' +
+              indent +
+              'rem;">';
+            out +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
-            html += '<div class="item-inner"><div class="item-title-row">';
-            html +=
-              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
-              escHtml(topic) +
+            out += '<div class="item-inner"><div class="item-title-row">';
+            out +=
+              '<div class="item-title" style="font-weight:700; font-size:' +
+              (depth === 0 ? "0.9rem" : "0.85rem") +
+              '; text-transform:uppercase; letter-spacing:0.5px;">' +
+              escHtml(key) +
               "</div>";
-            html +=
+            out +=
               '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
-              groupHosts.length +
+              hostCount +
               " " +
-              (groupHosts.length > 1 ? t("hosts") : t("host")) +
+              (hostCount > 1 ? t("hosts") : t("host")) +
               "</div>";
-            html += "</div></div></a>";
-            html += '<div class="accordion-item-content">';
-            html +=
-              '<div class="list media-list" style="margin-left:1rem;"><ul>';
-            groupHosts.forEach(function (h) {
-              html += renderHostListItem(h);
-            });
-            html += "</ul></div></div></li>";
+            out += "</div></div></a>";
+            out += '<div class="accordion-item-content">';
+
+            // Render child groups recursively
+            var hasChildren = Object.keys(child.children).length > 0;
+            if (hasChildren) {
+              out +=
+                '<div class="list accordion-list media-list" style="margin-left:' +
+                indent +
+                'rem;">';
+              out += renderTree(child, depth + 1);
+              out += "</div>";
+            }
+
+            // Render hosts at this level
+            if (child.hosts.length > 0) {
+              out +=
+                '<div class="list media-list" style="margin-left:' +
+                indent +
+                'rem;"><ul>';
+              child.hosts.forEach(function (h) {
+                out += renderHostListItem(h);
+              });
+              out += "</ul></div>";
+            }
+
+            out += "</div></li>";
           });
 
-          if (ungrouped.length > 0) {
+          // Hosts at this node level (ungrouped at root, or leaf hosts)
+          if (node.hosts.length > 0 && depth === 0) {
             var ungroupedStatus = "unknown";
-            ungrouped.forEach(function (h) {
+            node.hosts.forEach(function (h) {
               var s = h.status;
               if (
                 s === "critical" ||
@@ -656,35 +709,51 @@ function loadDashboard(page) {
                 ungroupedStatus = s;
               }
             });
-            html +=
+            out +=
               '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
-            html +=
+            out +=
               '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;">';
-            html +=
+            out +=
               '<div class="item-media">' +
               statusBadge(ungroupedStatus) +
               "</div>";
-            html += '<div class="item-inner"><div class="item-title-row">';
-            html +=
+            out += '<div class="item-inner"><div class="item-title-row">';
+            out +=
               '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
               t("general") +
               "</div>";
-            html +=
+            out +=
               '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
-              ungrouped.length +
+              node.hosts.length +
               " " +
-              (ungrouped.length > 1 ? t("hosts") : t("host")) +
+              (node.hosts.length > 1 ? t("hosts") : t("host")) +
               "</div>";
-            html += "</div></div></a>";
-            html += '<div class="accordion-item-content">';
-            html +=
-              '<div class="list media-list" style="margin-left:1rem;"><ul>';
-            ungrouped.forEach(function (h) {
-              html += renderHostListItem(h);
+            out += "</div></div></a>";
+            out += '<div class="accordion-item-content">';
+            out +=
+              '<div class="list media-list" style="margin-left:0rem;"><ul>';
+            node.hosts.forEach(function (h) {
+              out += renderHostListItem(h);
             });
-            html += "</ul></div></div></li>";
+            out += "</ul></div></div></li>";
           }
 
+          return out;
+        }
+
+        var tree = buildTopicTree(hosts);
+        var childKeys = Object.keys(tree.children);
+
+        if (childKeys.length === 0 && tree.hosts.length > 0) {
+          // No topics at all – flat list
+          html = '<div class="list media-list"><ul>';
+          tree.hosts.forEach(function (h) {
+            html += renderHostListItem(h);
+          });
+          html += "</ul></div>";
+        } else {
+          html = '<div class="list accordion-list media-list">';
+          html += renderTree(tree, 0);
           html += "</div>";
         }
       }
