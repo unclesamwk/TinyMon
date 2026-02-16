@@ -91,7 +91,7 @@ Alerts fire only on **status transitions** -- no repeated spam while something i
 ### Option A: Docker
 
 ```bash
-git clone https://github.com/your-org/TinyMon.git
+git clone https://github.com/unclesamwk/TinyMon.git
 cd TinyMon
 cp .env.example .env
 # Edit .env: set ADMIN_PASSWORD, SMTP credentials, etc.
@@ -115,7 +115,7 @@ Add a cronjob for the check runner (inside or outside the container):
 Requirements: PHP 8.3+, Composer, SQLite, Apache with `mod_rewrite`.
 
 ```bash
-git clone https://github.com/your-org/TinyMon.git
+git clone https://github.com/unclesamwk/TinyMon.git
 cd TinyMon
 cp .env.example .env
 # Edit .env
