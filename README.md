@@ -26,6 +26,7 @@ TinyMon is written in PHP on purpose. It runs on any cheap shared hosting provid
 | Configuration | YAML files, relabeling | Web UI + templates | Config files | **Web UI** |
 | Setup time | Hours | Hours | Hours | **Minutes** |
 | Push support | Pushgateway (extra component) | Active checks | NSCA (extra daemon) | **Built-in REST API** |
+| IaC support | Native (config files) | API / Terraform | Config files | **Terraform Provider** |
 | Alerting | Alertmanager (extra component) | Built-in (complex) | Config files | **Built-in (email + browser push)** |
 
 TinyMon is not a replacement for enterprise monitoring. It is designed for a manageable number of hosts and checks -- not for hundreds of targets with high-frequency scraping. If you need that, Prometheus or Zabbix are the right choice. TinyMon is the right tool when a full stack is overkill -- for small teams, homelabs, side projects, freelancers, and shared hosting.
@@ -195,6 +196,37 @@ curl -X POST https://mon.example.com/api/push/hosts \
 ```
 
 The `config` field in bulk push results allows multiple checks of the same type per host. Checks are matched by `host_address` + `check_type` + `config`. If no matching check exists, it is auto-created.
+
+## Terraform Provider
+
+For non-Kubernetes infrastructure (VPS, bare metal, IoT, homelabs), the [Terraform Provider](https://github.com/unclesamwk/terraform-provider-tinymon) lets you manage hosts and checks as code:
+
+```hcl
+provider "tinymon" {
+  url     = "https://mon.example.com"
+  api_key = var.tinymon_api_key
+}
+
+resource "tinymon_host" "nas" {
+  name        = "NAS"
+  address     = "192.168.1.50"
+  description = "Synology DS920+"
+  topic       = "home/storage"
+}
+
+resource "tinymon_check" "nas_ping" {
+  host_address = tinymon_host.nas.address
+  type         = "ping"
+}
+
+resource "tinymon_check" "nas_http" {
+  host_address     = tinymon_host.nas.address
+  type             = "http"
+  interval_seconds = 60
+}
+```
+
+The provider uses the Push API to create, update, and delete hosts and checks. Full documentation and installation instructions are in the [provider repository](https://github.com/unclesamwk/terraform-provider-tinymon).
 
 ## Configuration
 
