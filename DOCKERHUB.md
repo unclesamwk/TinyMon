@@ -25,7 +25,8 @@ Add a cronjob for the check runner:
 ## Features
 
 - **Pull checks**: Ping, HTTP, TCP Port, SSL Certificate, Content, Content Hash, Disk, Load, Memory
-- **Push API**: External systems push results via REST API (K8s, cronjobs, CI/CD, IoT)
+- **Push API**: External systems push results via REST API (K8s, cronjobs, CI/CD, IoT) with config-aware multi-check support
+- **Push-only checks**: Disk Health (S.M.A.R.T.)
 - **Alerting**: Email (SMTP) + Browser Push (VAPID) on status transitions
 - **Dashboard**: Mobile-first PWA, charts, dark mode, multi-language (EN/DE)
 - **Zero dependencies**: SQLite database, no agents required

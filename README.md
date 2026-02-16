@@ -43,6 +43,7 @@ TinyMon actively monitors your infrastructure via a cronjob runner:
 - **Content** -- expected/unexpected strings on a page
 - **Content Hash** -- detect changes (SHA-256)
 - **Disk / Load / Memory** -- local system resources
+- **Disk Health** -- S.M.A.R.T. health status and temperature (push-only)
 
 Each check has configurable **warning** and **critical** thresholds.
 
@@ -58,7 +59,7 @@ curl -X POST https://mon.example.com/api/push/results \
   -d '{"host_address": "10.0.1.5", "check_type": "backup", "status": "ok", "value": 42, "message": "Backup completed in 42s"}'
 ```
 
-Hosts and checks are created automatically on first push (upsert by address + type). Bulk endpoint available for submitting multiple results at once.
+Hosts and checks are created automatically on first push (upsert by address + type). Bulk endpoint available for submitting multiple results at once. Push results can include a `config` field to distinguish multiple checks of the same type (e.g. multiple disk mounts on one host).
 
 Use cases:
 - **Kubernetes** -- an operator pushes node/pod health
@@ -176,13 +177,14 @@ curl -X POST https://mon.example.com/api/push/results \
   -H "Content-Type: application/json" \
   -d '{"host_address": "web-1", "check_type": "http", "status": "ok", "value": 120, "message": "200 OK, 120ms"}'
 
-# Bulk
+# Bulk (multiple results in one request)
 curl -X POST https://mon.example.com/api/push/bulk \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"results": [
     {"host_address": "web-1", "check_type": "memory", "status": "ok", "value": 62.5, "message": "62.5%"},
-    {"host_address": "web-1", "check_type": "load", "status": "warning", "value": 3.2, "message": "Load 3.2"}
+    {"host_address": "web-1", "check_type": "disk", "status": "ok", "value": 20, "message": "20% used", "config": {"mount": "/"}},
+    {"host_address": "web-1", "check_type": "disk", "status": "ok", "value": 45, "message": "45% used", "config": {"mount": "/data"}}
   ]}'
 
 # Create/update hosts and checks programmatically
@@ -191,6 +193,8 @@ curl -X POST https://mon.example.com/api/push/hosts \
   -H "Content-Type: application/json" \
   -d '{"name": "k8s-node-1", "address": "10.0.1.5"}'
 ```
+
+The `config` field in bulk push results allows multiple checks of the same type per host. Checks are matched by `host_address` + `check_type` + `config`. If no matching check exists, it is auto-created.
 
 ## Configuration
 
@@ -219,7 +223,7 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 | API | Auth | Endpoints |
 |-----|------|-----------|
 | **Session API** `/api/*` | Cookie (login) | Dashboard, Host/Check CRUD, run checks, result history |
-| **Push API** `/api/push/*` | Bearer token | Create hosts/checks, push results (single + bulk) |
+| **Push API** `/api/push/*` | Bearer token | Create/delete hosts/checks, push results (single + bulk, config-aware) |
 
 ## Tech Stack
 
