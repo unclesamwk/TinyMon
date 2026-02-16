@@ -1,0 +1,16 @@
+apiVersion: v2
+name: tinymon
+description: Minimalist server monitoring - Pull checks, Push API, SQLite
+type: application
+version: 0.1.0
+appVersion: "1.6.0"
+home: https://github.com/unclesamwk/TinyMon
+sources:
+  - https://github.com/unclesamwk/TinyMon
+keywords:
+  - monitoring
+  - php
+  - sqlite
+  - self-hosted
+maintainers:
+  - name: unclesamwk

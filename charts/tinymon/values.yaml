@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: unclesamwk/tinymon
+  tag: ""
+  pullPolicy: IfNotPresent
+
+adminPassword: "changeme"
+
+smtp:
+  host: ""
+  port: 587
+  user: ""
+  password: ""
+  fromEmail: ""
+  fromName: "TinyMon"
+  encryption: "tls"
+
+alertRecipients: ""
+
+pushApiKey: ""
+
+vapid:
+  publicKey: ""
+  privateKey: ""
+  subject: "mailto:admin@example.com"
+
+runner:
+  schedule: "*/1 * * * *"
+  enabled: true
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""
+  accessMode: ReadWriteOnce
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: tinymon.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

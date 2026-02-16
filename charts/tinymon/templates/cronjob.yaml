@@ -1,0 +1,49 @@
+{{- if .Values.runner.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "tinymon.fullname" . }}-runner
+  labels:
+    {{- include "tinymon.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.runner.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "tinymon.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: runner
+        spec:
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: OnFailure
+          containers:
+            - name: runner
+              image: {{ include "tinymon.image" . }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["php", "/var/www/html/bin/runner.php"]
+              envFrom:
+                - configMapRef:
+                    name: {{ include "tinymon.fullname" . }}
+                - secretRef:
+                    name: {{ include "tinymon.fullname" . }}
+              {{- if .Values.persistence.enabled }}
+              volumeMounts:
+                - name: data
+                  mountPath: /var/www/html/data
+              {{- end }}
+          {{- if .Values.persistence.enabled }}
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ include "tinymon.fullname" . }}-data
+          {{- end }}
+{{- end }}
