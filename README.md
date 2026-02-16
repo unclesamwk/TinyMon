@@ -231,7 +231,9 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 
 ## Contributing
 
-Contributions are welcome! Feel free to open a pull request or create an issue if you find a bug, have a feature idea, or want to improve the docs.
+TinyMon is built to stay simple -- but there is always room to make it better. If you have an idea, found a bug, or want to suggest a feature, open an issue on GitHub. Pull requests are welcome too.
+
+We'd love to hear how you use TinyMon and what would make it more useful for you. Even rough ideas or "wouldn't it be nice if..." suggestions are appreciated -- they help shape what comes next.
 
 ## Disclaimer
 
