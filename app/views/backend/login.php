@@ -73,7 +73,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
             $appVersion,
         ) ?></div>
     </div>
-    <div id="ptr-spinner" style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999;">
+    <div id="ptr-spinner" style="display:none; position:fixed; left:50%; transform:translateX(-50%); z-index:9999;">
         <svg width="24" height="24" viewBox="0 0 24 24" style="animation:ptr-spin 0.8s linear infinite;">
             <circle cx="12" cy="12" r="10" fill="none" stroke="#999" stroke-width="2.5" stroke-dasharray="47" stroke-dashoffset="15" stroke-linecap="round"/>
         </svg>
@@ -88,7 +88,12 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
         }, { passive: true });
         document.addEventListener('touchmove', function(e) {
             var dy = e.touches[0].pageY - startY;
-            spinner.style.display = dy > 40 ? 'block' : 'none';
+            if (dy > 40) {
+                spinner.style.top = Math.min(dy - 30, 120) + 'px';
+                spinner.style.display = 'block';
+            } else {
+                spinner.style.display = 'none';
+            }
         }, { passive: true });
         document.addEventListener('touchend', function(e) {
             var dy = e.changedTouches[0].pageY - startY;
