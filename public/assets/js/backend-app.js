@@ -801,29 +801,28 @@ function loadHostDetail(page, hostId) {
             html += timeAgo(lr.checked_at);
             html += "</div>";
           }
+          var btnStyle = "font-size:0.75rem; padding:0 8px; line-height:28px;";
+          var icoSize = app.theme === "ios" ? "12px" : "14px";
+          var icoStyle = "font-size:" + icoSize + "; vertical-align:middle;";
           html +=
-            '<div class="item-text" style="display:flex; gap:0.5rem; margin-top:6px; align-items:center;">';
+            '<div class="item-text" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:6px; align-items:center;">';
           html +=
             '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;">' +
-            iconHtml(
-              "chart_bar",
-              "show_chart",
-              "font-size:14px; vertical-align:middle",
-            ) +
+            '" style="' +
+            btnStyle +
+            '">' +
+            iconHtml("chart_bar", "show_chart", icoStyle) +
             " " +
             t("chart") +
             "</a>";
           html +=
             '<a href="#" class="button button-small button-outline run-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;">' +
-            iconHtml(
-              "play_fill",
-              "play_arrow",
-              "font-size:14px; vertical-align:middle",
-            ) +
+            '" style="' +
+            btnStyle +
+            '">' +
+            iconHtml("play_fill", "play_arrow", icoStyle) +
             " " +
             t("run") +
             "</a>";
@@ -831,12 +830,10 @@ function loadHostDetail(page, hostId) {
             html +=
               '<a href="#" class="button button-small button-outline accept-hash" data-check-id="' +
               c.id +
-              '" style="font-size:0.75rem;">' +
-              iconHtml(
-                "checkmark",
-                "check",
-                "font-size:14px; vertical-align:middle",
-              ) +
+              '" style="' +
+              btnStyle +
+              '">' +
+              iconHtml("checkmark", "check", icoStyle) +
               " " +
               t("accept_hash") +
               "</a>";
@@ -844,22 +841,18 @@ function loadHostDetail(page, hostId) {
           html +=
             '<a href="#" class="button button-small button-outline edit-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;">' +
-            iconHtml(
-              "pencil",
-              "edit",
-              "font-size:14px; vertical-align:middle",
-            ) +
+            '" style="' +
+            btnStyle +
+            '">' +
+            iconHtml("pencil", "edit", icoStyle) +
             "</a>";
           html +=
             '<a href="#" class="button button-small button-outline color-red delete-check" data-check-id="' +
             c.id +
-            '" style="font-size:0.75rem;">' +
-            iconHtml(
-              "trash",
-              "delete",
-              "font-size:14px; vertical-align:middle",
-            ) +
+            '" style="' +
+            btnStyle +
+            '">' +
+            iconHtml("trash", "delete", icoStyle) +
             "</a>";
           html += "</div></div></div>";
           html +=
@@ -1568,18 +1561,14 @@ var app = new Framework7({
             var link = page.$el.find(
               '.toggle-chart[data-check-id="' + checkId + '"]',
             );
+            var icoSz = app.theme === "ios" ? "12px" : "14px";
+            var icoSt = "font-size:" + icoSz + "; vertical-align:middle;";
             if (container.style.display === "none") {
               container.style.display = "block";
               loadChart(checkId, currentChartRange);
               if (link.length)
                 link.html(
-                  iconHtml(
-                    "chart_bar",
-                    "show_chart",
-                    "font-size:14px; vertical-align:middle",
-                  ) +
-                    " " +
-                    t("close"),
+                  iconHtml("chart_bar", "show_chart", icoSt) + " " + t("close"),
                 );
             } else {
               container.style.display = "none";
@@ -1589,13 +1578,7 @@ var app = new Framework7({
               }
               if (link.length)
                 link.html(
-                  iconHtml(
-                    "chart_bar",
-                    "show_chart",
-                    "font-size:14px; vertical-align:middle",
-                  ) +
-                    " " +
-                    t("chart"),
+                  iconHtml("chart_bar", "show_chart", icoSt) + " " + t("chart"),
                 );
             }
           }
