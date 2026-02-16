@@ -1,4 +1,5 @@
-var CACHE_NAME = "tinymon-v2";
+var SW_VERSION = new URL(self.location).searchParams.get("v") || "dev";
+var CACHE_NAME = "tinymon-" + SW_VERSION;
 var SHELL_URLS = [
   "/backend",
   "/assets/js/backend-app.js",
