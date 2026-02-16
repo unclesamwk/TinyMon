@@ -1,0 +1,12 @@
+.git
+vendor/
+data/
+docker/
+.env
+.env.example
+var/
+*.sqlite
+*.md
+.drone.yml
+.github/
+.DS_Store
