@@ -73,16 +73,25 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
             $appVersion,
         ) ?></div>
     </div>
+    <div id="ptr-indicator" style="display:none; position:fixed; top:0; left:0; right:0; text-align:center; padding:12px; font-size:0.85rem; color:#007aff; background:rgba(245,245,245,0.95); z-index:9999;">&#x21bb; Reload…</div>
     <script>
     (function() {
         var startY = 0;
+        var indicator = document.getElementById('ptr-indicator');
         document.addEventListener('touchstart', function(e) {
             startY = e.touches[0].pageY;
+        }, { passive: true });
+        document.addEventListener('touchmove', function(e) {
+            var dy = e.touches[0].pageY - startY;
+            indicator.style.display = dy > 40 ? 'block' : 'none';
         }, { passive: true });
         document.addEventListener('touchend', function(e) {
             var dy = e.changedTouches[0].pageY - startY;
             if (dy > 80) {
+                indicator.style.display = 'block';
                 window.location.href = window.location.pathname + '?r=' + Date.now();
+            } else {
+                indicator.style.display = 'none';
             }
         }, { passive: true });
     })();
