@@ -311,9 +311,17 @@ class PushController
         }
 
         $existing = $db->fetchRow(
-            "SELECT * FROM checks WHERE host_id = ? AND type = ?",
-            [$host["id"], $type],
+            "SELECT * FROM checks WHERE host_id = ? AND type = ? AND config = ?",
+            [$host["id"], $type, $config],
         );
+
+        if (!$existing) {
+            // Fallback: match by host_id + type only (for checks without config)
+            $existing = $db->fetchRow(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ? AND (config IS NULL OR config = '{}' OR config = '')",
+                [$host["id"], $type],
+            );
+        }
 
         if ($existing) {
             $db->runQuery(

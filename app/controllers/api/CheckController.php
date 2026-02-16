@@ -240,6 +240,7 @@ class CheckController
             "load",
             "memory",
             "icecast_listeners",
+            "status",
         ];
         if (!in_array($type, $validTypes, true)) {
             Flight::halt(
@@ -345,6 +346,7 @@ class CheckController
             "load",
             "memory",
             "icecast_listeners",
+            "status",
         ];
         if (!in_array($type, $validTypes, true)) {
             Flight::halt(400, json_encode(["error" => "Invalid check type"]));

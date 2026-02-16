@@ -131,6 +131,7 @@ var translations = {
     type_content: "Inhalt",
     type_content_hash: "Inhalt Hash",
     type_icecast: "Icecast",
+    type_status: "Status",
     cfg_path: "Pfad",
     cfg_port: "Port",
     cfg_expected_status: "Erwarteter Status",
@@ -256,6 +257,7 @@ var translations = {
     type_content: "Content",
     type_content_hash: "Content Hash",
     type_icecast: "Icecast",
+    type_status: "Status",
     cfg_path: "Path",
     cfg_port: "Port",
     cfg_expected_status: "Expected status",
@@ -449,6 +451,7 @@ function typeIcon(type) {
     content: { ios: "doc_text", md: "article" },
     content_hash: { ios: "number", md: "fingerprint" },
     icecast_listeners: { ios: "antenna_radiowaves_left_right", md: "radio" },
+    status: { ios: "info_circle", md: "info" },
   };
   var entry = icons[type] || { ios: "waveform_path_ecg", md: "monitor_heart" };
   return app.theme === "ios" ? entry.ios : entry.md;
@@ -466,6 +469,7 @@ function typeLabel(type) {
     content: "type_content",
     content_hash: "type_content_hash",
     icecast_listeners: "type_icecast",
+    status: "type_status",
   };
   return t(map[type] || type);
 }

@@ -18,6 +18,8 @@ class CheckRunner
             FROM checks c
             JOIN hosts h ON h.id = c.host_id
             WHERE c.enabled = 1 AND h.enabled = 1
+            AND c.type NOT IN ('status')
+            AND NOT (h.address LIKE 'k8s://%' AND c.type NOT IN ('http', 'certificate'))
             AND (
                 NOT EXISTS (SELECT 1 FROM check_results WHERE check_id = c.id)
                 OR (
@@ -261,27 +263,37 @@ class CheckRunner
 
     private function checkHttp(string $address, array $config): array
     {
-        if ($this->isBlockedAddress($address)) {
+        $configUrl = $config["url"] ?? null;
+        $expectedStatus = $config["expected_status"] ?? 200;
+        $warningMs = $config["warning_ms"] ?? 1000;
+        $criticalMs = $config["critical_ms"] ?? 5000;
+        $verifySsl = $config["verify_ssl"] ?? true;
+
+        if ($configUrl && preg_match("#^https?://#", $configUrl)) {
+            // Full URL provided (e.g. from operator) — use directly
+            $url = $configUrl;
+            $checkHost = parse_url($url, PHP_URL_HOST);
+        } else {
+            // Build URL from address
+            $checkHost = $address;
+            $port = $config["port"] ?? 443;
+            $path = $configUrl ?? "/";
+            $scheme = $port === 443 ? "https" : "http";
+            $portSuffix =
+                ($scheme === "https" && $port === 443) ||
+                ($scheme === "http" && $port === 80)
+                    ? ""
+                    : ":" . $port;
+            $url = $scheme . "://" . $address . $portSuffix . $path;
+        }
+
+        if ($this->isBlockedAddress($checkHost)) {
             return [
                 "status" => "critical",
                 "value" => null,
                 "message" => "Blocked: private/reserved IP",
             ];
         }
-        $port = $config["port"] ?? 443;
-        $path = $config["url"] ?? "/";
-        $expectedStatus = $config["expected_status"] ?? 200;
-        $warningMs = $config["warning_ms"] ?? 1000;
-        $criticalMs = $config["critical_ms"] ?? 5000;
-        $verifySsl = $config["verify_ssl"] ?? true;
-
-        $scheme = $port === 443 ? "https" : "http";
-        $portSuffix =
-            ($scheme === "https" && $port === 443) ||
-            ($scheme === "http" && $port === 80)
-                ? ""
-                : ":" . $port;
-        $url = $scheme . "://" . $address . $portSuffix . $path;
 
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -384,16 +396,18 @@ class CheckRunner
 
     private function checkCertificate(string $address, array $config): array
     {
-        if ($this->isBlockedAddress($address)) {
+        $checkHost = $config["host"] ?? $address;
+        $port = $config["port"] ?? 443;
+        $warningDays = $config["warning_days"] ?? 30;
+        $criticalDays = $config["critical_days"] ?? 7;
+
+        if ($this->isBlockedAddress($checkHost)) {
             return [
                 "status" => "critical",
                 "value" => null,
                 "message" => "Blocked: private/reserved IP",
             ];
         }
-        $port = $config["port"] ?? 443;
-        $warningDays = $config["warning_days"] ?? 30;
-        $criticalDays = $config["critical_days"] ?? 7;
 
         $context = stream_context_create([
             "ssl" => [
@@ -404,7 +418,7 @@ class CheckRunner
         ]);
 
         $client = @stream_socket_client(
-            "ssl://" . $address . ":" . $port,
+            "ssl://" . $checkHost . ":" . $port,
             $errno,
             $errstr,
             5,
