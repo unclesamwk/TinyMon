@@ -634,32 +634,53 @@ function loadDashboard(page) {
           return count;
         }
 
-        function renderTree(node, depth) {
-          var out = "";
+        // Collapse single-child paths into one label
+        // e.g. Kubernetes > home-prod > Ingress > ns becomes "Kubernetes / home-prod / Ingress / ns"
+        // Stop collapsing when a node has hosts, multiple children, or is a leaf
+        function collapsePath(node) {
+          var groups = [];
           var childKeys = Object.keys(node.children).sort();
-          var indent = depth * 1;
 
           childKeys.forEach(function (key) {
             var child = node.children[key];
+            var label = key;
+            var current = child;
+
+            // Collapse chain: single child, no hosts at this level
+            while (
+              current.hosts.length === 0 &&
+              Object.keys(current.children).length === 1
+            ) {
+              var nextKey = Object.keys(current.children)[0];
+              label += " / " + nextKey;
+              current = current.children[nextKey];
+            }
+
+            groups.push({ label: label, node: current });
+          });
+
+          return groups;
+        }
+
+        function renderTree(node) {
+          var out = "";
+          var groups = collapsePath(node);
+
+          groups.forEach(function (group) {
+            var child = group.node;
             var groupStatus = treeStatus(child);
             var hostCount = countHosts(child);
+            var subGroups = collapsePath(child);
+            var hasSubGroups = subGroups.length > 0;
 
-            out +=
-              '<li class="accordion-item accordion-item-opened" style="margin-top:' +
-              (depth === 0 ? "0.75rem" : "0.25rem") +
-              ';">';
-            out +=
-              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;padding-left:' +
-              indent +
-              'rem;">';
+            out += '<li class="accordion-item accordion-item-opened">';
+            out += '<a class="item-link item-content topic-header" href="#">';
             out +=
               '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
             out += '<div class="item-inner"><div class="item-title-row">';
             out +=
-              '<div class="item-title" style="font-weight:700; font-size:' +
-              (depth === 0 ? "0.9rem" : "0.85rem") +
-              '; text-transform:uppercase; letter-spacing:0.5px;">' +
-              escHtml(key) +
+              '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
+              escHtml(group.label) +
               "</div>";
             out +=
               '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
@@ -670,34 +691,27 @@ function loadDashboard(page) {
             out += "</div></div></a>";
             out += '<div class="accordion-item-content">';
 
-            // Render child groups recursively
-            var hasChildren = Object.keys(child.children).length > 0;
-            if (hasChildren) {
-              out +=
-                '<div class="list accordion-list media-list" style="margin-left:' +
-                indent +
-                'rem;">';
-              out += renderTree(child, depth + 1);
-              out += "</div>";
-            }
-
             // Render hosts at this level
             if (child.hosts.length > 0) {
-              out +=
-                '<div class="list media-list" style="margin-left:' +
-                indent +
-                'rem;"><ul>';
+              out += '<div class="list media-list"><ul>';
               child.hosts.forEach(function (h) {
                 out += renderHostListItem(h);
               });
               out += "</ul></div>";
             }
 
+            // Render sub-groups recursively
+            if (hasSubGroups) {
+              out += '<div class="list accordion-list media-list"><ul>';
+              out += renderTree(child);
+              out += "</ul></div>";
+            }
+
             out += "</div></li>";
           });
 
-          // Hosts at this node level (ungrouped at root, or leaf hosts)
-          if (node.hosts.length > 0 && depth === 0) {
+          // Ungrouped hosts at root level
+          if (node.hosts.length > 0 && groups.length > 0) {
             var ungroupedStatus = "unknown";
             node.hosts.forEach(function (h) {
               var s = h.status;
@@ -709,10 +723,8 @@ function loadDashboard(page) {
                 ungroupedStatus = s;
               }
             });
-            out +=
-              '<li class="accordion-item accordion-item-opened" style="margin-top:0.75rem;">';
-            out +=
-              '<a class="item-link item-content topic-header" href="#" style="border-radius:8px 8px 0 0;">';
+            out += '<li class="accordion-item accordion-item-opened">';
+            out += '<a class="item-link item-content topic-header" href="#">';
             out +=
               '<div class="item-media">' +
               statusBadge(ungroupedStatus) +
@@ -730,8 +742,7 @@ function loadDashboard(page) {
               "</div>";
             out += "</div></div></a>";
             out += '<div class="accordion-item-content">';
-            out +=
-              '<div class="list media-list" style="margin-left:0rem;"><ul>';
+            out += '<div class="list media-list"><ul>';
             node.hosts.forEach(function (h) {
               out += renderHostListItem(h);
             });
@@ -752,9 +763,9 @@ function loadDashboard(page) {
           });
           html += "</ul></div>";
         } else {
-          html = '<div class="list accordion-list media-list">';
-          html += renderTree(tree, 0);
-          html += "</div>";
+          html = '<div class="list accordion-list media-list"><ul>';
+          html += renderTree(tree);
+          html += "</ul></div>";
         }
       }
       page.$el.find("#host-list").html(html);
