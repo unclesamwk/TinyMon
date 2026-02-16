@@ -350,7 +350,8 @@ class PushController
     #[
         OA\Delete(
             path: "/api/push/checks",
-            summary: "Check loeschen (by host_address + type)",
+            summary: "Check loeschen (by host_address + type + optional config)",
+            description: "With config: deletes matching check. Without config: deletes all checks of this type.",
             tags: ["Push: Checks"],
             security: [["bearerAuth" => []]],
             requestBody: new OA\RequestBody(
@@ -368,6 +369,11 @@ class PushController
                             type: "string",
                             example: "memory",
                         ),
+                        new OA\Property(
+                            property: "config",
+                            type: "object",
+                            description: "If provided, only delete the check matching this config",
+                        ),
                     ],
                 ),
             ),
@@ -380,6 +386,10 @@ class PushController
                             new OA\Property(
                                 property: "success",
                                 type: "boolean",
+                            ),
+                            new OA\Property(
+                                property: "deleted",
+                                type: "integer",
                             ),
                         ],
                     ),
@@ -401,6 +411,7 @@ class PushController
 
         $hostAddress = trim($data->host_address ?? "");
         $type = trim($data->type ?? "");
+        $config = $data->config ?? null;
 
         if ($hostAddress === "" || $type === "") {
             Flight::halt(
@@ -418,17 +429,37 @@ class PushController
             return;
         }
 
-        $check = $db->fetchRow(
-            "SELECT * FROM checks WHERE host_id = ? AND type = ?",
-            [$host["id"], $type],
-        );
-        if (!$check) {
-            Flight::halt(404, json_encode(["error" => "Check not found"]));
-            return;
+        if ($config !== null) {
+            $configJson = is_string($config) ? $config : json_encode($config);
+            $check = $db->fetchRow(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ? AND config = ?",
+                [$host["id"], $type, $configJson],
+            );
+            if (!$check) {
+                Flight::halt(404, json_encode(["error" => "Check not found"]));
+                return;
+            }
+            $db->runQuery("DELETE FROM checks WHERE id = ?", [$check["id"]]);
+            Flight::json(["success" => true, "deleted" => 1]);
+        } else {
+            $checks = $db->fetchAll(
+                "SELECT * FROM checks WHERE host_id = ? AND type = ?",
+                [$host["id"], $type],
+            );
+            if (count($checks) === 0) {
+                Flight::halt(404, json_encode(["error" => "Check not found"]));
+                return;
+            }
+            foreach ($checks as $check) {
+                $db->runQuery("DELETE FROM checks WHERE id = ?", [
+                    $check["id"],
+                ]);
+            }
+            Flight::json([
+                "success" => true,
+                "deleted" => count($checks),
+            ]);
         }
-
-        $db->runQuery("DELETE FROM checks WHERE id = ?", [$check["id"]]);
-        Flight::json(["success" => true]);
     }
 
     #[

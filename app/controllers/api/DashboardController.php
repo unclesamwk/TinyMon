@@ -140,33 +140,57 @@ class DashboardController
             "SELECT * FROM hosts WHERE enabled = 1 ORDER BY topic ASC, name ASC",
         );
 
+        // Single query: all enabled checks with their latest result
+        $rows = $db->fetchAll(
+            "SELECT c.*,
+                    cr.status AS result_status, cr.value AS result_value,
+                    cr.message AS result_message, cr.checked_at AS result_checked_at
+             FROM checks c
+             LEFT JOIN check_results cr ON cr.id = (
+                 SELECT id FROM check_results WHERE check_id = c.id ORDER BY checked_at DESC LIMIT 1
+             )
+             WHERE c.enabled = 1
+             ORDER BY c.host_id, c.id",
+        );
+
+        // Group checks by host_id
+        $checksByHost = [];
+        foreach ($rows as $row) {
+            $hostId = $row["host_id"];
+            $lastResult = null;
+            if ($row["result_status"] !== null) {
+                $lastResult = [
+                    "status" => $row["result_status"],
+                    "value" => $row["result_value"],
+                    "message" => $row["result_message"],
+                    "checked_at" => $row["result_checked_at"],
+                ];
+            }
+            unset(
+                $row["result_status"],
+                $row["result_value"],
+                $row["result_message"],
+                $row["result_checked_at"],
+            );
+            $row["last_result"] = $lastResult;
+            $checksByHost[$hostId][] = $row;
+        }
+
         $summary = ["ok" => 0, "warning" => 0, "critical" => 0, "unknown" => 0];
+        $prio = [
+            "ok" => 0,
+            "unknown" => 1,
+            "warning" => 2,
+            "critical" => 3,
+        ];
 
         foreach ($hosts as &$host) {
-            $checks = $db->fetchAll(
-                "SELECT * FROM checks WHERE host_id = ? AND enabled = 1",
-                [$host["id"]],
-            );
-
-            $hostChecks = [];
-            $prio = [
-                "ok" => 0,
-                "unknown" => 1,
-                "warning" => 2,
-                "critical" => 3,
-            ];
+            $hostChecks = $checksByHost[$host["id"]] ?? [];
             $worstPrio = -1;
             $hostStatus = "unknown";
 
-            foreach ($checks as $check) {
-                $lastResult = $db->fetchRow(
-                    "SELECT * FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT 1",
-                    [$check["id"]],
-                );
-                $check["last_result"] = $lastResult;
-                $hostChecks[] = $check;
-
-                $s = $lastResult["status"] ?? "unknown";
+            foreach ($hostChecks as $check) {
+                $s = $check["last_result"]["status"] ?? "unknown";
                 $summary[$s] = ($summary[$s] ?? 0) + 1;
                 $p = $prio[$s] ?? 1;
                 if ($p > $worstPrio) {
