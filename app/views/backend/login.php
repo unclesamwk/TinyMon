@@ -53,12 +53,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
         <?php endif; ?>
         <form method="POST" action="/backend/login" autocomplete="on">
             <?= \App\services\CsrfService::field() ?>
-            <div class="form-group">
-                <label for="username"><?= $lang === "en"
-                    ? "User"
-                    : "Benutzer" ?></label>
-                <input type="text" id="username" name="username" autocomplete="username" value="admin" readonly style="background:#eee; cursor:default;">
-            </div>
+            <input type="text" name="username" autocomplete="username" value="admin" style="display:none;">
             <div class="form-group">
                 <label for="password"><?= $lang === "en"
                     ? "Password"
