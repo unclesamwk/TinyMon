@@ -95,6 +95,10 @@ class BackendController
 
     public static function manifest(): void
     {
+        $version = file_exists(__DIR__ . "/../../VERSION")
+            ? trim(file_get_contents(__DIR__ . "/../../VERSION"))
+            : "dev";
+        $v = "?v=" . $version;
         $manifest = [
             "name" => "TinyMon",
             "short_name" => "TinyMon",
@@ -106,19 +110,19 @@ class BackendController
             "theme_color" => "#007aff",
             "icons" => [
                 [
-                    "src" => "/assets/images/logo.svg",
+                    "src" => "/assets/images/logo.svg" . $v,
                     "sizes" => "any",
                     "type" => "image/svg+xml",
                     "purpose" => "any",
                 ],
                 [
-                    "src" => "/assets/images/icon-192.png",
+                    "src" => "/assets/images/icon-192.png" . $v,
                     "sizes" => "192x192",
                     "type" => "image/png",
                     "purpose" => "any maskable",
                 ],
                 [
-                    "src" => "/assets/images/icon-512.png",
+                    "src" => "/assets/images/icon-512.png" . $v,
                     "sizes" => "512x512",
                     "type" => "image/png",
                     "purpose" => "any maskable",

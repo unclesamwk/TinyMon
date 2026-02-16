@@ -32,7 +32,7 @@ $isDebug = !empty($debug);
     <title>TinyMon</title>
     <link rel="manifest" href="/backend/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
-    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png<?= $v ?>">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7-icons@5.0.5/css/framework7-icons.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@9.0.2/framework7-bundle.min.css">
