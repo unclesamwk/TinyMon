@@ -110,7 +110,38 @@ Add a cronjob for the check runner (inside or outside the container):
 * * * * * php /var/www/html/bin/runner.php >> /var/www/html/data/runner.log 2>&1
 ```
 
-### Option B: Shared Hosting / Bare Metal
+### Option B: Kubernetes (Helm)
+
+```bash
+helm repo add tinymon https://unclesamwk.github.io/TinyMon
+helm repo update
+helm install tinymon tinymon/tinymon --set adminPassword=changeme
+```
+
+The chart deploys the web app, a CronJob for the check runner, and a PersistentVolumeClaim for the SQLite database. Configure via `values.yaml`:
+
+```bash
+helm show values tinymon/tinymon
+```
+
+Common overrides:
+
+```bash
+helm install tinymon tinymon/tinymon \
+  --set adminPassword=secret \
+  --set ingress.enabled=true \
+  --set ingress.hosts[0].host=mon.example.com \
+  --set ingress.hosts[0].paths[0].path=/ \
+  --set ingress.hosts[0].paths[0].pathType=Prefix \
+  --set smtp.host=smtp.example.com \
+  --set smtp.user=user \
+  --set smtp.password=pass \
+  --set alertRecipients=admin@example.com
+```
+
+The Docker image (`unclesamwk/tinymon`) supports **amd64** and **arm64**.
+
+### Option C: Shared Hosting / Bare Metal
 
 Requirements: PHP 8.3+, Composer, SQLite, Apache with `mod_rewrite`.
 
