@@ -448,7 +448,7 @@ function typeIcon(type) {
     port: { ios: "bolt", md: "power" },
     certificate: { ios: "checkmark_seal_fill", md: "verified_user" },
     disk: { ios: "internaldrive", md: "storage" },
-    disk_health: { ios: "heart_text_square", md: "health_and_safety" },
+    disk_health: { ios: "checkmark_shield", md: "health_and_safety" },
     load: { ios: "speedometer", md: "speed" },
     memory: { ios: "memorychip", md: "memory" },
     content: { ios: "doc_text", md: "article" },
