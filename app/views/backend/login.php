@@ -9,7 +9,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
 <html lang="<?= $lang === "en" ? "en" : "de" ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
@@ -23,7 +23,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
     <link rel="apple-touch-icon" href="/assets/images/logo.svg">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 1px 0 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: calc(100vh + 1px); overflow-y: scroll; -webkit-overflow-scrolling: touch; }
         .login-card { background: white; border-radius: 8px; padding: 2rem; width: 100%; max-width: 360px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .login-card h1 { margin: 0 0 1.5rem; font-size: 1.4rem; text-align: center; color: inherit; }
         .form-group { margin-bottom: 1rem; }
