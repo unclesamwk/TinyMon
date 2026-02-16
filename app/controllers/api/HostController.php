@@ -56,11 +56,11 @@ class HostController
         foreach ($hosts as &$host) {
             $worst = $db->fetchRow(
                 "
-                SELECT cr.status FROM checks c
-                JOIN check_results cr ON cr.check_id = c.id
+                SELECT COALESCE(cr.status, 'unknown') AS status FROM checks c
+                LEFT JOIN check_results cr ON cr.check_id = c.id
+                    AND cr.id = (SELECT id FROM check_results WHERE check_id = c.id ORDER BY checked_at DESC LIMIT 1)
                 WHERE c.host_id = ? AND c.enabled = 1
-                AND cr.id = (SELECT id FROM check_results WHERE check_id = c.id ORDER BY checked_at DESC LIMIT 1)
-                ORDER BY CASE cr.status
+                ORDER BY CASE COALESCE(cr.status, 'unknown')
                     WHEN 'critical' THEN 0
                     WHEN 'warning' THEN 1
                     WHEN 'unknown' THEN 2

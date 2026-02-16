@@ -160,11 +160,13 @@ class DashboardController
                 $hostChecks[] = $check;
 
                 $s = $lastResult["status"] ?? "unknown";
-                if (
-                    $s === "critical" ||
-                    ($hostStatus !== "critical" && $s === "warning") ||
-                    ($hostStatus === "unknown" && $s === "ok")
-                ) {
+                $prio = [
+                    "ok" => 0,
+                    "unknown" => 1,
+                    "warning" => 2,
+                    "critical" => 3,
+                ];
+                if (($prio[$s] ?? 1) > ($prio[$hostStatus] ?? 1)) {
                     $hostStatus = $s;
                 }
             }

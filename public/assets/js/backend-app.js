@@ -627,27 +627,18 @@ function renderDashboard(page) {
       return root;
     }
 
+    var statusPrio = { ok: 0, unknown: 1, warning: 2, critical: 3 };
+    function worseStatus(a, b) {
+      return (statusPrio[b] || 1) > (statusPrio[a] || 1) ? b : a;
+    }
+
     function treeStatus(node) {
       var status = "unknown";
       node.hosts.forEach(function (h) {
-        var s = h.status;
-        if (
-          s === "critical" ||
-          (status !== "critical" && s === "warning") ||
-          (status === "unknown" && s === "ok")
-        ) {
-          status = s;
-        }
+        status = worseStatus(status, h.status);
       });
       Object.keys(node.children).forEach(function (key) {
-        var s = treeStatus(node.children[key]);
-        if (
-          s === "critical" ||
-          (status !== "critical" && s === "warning") ||
-          (status === "unknown" && s === "ok")
-        ) {
-          status = s;
-        }
+        status = worseStatus(status, treeStatus(node.children[key]));
       });
       return status;
     }
@@ -742,14 +733,7 @@ function renderDashboard(page) {
       if (node.hosts.length > 0 && groups.length > 0) {
         var ungroupedStatus = "unknown";
         node.hosts.forEach(function (h) {
-          var s = h.status;
-          if (
-            s === "critical" ||
-            (ungroupedStatus !== "critical" && s === "warning") ||
-            (ungroupedStatus === "unknown" && s === "ok")
-          ) {
-            ungroupedStatus = s;
-          }
+          ungroupedStatus = worseStatus(ungroupedStatus, h.status);
         });
         out += '<li class="accordion-item accordion-item-opened">';
         out +=
