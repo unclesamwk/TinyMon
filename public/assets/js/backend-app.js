@@ -1566,12 +1566,12 @@ var app = new Framework7({
             });
           });
 
-          // Auto-refresh every 60s, with version check
+          // Auto-refresh every 10s, with version check
           page.dashboardInterval = setInterval(function () {
             checkForUpdate(function () {
               loadDashboard(page);
             });
-          }, 60000);
+          }, 10000);
         },
         pageBeforeIn: function (e, page) {
           updateDarkModeIcon();
