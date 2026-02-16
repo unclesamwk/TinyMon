@@ -8,7 +8,11 @@ services:
       - "8444:443"
     volumes:
       - .:/var/www/html
+      - data:/var/www/html/data
     env_file:
       - .env
     command: >
       bash -c "composer install --no-interaction && apache2-foreground"
+
+volumes:
+  data:
