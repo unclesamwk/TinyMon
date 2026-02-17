@@ -906,13 +906,6 @@ class CheckRunner
         string $address,
         array $config,
     ): array {
-        if ($this->isBlockedAddress($address)) {
-            return [
-                "status" => "critical",
-                "value" => null,
-                "message" => "Blocked: private/reserved IP",
-            ];
-        }
         $port = $config["port"] ?? 443;
         $mount = $config["mount"] ?? "/stream";
         $warningListeners = $config["warning_listeners"] ?? 0;
