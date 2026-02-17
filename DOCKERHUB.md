@@ -93,6 +93,14 @@ curl -X POST https://mon.example.com/api/push/results \
   -d '{"host_address": "web-1", "check_type": "backup", "status": "ok", "value": 42, "message": "Backup completed in 42s"}'
 ```
 
+## Ecosystem
+
+| Project | Description |
+|---|---|
+| [Docker Agent](https://github.com/unclesamwk/tinymon-docker-agent) | Monitors Docker containers via labels, pushes status to Push API |
+| [K8s Operator](https://github.com/unclesamwk/tinymon-operator) | Monitors Kubernetes nodes, deployments, ingresses, PVCs, backups |
+| [Terraform Provider](https://github.com/unclesamwk/terraform-provider-tinymon) | Manage hosts and checks as code |
+
 ## Source Code
 
 [GitHub: unclesamwk/TinyMon](https://github.com/unclesamwk/TinyMon)
