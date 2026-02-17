@@ -22,7 +22,7 @@ class AlertHelper
     ): ?string {
         if ($status === "ok") {
             $prev = $db->fetchRow(
-                "SELECT status FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT 1 OFFSET 1",
+                "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 1 OFFSET 1",
                 [$checkId],
             );
             if ($prev && $prev["status"] !== "ok") {
@@ -32,7 +32,7 @@ class AlertHelper
         }
 
         $lastN = $db->fetchAll(
-            "SELECT status FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT ?",
+            "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT ?",
             [$checkId, $threshold],
         );
 
@@ -46,7 +46,7 @@ class AlertHelper
         }
 
         $before = $db->fetchRow(
-            "SELECT status FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT 1 OFFSET ?",
+            "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 1 OFFSET ?",
             [$checkId, $threshold],
         );
 
