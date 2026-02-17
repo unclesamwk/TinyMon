@@ -907,6 +907,10 @@ class CheckRunner
         array $config,
     ): array {
         $host = $config["host"] ?? $address;
+        // Strip k8s:// prefix — extract real hostname
+        if (preg_match('#^k8s://(.+)$#', $host, $m)) {
+            $host = $m[1];
+        }
         $port = $config["port"] ?? 443;
         $mount = $config["mount"] ?? "/stream";
         $warningListeners = $config["warning_listeners"] ?? 0;
