@@ -4,6 +4,7 @@ namespace App\controllers\api;
 
 use App\services\WebPushService;
 use App\services\AlertService;
+use App\services\AlertHelper;
 use Flight;
 use OpenApi\Attributes as OA;
 
@@ -885,22 +886,25 @@ class PushController
             return ["error" => "Check not found"];
         }
 
-        // Get previous status for change detection
-        $prevResult = $db->fetchRow(
-            "SELECT status FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT 1",
-            [$check["id"]],
-        );
-        $prevStatus = $prevResult["status"] ?? null;
-
         $db->runQuery(
             "INSERT INTO check_results (check_id, status, value, message) VALUES (?, ?, ?, ?)",
             [$check["id"], $status, $value, $message],
         );
 
-        $statusChanged = $prevStatus !== null && $prevStatus !== $status;
+        // Alert threshold support
+        $thresholdRow = $db->fetchRow(
+            "SELECT value FROM settings WHERE key = 'alert_threshold'",
+        );
+        $alertThreshold = max(1, (int) ($thresholdRow["value"] ?? 1));
 
-        // Send notifications on status change
-        if ($statusChanged) {
+        $prevStatus = AlertHelper::shouldAlert(
+            $db,
+            $check["id"],
+            $status,
+            $alertThreshold,
+        );
+
+        if ($prevStatus !== null) {
             $hostRow = $db->fetchRow("SELECT name FROM hosts WHERE id = ?", [
                 $host["id"],
             ]);
@@ -930,7 +934,7 @@ class PushController
             "check_id" => $check["id"],
             "status" => $status,
             "value" => $value,
-            "status_changed" => $statusChanged,
+            "status_changed" => $prevStatus !== null,
             "previous_status" => $prevStatus,
         ];
     }

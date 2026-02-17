@@ -77,6 +77,26 @@ Flight::route("GET /api/checks/@id/results", [
     "results",
 ]);
 
+// Settings
+Flight::route("GET /api/settings/alert-threshold", function () {
+    $db = Flight::db();
+    $row = $db->fetchRow(
+        "SELECT value FROM settings WHERE key = 'alert_threshold'",
+    );
+    Flight::json(["value" => (int) ($row["value"] ?? 1)]);
+});
+
+Flight::route("PUT /api/settings/alert-threshold", function () {
+    $db = Flight::db();
+    $value = max(1, (int) (Flight::request()->data->value ?? 1));
+    $db->runQuery(
+        "INSERT INTO settings (key, value) VALUES ('alert_threshold', ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        [$value],
+    );
+    Flight::json(["value" => $value]);
+});
+
 // Notifications (Web Push)
 Flight::route("GET /api/notifications/vapid-key", [
     NotificationController::class,

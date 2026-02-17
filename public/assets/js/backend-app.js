@@ -193,6 +193,8 @@ var translations = {
     push_test_failed: "Senden fehlgeschlagen (%d Fehler).",
     push_no_subs: "Keine aktiven Push-Subscriptions vorhanden.",
     push_test_error: "Fehler beim Senden der Test-Benachrichtigung.",
+    alert_threshold: "Alert Threshold",
+    alert_threshold_saved: "Alert Threshold gespeichert",
     not_checked_yet: "Noch nicht geprüft",
     add_check: "Check hinzufügen",
     delete_host_btn: "Host löschen",
@@ -320,6 +322,8 @@ var translations = {
     push_test_failed: "Sending failed (%d errors).",
     push_no_subs: "No active push subscriptions.",
     push_test_error: "Error sending test notification.",
+    alert_threshold: "Alert Threshold",
+    alert_threshold_saved: "Alert threshold saved",
     not_checked_yet: "Not checked yet",
     add_check: "Add check",
     delete_host_btn: "Delete host",
@@ -2138,6 +2142,27 @@ var app = new Framework7({
                     : t("never"),
                 );
             });
+
+          // Alert Threshold
+          fetch("/api/settings/alert-threshold")
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              page.$el.find("#settings-alert-threshold").val(data.value || 1);
+            });
+
+          page.$el.find("#settings-alert-threshold").on("change", function () {
+            var val = Math.max(1, parseInt(this.value) || 1);
+            this.value = val;
+            fetch("/api/settings/alert-threshold", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ value: val }),
+            }).then(function () {
+              showToast(t("alert_threshold_saved"));
+            });
+          });
 
           // Push Notifications toggle
           var pushToggle = page.$el.find("#settings-push")[0];

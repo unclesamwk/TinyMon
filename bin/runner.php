@@ -5,6 +5,7 @@ require __DIR__ . "/../vendor/autoload.php";
 use App\services\Database;
 use App\services\CheckRunner;
 use App\services\AlertService;
+use App\services\AlertHelper;
 use App\services\WebPushService;
 
 // Ensure we run from project root
@@ -39,13 +40,25 @@ $db->exec("PRAGMA foreign_keys=ON");
 $runner = new CheckRunner($db);
 $results = $runner->runDue();
 
-// Send alerts for status changes
+// Send alerts with threshold support
 $alertService = new AlertService($config["smtp"], $config["alert_recipients"]);
 $pushService = new WebPushService($db, $config);
 
+$thresholdRow = $db->fetchRow(
+    "SELECT value FROM settings WHERE key = 'alert_threshold'",
+);
+$alertThreshold = max(1, (int) ($thresholdRow["value"] ?? 1));
+
 $alertCount = 0;
 foreach ($results as $result) {
-    if (!empty($result["status_changed"])) {
+    $prevStatus = AlertHelper::shouldAlert(
+        $db,
+        $result["check_id"],
+        $result["status"],
+        $alertThreshold,
+    );
+    if ($prevStatus !== null) {
+        $result["previous_status"] = $prevStatus;
         $alertService->sendAlert($result);
         $pushService->sendAll($result);
         $alertCount++;
