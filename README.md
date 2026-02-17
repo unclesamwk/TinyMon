@@ -265,6 +265,33 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 - **API Docs:** zircote/swagger-php (OpenAPI 3)
 - **Deploy:** Docker or bare metal / shared hosting
 
+## Docker Agent
+
+For Docker hosts, the [Docker Agent](https://github.com/unclesamwk/tinymon-docker-agent) monitors containers via labels -- similar to how the K8s operator monitors deployments via annotations:
+
+```yaml
+services:
+  tinymon-agent:
+    image: unclesamwk/tinymon-docker-agent
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TINYMON_URL: "https://mon.example.com"
+      TINYMON_API_KEY: "your-push-api-key"
+      AGENT_NAME: "prod-docker-01"
+
+  web:
+    image: nginx
+    labels:
+      tinymon.enable: "true"
+      tinymon.name: "Webserver"
+      tinymon.http.url: "https://example.com/health"
+      tinymon.certificate.host: "example.com"
+```
+
+The agent discovers containers with `tinymon.enable=true`, pushes their status to the Push API, and optionally creates HTTP and certificate checks (pull mode). Full documentation and label reference in the [agent repository](https://github.com/unclesamwk/tinymon-docker-agent).
+
 ## Ideas
 
 - **SSH Checks** -- Connect to remote hosts via SSH and run checks there (disk, load, memory, custom scripts). No agent required, just SSH access. Extends the pull model to remote systems.

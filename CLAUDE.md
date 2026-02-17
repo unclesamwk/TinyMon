@@ -66,4 +66,5 @@ Runner cronjob (pull checks): `php bin/runner.php`
 ## Related Repos
 
 - **tinymon-operator**: K8s operator that pushes node/deployment/ingress/PVC/backup status
+- **tinymon-docker-agent**: Docker agent that monitors containers via labels and pushes status to Push API
 - **terraform-provider-tinymon**: Terraform provider for managing hosts and checks as code
