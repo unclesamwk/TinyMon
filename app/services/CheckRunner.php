@@ -906,6 +906,7 @@ class CheckRunner
         string $address,
         array $config,
     ): array {
+        $host = $config["host"] ?? $address;
         $port = $config["port"] ?? 443;
         $mount = $config["mount"] ?? "/stream";
         $warningListeners = $config["warning_listeners"] ?? 0;
@@ -917,7 +918,7 @@ class CheckRunner
             ($scheme === "http" && $port === 80)
                 ? ""
                 : ":" . $port;
-        $url = $scheme . "://" . $address . $portSuffix . "/status-json.xsl";
+        $url = $scheme . "://" . $host . $portSuffix . "/status-json.xsl";
 
         $ch = curl_init();
         curl_setopt_array($ch, [
