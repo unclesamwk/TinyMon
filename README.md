@@ -88,6 +88,15 @@ Alerts fire only on **status transitions** -- no repeated spam while something i
 - Multi-language (EN / DE)
 - PWA-ready, pull-to-refresh
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/login.png" width="200" alt="Login">
+  <img src="docs/screenshots/dashboard.png" width="200" alt="Dashboard">
+  <img src="docs/screenshots/checks.png" width="200" alt="Checks">
+  <img src="docs/screenshots/settings.png" width="200" alt="Settings">
+</p>
+
 ## Getting Started
 
 ### Option A: Docker
