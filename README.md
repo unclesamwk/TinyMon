@@ -265,6 +265,35 @@ The OpenAPI spec is auto-generated from PHP attributes and always reflects the c
 - **API Docs:** zircote/swagger-php (OpenAPI 3)
 - **Deploy:** Docker or bare metal / shared hosting
 
+## Kubernetes Operator
+
+For Kubernetes clusters, the [Kubernetes Operator](https://github.com/unclesamwk/tinymon-operator) watches your cluster resources and pushes their status to TinyMon via the Push API:
+
+| Resource | Check Type | What it reports |
+|----------|-----------|-----------------|
+| Nodes | `k8s_node` | Conditions (Ready, MemoryPressure, DiskPressure, PIDPressure) |
+| Deployments | `k8s_deployment` | Replica availability, rollout status |
+| StatefulSets | `k8s_statefulset` | Replica availability, rollout status |
+| DaemonSets | `k8s_daemonset` | Scheduled vs. ready pods, misscheduled pods |
+| Ingresses | `k8s_ingress` | Configuration status, TLS, load balancer assignment |
+| PVCs | `k8s_pvc` | Bound status, capacity |
+| CronJobs | `k8s_cronjob` | Last schedule time, active jobs, failed job detection |
+| Backup schedules | `k8s_backup` | Velero backup schedule status, last backup time |
+
+```bash
+helm repo add tinymon https://unclesamwk.github.io/tinymon-operator
+helm repo update
+
+helm install tinymon-operator tinymon/tinymon-operator \
+  --namespace tinymon-operator \
+  --create-namespace \
+  --set config.tinymonUrl=https://mon.example.com \
+  --set config.pushApiKey=your-push-api-key \
+  --set config.clusterName=my-cluster
+```
+
+The operator auto-discovers resources via Kubernetes informers (real-time) and periodic full syncs, pushes status updates in bulk, and creates checks in TinyMon automatically. Exclude resources with the `tinymon.io/ignore: "true"` annotation. Full documentation and configuration options in the [operator repository](https://github.com/unclesamwk/tinymon-operator).
+
 ## Docker Agent
 
 For Docker hosts, the [Docker Agent](https://github.com/unclesamwk/tinymon-docker-agent) monitors containers via labels -- similar to how the K8s operator monitors deployments via annotations:
