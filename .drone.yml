@@ -108,10 +108,7 @@ steps:
         - git fetch origin --tags --force
         - git checkout "$${DRONE_TAG}"
         - bash deploy.sh "$${DRONE_TAG}"
-        - printf 'APP_DEBUG=false\nADMIN_PASSWORD=demo\nPUSH_API_KEY=\n' > .env
-        - cat .env
-        - ls -la .env data/
-        - php -r "require 'vendor/autoload.php'; Dotenv\Dotenv::createImmutable('/html/tinymon-demo')->load(); var_dump(\$_ENV);" 2>&1 || true
+        - echo -e "APP_DEBUG=false\nADMIN_PASSWORD=demo\nPUSH_API_KEY=" > .env
 
 ---
 kind: pipeline
