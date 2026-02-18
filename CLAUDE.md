@@ -57,6 +57,12 @@ docker compose up -d   # http://localhost:8001/backend
 
 Runner cronjob (pull checks): `php bin/runner.php`
 
+**Important:** No PHP installed locally. Always test PHP via Docker:
+```bash
+docker compose exec app php bin/runner.php
+docker compose exec app php bin/seed-demo.php
+```
+
 ## Versioning
 
 - Current version: v1.8.x

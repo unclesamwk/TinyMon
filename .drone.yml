@@ -109,6 +109,7 @@ steps:
         - git checkout "$${DRONE_TAG}"
         - bash deploy.sh "$${DRONE_TAG}"
         - echo -e "APP_DEBUG=false\nADMIN_PASSWORD=demo\nPUSH_API_KEY=" > .env
+        - php bin/seed-demo.php
 
 ---
 kind: pipeline
@@ -135,3 +136,4 @@ steps:
       script_stop: true
       script:
         - rm -f /html/tinymon-demo/data/tinymon.sqlite
+        - cd /html/tinymon-demo && php bin/seed-demo.php
