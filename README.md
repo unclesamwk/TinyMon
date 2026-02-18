@@ -350,4 +350,4 @@ TinyMon is provided as-is, without warranty of any kind. Use at your own risk. T
 
 ## License
 
-MIT
+[MIT](LICENSE)
