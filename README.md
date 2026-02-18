@@ -6,7 +6,8 @@
 
 <p align="center">
   <strong>The minimalist alternative to Prometheus, Nagios & Co.</strong><br>
-  Pull checks. Push API. One SQLite file. Zero overhead.
+  Pull checks. Push API. One SQLite file. Zero overhead.<br><br>
+  <a href="https://demo.p-q8g5ns.project.space/backend"><strong>Live Demo</strong></a> (password: <code>demo</code>)
 </p>
 
 ---
@@ -96,6 +97,8 @@ Alerts fire only on **status transitions** -- no repeated spam while something i
   <img src="docs/screenshots/checks.png" width="200" alt="Checks">
   <img src="docs/screenshots/settings.png" width="200" alt="Settings">
 </p>
+
+> **Try it yourself:** [Live Demo](https://demo.p-q8g5ns.project.space/backend) -- password: `demo`. The demo resets daily.
 
 ## Getting Started
 
