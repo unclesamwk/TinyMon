@@ -201,10 +201,15 @@ var translations = {
     no_alerts: "Keine Alert-Events vorhanden.",
     load_more: "Mehr laden",
     not_checked_yet: "Noch nicht geprüft",
+    check_history: "Alert-Verlauf",
+    details: "Details",
+    history: "Alerts",
     add_check: "Check hinzufügen",
     delete_host_btn: "Host löschen",
     "7_days": "7 Tage",
     "30_days": "30 Tage",
+    update_available: "Update verfügbar",
+    update_instructions: "Update-Anleitung",
     password: "Passwort",
     login: "Anmelden",
   },
@@ -335,10 +340,15 @@ var translations = {
     no_alerts: "No alert events recorded.",
     load_more: "Load more",
     not_checked_yet: "Not checked yet",
+    check_history: "Alert History",
+    details: "Details",
+    history: "Alerts",
     add_check: "Add check",
     delete_host_btn: "Delete host",
     "7_days": "7 Days",
     "30_days": "30 Days",
+    update_available: "Update available",
+    update_instructions: "Update instructions",
     password: "Password",
     login: "Log in",
   },
@@ -515,16 +525,55 @@ function timeAgo(dateStr) {
   return Math.floor(diff / 86400) + t("d_ago");
 }
 
+var openHosts = (function () {
+  try {
+    return JSON.parse(localStorage.getItem("openHosts") || "[]");
+  } catch (e) {
+    return [];
+  }
+})();
+
+function isHostOpen(hostId) {
+  return openHosts.indexOf(hostId) !== -1;
+}
+
+function renderStatusDots(counts) {
+  var html = '<span class="status-dots">';
+  if (counts.ok > 0) html += '<span style="color:#4cd964;">' + counts.ok + "●</span>";
+  if (counts.warning > 0) html += '<span style="color:#ff9500;">' + counts.warning + "●</span>";
+  if (counts.critical > 0) html += '<span style="color:#ff3b30;">' + counts.critical + "●</span>";
+  if (counts.unknown > 0) html += '<span style="color:#8e8e93;">' + counts.unknown + "●</span>";
+  html += "</span>";
+  return html;
+}
+
 function renderHostListItem(h) {
   var cs =
     h.checks && h.checks.length > 0
       ? h.checks.length + " " + (h.checks.length > 1 ? t("checks") : t("check"))
       : t("no_checks");
-  var li = '<li class="swipeout" data-host-id="' + h.id + '">';
-  li +=
-    '<a href="#" class="item-link item-content swipeout-content host-link" data-host-id="' +
-    h.id +
-    '">';
+  var lastChecked = null;
+  if (h.checks && h.checks.length > 0) {
+    h.checks.forEach(function (c) {
+      if (c.last_result && c.last_result.checked_at) {
+        if (!lastChecked || c.last_result.checked_at > lastChecked) {
+          lastChecked = c.last_result.checked_at;
+        }
+      }
+    });
+  }
+  var hasChecks = h.checks && h.checks.length > 0;
+  var hostOpened = (hasChecks && (dashboardFilter || isHostOpen(String(h.id)))) ? " accordion-item-opened" : "";
+  var checkCounts = { ok: 0, warning: 0, critical: 0, unknown: 0 };
+  if (hasChecks) {
+    h.checks.forEach(function (c) {
+      var st = c.last_result ? c.last_result.status : "unknown";
+      checkCounts[st] = (checkCounts[st] || 0) + 1;
+    });
+  }
+
+  var li = '<li class="accordion-item' + hostOpened + '" data-host-id="' + h.id + '">';
+  li += '<a class="item-link item-content" href="#">';
   li += '<div class="item-media">' + statusBadge(h.status) + "</div>";
   li +=
     '<div class="item-inner"><div class="item-title-row"><div class="item-title">' +
@@ -532,20 +581,54 @@ function renderHostListItem(h) {
     "</div>";
   li +=
     '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
-    cs +
+    cs + renderStatusDots(checkCounts) +
     "</div>";
   li += "</div>";
   li +=
     '<div class="item-subtitle" style="color:gray;">' +
-    escHtml(h.address) +
-    "</div>";
+    escHtml(h.address);
+  if (lastChecked) {
+    li +=
+      ' <span style="font-size:0.7rem; opacity:0.6;">· ' +
+      timeAgo(lastChecked) +
+      "</span>";
+  }
+  li += "</div>";
   li += "</div></a>";
-  li +=
-    '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-host color-red swipeout-close" data-host-id="' +
-    h.id +
-    '">' +
-    t("delete") +
-    "</a></div>";
+
+  if (hasChecks) {
+    li += '<div class="accordion-item-content">';
+    li += '<div class="host-checks-sublist">';
+    li += '<div class="list media-list" style="margin:0;"><ul>';
+    h.checks.forEach(function (c) {
+      var lr = c.last_result;
+      var st = lr ? lr.status : "unknown";
+      var color = statusColors[st] || statusColors.unknown;
+      var checkTitle = typeLabel(c.type);
+      if (c.type === "icecast_listeners" || c.type === "disk" || c.type === "disk_health") {
+        var parsedCfg = {};
+        try { parsedCfg = typeof c.config === "string" ? JSON.parse(c.config || "{}") : c.config || {}; } catch (e) {}
+        if (c.type === "icecast_listeners") { checkTitle += " " + (parsedCfg.mount || "/stream"); }
+        else if (parsedCfg.mount) { checkTitle += " " + parsedCfg.mount; }
+        else if (parsedCfg.device) { checkTitle += " " + parsedCfg.device; }
+      }
+      li += '<li>';
+      li += '<a href="/check-history/' + c.id + '/" class="item-link item-content" data-check-id="' + c.id + '">';
+      li += '<div class="item-media"><i class="icon ' + iconClass() + '" style="color:' + color + '; font-size:16px;">' + typeIcon(c.type) + '</i></div>';
+      li += '<div class="item-inner"><div class="item-title-row">';
+      li += '<div class="item-title" style="font-size:0.8rem;">' + escHtml(checkTitle) + '</div>';
+      li += '<div class="item-after">' + statusBadge(st) + '</div></div>';
+      li += '<div class="item-subtitle" style="color:gray; font-size:0.75rem;">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
+      li += '</div></a></li>';
+    });
+    li += '</ul></div>';
+    li += '<div style="padding:0.25rem 1rem 0.5rem; text-align:right;">';
+    li += '<a href="#" class="link host-detail-link" data-host-id="' + h.id + '" style="font-size:0.75rem; color:var(--f7-theme-color);">' + t("details") + ' &rarr;</a>';
+    li += '</div>';
+    li += '</div>';
+    li += '</div>';
+  }
+
   li += "</li>";
   return li;
 }
@@ -601,9 +684,21 @@ function renderDashboard(page) {
   });
 
   if (dashboardFilter) {
-    hosts = hosts.filter(function (h) {
-      return h.status === dashboardFilter;
-    });
+    hosts = hosts
+      .map(function (h) {
+        var matchingChecks = (h.checks || []).filter(function (c) {
+          var st = c.last_result ? c.last_result.status : "unknown";
+          return st === dashboardFilter;
+        });
+        if (matchingChecks.length === 0) return null;
+        var filtered = {};
+        for (var k in h) filtered[k] = h[k];
+        filtered.checks = matchingChecks;
+        return filtered;
+      })
+      .filter(function (h) {
+        return h !== null;
+      });
   }
 
   var runnerEl = page.$el.find("#runner-status");
@@ -670,6 +765,21 @@ function renderDashboard(page) {
       return count;
     }
 
+    function statusSummary(node) {
+      var counts = { ok: 0, warning: 0, critical: 0, unknown: 0 };
+      node.hosts.forEach(function (h) {
+        counts[h.status] = (counts[h.status] || 0) + 1;
+      });
+      Object.keys(node.children).forEach(function (key) {
+        var sub = statusSummary(node.children[key]);
+        counts.ok += sub.ok;
+        counts.warning += sub.warning;
+        counts.critical += sub.critical;
+        counts.unknown += sub.unknown;
+      });
+      return counts;
+    }
+
     function collapsePath(node) {
       var groups = [];
       var childKeys = Object.keys(node.children).sort();
@@ -716,9 +826,18 @@ function renderDashboard(page) {
         var child = group.node;
         var groupStatus = treeStatus(child);
         var hostCount = countHosts(child);
+        var counts = statusSummary(child);
         var subGroups = collapsePath(child);
         var hasSubGroups = subGroups.length > 0;
-        var opened = isTopicOpen(group.label) ? " accordion-item-opened" : "";
+        var opened = (dashboardFilter || isTopicOpen(group.label)) ? " accordion-item-opened" : "";
+        var borderColor = statusColors[groupStatus] || statusColors.unknown;
+
+        if (depth === 0) {
+          out +=
+            '<div class="topic-group" style="border-left:4px solid ' +
+            borderColor +
+            ';"><div class="list accordion-list media-list"><ul>';
+        }
 
         out +=
           '<li class="accordion-item' +
@@ -726,16 +845,17 @@ function renderDashboard(page) {
           '" data-topic="' +
           escHtml(group.label) +
           '">';
+        var headerPad = indent > 0 ? ' style="padding-left:' + indent + 'rem;"' : "";
         out +=
-          '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
-          indent +
-          'rem;">';
+          '<a class="item-link item-content topic-header" href="#"' +
+          headerPad +
+          ">";
         out += '<div class="item-media">' + statusBadge(groupStatus) + "</div>";
         out += '<div class="item-inner"><div class="item-title-row">';
         out +=
-          '<div class="item-title" style="font-weight:700; font-size:' +
-          (depth === 0 ? "0.9rem" : "0.85rem") +
-          '; text-transform:uppercase; letter-spacing:0.5px;">' +
+          '<div class="item-title" style="font-weight:600; font-size:' +
+          (depth === 0 ? "1rem" : "0.9rem") +
+          ';">' +
           escHtml(group.label) +
           "</div>";
         out +=
@@ -743,15 +863,13 @@ function renderDashboard(page) {
           hostCount +
           " " +
           (hostCount > 1 ? t("hosts") : t("host")) +
+          renderStatusDots(counts) +
           "</div>";
         out += "</div></div></a>";
         out += '<div class="accordion-item-content">';
 
         if (child.hosts.length > 0) {
-          out +=
-            '<div class="list media-list" style="padding-left:' +
-            indent +
-            'rem;"><ul>';
+          out += '<div class="list accordion-list media-list"><ul>';
           child.hosts.forEach(function (h) {
             out += renderHostListItem(h);
           });
@@ -765,30 +883,43 @@ function renderDashboard(page) {
         }
 
         out += "</div></li>";
+
+        if (depth === 0) {
+          out += "</ul></div></div>";
+        }
       });
 
       if (node.hosts.length > 0 && groups.length > 0) {
         var ungroupedStatus =
           node.hosts.length > 0 ? node.hosts[0].status : "unknown";
-        for (var i = 1; i < node.hosts.length; i++) {
-          ungroupedStatus = worseStatus(ungroupedStatus, node.hosts[i].status);
+        var ungroupedCounts = { ok: 0, warning: 0, critical: 0, unknown: 0 };
+        for (var i = 0; i < node.hosts.length; i++) {
+          if (i > 0) ungroupedStatus = worseStatus(ungroupedStatus, node.hosts[i].status);
+          ungroupedCounts[node.hosts[i].status] = (ungroupedCounts[node.hosts[i].status] || 0) + 1;
         }
-        var ungroupedOpened = isTopicOpen("__general__")
+        var ungroupedBorderColor = statusColors[ungroupedStatus] || statusColors.unknown;
+        var ungroupedOpened = (dashboardFilter || isTopicOpen("__general__"))
           ? " accordion-item-opened"
           : "";
+
+        if (depth === 0) {
+          out +=
+            '<div class="topic-group" style="border-left:4px solid ' +
+            ungroupedBorderColor +
+            ';"><div class="list accordion-list media-list"><ul>';
+        }
+
         out +=
           '<li class="accordion-item' +
           ungroupedOpened +
           '" data-topic="__general__">';
         out +=
-          '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
-          indent +
-          'rem;">';
+          '<a class="item-link item-content topic-header" href="#">';
         out +=
           '<div class="item-media">' + statusBadge(ungroupedStatus) + "</div>";
         out += '<div class="item-inner"><div class="item-title-row">';
         out +=
-          '<div class="item-title" style="font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">' +
+          '<div class="item-title" style="font-weight:600; font-size:1rem;">' +
           t("general") +
           "</div>";
         out +=
@@ -796,17 +927,19 @@ function renderDashboard(page) {
           node.hosts.length +
           " " +
           (node.hosts.length > 1 ? t("hosts") : t("host")) +
+          renderStatusDots(ungroupedCounts) +
           "</div>";
         out += "</div></div></a>";
         out += '<div class="accordion-item-content">';
-        out +=
-          '<div class="list media-list" style="padding-left:' +
-          indent +
-          'rem;"><ul>';
+        out += '<div class="list accordion-list media-list"><ul>';
         node.hosts.forEach(function (h) {
           out += renderHostListItem(h);
         });
         out += "</ul></div></div></li>";
+
+        if (depth === 0) {
+          out += "</ul></div></div>";
+        }
       }
 
       return out;
@@ -816,15 +949,13 @@ function renderDashboard(page) {
     var childKeys = Object.keys(tree.children);
 
     if (childKeys.length === 0 && tree.hosts.length > 0) {
-      html = '<div class="list media-list"><ul>';
+      html = '<div class="topic-group"><div class="list accordion-list media-list"><ul>';
       tree.hosts.forEach(function (h) {
         html += renderHostListItem(h);
       });
-      html += "</ul></div>";
+      html += "</ul></div></div>";
     } else {
-      html = '<div class="list accordion-list media-list"><ul>';
-      html += renderTree(tree, 0);
-      html += "</ul></div>";
+      html = renderTree(tree, 0);
     }
   }
   page.$el.find("#host-list").html(html);
@@ -848,8 +979,28 @@ function renderDashboard(page) {
     localStorage.setItem("openTopics", JSON.stringify(open));
   });
 
-  page.$el.find(".host-link").on("click", function (ev) {
+  page.$el.find(".accordion-item[data-host-id]").on("accordion:opened", function () {
+    var hostId = this.dataset.hostId;
+    var open = (function () {
+      try { return JSON.parse(localStorage.getItem("openHosts") || "[]"); }
+      catch (e) { return []; }
+    })();
+    if (open.indexOf(hostId) === -1) open.push(hostId);
+    localStorage.setItem("openHosts", JSON.stringify(open));
+  });
+  page.$el.find(".accordion-item[data-host-id]").on("accordion:closed", function () {
+    var hostId = this.dataset.hostId;
+    var open = (function () {
+      try { return JSON.parse(localStorage.getItem("openHosts") || "[]"); }
+      catch (e) { return []; }
+    })();
+    open = open.filter(function (id) { return id !== hostId; });
+    localStorage.setItem("openHosts", JSON.stringify(open));
+  });
+
+  page.$el.find(".host-detail-link").on("click", function (ev) {
     ev.preventDefault();
+    ev.stopPropagation();
     app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
   });
 
@@ -935,9 +1086,11 @@ function loadHostDetail(page, hostId) {
               : JSON.stringify(c.config || {});
           html += '<li class="swipeout" data-check-id="' + c.id + '">';
           html +=
-            '<div class="item-content swipeout-content check-card" data-check-id="' +
+            '<a href="/check-history/' +
             c.id +
-            '" style="cursor:pointer;">';
+            '/" class="item-link item-content swipeout-content check-card" data-check-id="' +
+            c.id +
+            '">';
           html +=
             '<div class="item-media"><i class="icon ' +
             iconClass() +
@@ -967,13 +1120,6 @@ function loadHostDetail(page, hostId) {
               checkTitle += " " + parsedCfg.device;
             }
           }
-          var valueStr = "";
-          if (lr && lr.value != null) {
-            valueStr =
-              '<span style="font-weight:600; font-size:0.95rem;">' +
-              lr.value +
-              "</span> ";
-          }
           html +=
             '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="font-size:0.85rem; font-weight:600;">' +
             escHtml(checkTitle) +
@@ -989,11 +1135,12 @@ function loadHostDetail(page, hostId) {
             html += timeAgo(lr.checked_at);
             html += "</div>";
           }
+          html += "</div></a>";
           var btnStyle = "font-size:0.75rem; padding:0 8px; line-height:28px;";
           var icoSize = app.theme === "ios" ? "12px" : "14px";
           var icoStyle = "font-size:" + icoSize + "; vertical-align:middle;";
           html +=
-            '<div class="item-text" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:6px; align-items:center;">';
+            '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; padding:0 1rem 0.5rem; align-items:center;">';
           html +=
             '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
@@ -1049,7 +1196,7 @@ function loadHostDetail(page, hostId) {
             '">' +
             iconHtml("trash", "delete", icoStyle) +
             "</a>";
-          html += "</div></div></div>";
+          html += "</div>";
           html +=
             '<div class="check-chart-container" id="chart-container-' +
             c.id +
@@ -1593,6 +1740,58 @@ function checkForUpdate(callback) {
     });
 }
 
+// Check GitHub for latest release, cache for 1 hour
+function checkGitHubUpdate(callback) {
+  var cacheKey = "ghLatestVersion";
+  var cacheTimeKey = "ghLatestVersionCheckedAt";
+  var cacheUrl = "ghLatestVersionUrl";
+  var now = Date.now();
+  var lastCheck = parseInt(localStorage.getItem(cacheTimeKey) || "0", 10);
+
+  if (now - lastCheck < 3600000) {
+    var cached = localStorage.getItem(cacheKey);
+    if (cached && callback) {
+      var current = (APP_VERSION || "").replace(/^v/, "");
+      var latest = cached.replace(/^v/, "");
+      callback({
+        latest: cached,
+        current: APP_VERSION,
+        hasUpdate: latest !== current && current !== "dev",
+        url: localStorage.getItem(cacheUrl) || "",
+      });
+    }
+    return;
+  }
+
+  fetch(
+    "https://api.github.com/repos/unclesamwk/TinyMon/tags?per_page=1",
+  )
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (data) {
+      if (Array.isArray(data) && data.length > 0 && data[0].name) {
+        var tagName = data[0].name;
+        var tagUrl =
+          "https://github.com/unclesamwk/TinyMon/releases/tag/" + tagName;
+        localStorage.setItem(cacheKey, tagName);
+        localStorage.setItem(cacheTimeKey, String(now));
+        localStorage.setItem(cacheUrl, tagUrl);
+        var current = (APP_VERSION || "").replace(/^v/, "");
+        var latest = tagName.replace(/^v/, "");
+        if (callback) {
+          callback({
+            latest: tagName,
+            current: APP_VERSION,
+            hasUpdate: latest !== current && current !== "dev",
+            url: tagUrl,
+          });
+        }
+      }
+    })
+    .catch(function () {});
+}
+
 // Cache buster for SPA page templates
 var pageV = "?v=" + (APP_CACHE_BUSTER || APP_VERSION || Date.now());
 
@@ -1605,7 +1804,13 @@ var app = new Framework7({
   name: "TinyMon",
   theme: themePref === "auto" ? "auto" : themePref,
   darkMode: initialDarkMode,
-  view: { iosSwipeBack: true, mdSwipeBack: true },
+  view: {
+    iosSwipeBack: true,
+    mdSwipeBack: true,
+    browserHistory: true,
+    browserHistoryRoot: "/backend",
+    browserHistorySeparator: "",
+  },
   routes: [
     // Home / Dashboard
     {
@@ -1627,6 +1832,25 @@ var app = new Framework7({
             ev.preventDefault();
             app.views.main.router.navigate("/hosts/new/");
           });
+
+          // GitHub update check
+          checkGitHubUpdate(function (info) {
+            if (info && info.hasUpdate) {
+              page.$el.find("#update-badge").show();
+              page.$el.find("#update-badge").on("click", function (ev) {
+                ev.preventDefault();
+                app.dialog.alert(
+                  t("update_available") +
+                    ": <b>" +
+                    escHtml(info.latest) +
+                    "</b><br>" +
+                    '<a href="https://github.com/unclesamwk/TinyMon#updating" target="_blank" class="external">' + t("update_instructions") + "</a>",
+                  "Update",
+                );
+              });
+            }
+          });
+
           page.$el.find(".ptr-content").on("ptr:refresh", function () {
             checkForUpdate(function () {
               loadDashboard(page);
@@ -1777,11 +2001,6 @@ var app = new Framework7({
                 );
             }
           }
-
-          page.$el.on("click", ".check-card", function (ev) {
-            if (ev.target.closest("a")) return;
-            toggleChart(this.dataset.checkId);
-          });
 
           page.$el.on("click", ".toggle-chart", function (ev) {
             ev.preventDefault();
@@ -2464,6 +2683,126 @@ var app = new Framework7({
             offset += limit;
             loadAlerts(true);
           });
+        },
+      },
+    },
+    // Check Alert History
+    {
+      path: "/check-history/:checkId/",
+      url: "/assets/js/pages/check-history.html" + pageV,
+      on: {
+        pageInit: function (e, page) {
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
+          var checkId = page.route.params.checkId;
+          var offset = 0;
+          var limit = 50;
+
+          function loadAlerts(append) {
+            fetch(
+              "/api/alert-log?check_id=" +
+                checkId +
+                "&limit=" +
+                limit +
+                "&offset=" +
+                offset,
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(function (data) {
+                var items = data.items || [];
+                var html = "";
+
+                if (items.length === 0 && offset === 0) {
+                  html =
+                    '<div class="block text-align-center" style="color:gray; padding:2rem;">' +
+                    t("no_alerts") +
+                    "</div>";
+                  page.$el.find("#check-history-list").html(html);
+                  return;
+                }
+
+                items.forEach(function (entry) {
+                  var sent = entry.alert_sent === 1;
+                  var badgeColor = sent ? "#4cd964" : "#8e8e93";
+                  var badgeLabel = sent
+                    ? t("alert_sent")
+                    : t("alert_suppressed");
+                  var prevColor =
+                    statusColors[entry.previous_status] ||
+                    statusColors.unknown;
+                  var newColor =
+                    statusColors[entry.new_status] ||
+                    statusColors.unknown;
+
+                  html +=
+                    '<div class="block" style="margin:0.5rem 1rem; padding:0.75rem; ' +
+                    "border-radius:8px; border-left:4px solid " +
+                    badgeColor +
+                    '; background:var(--f7-block-bg-color, #fff);">';
+                  html +=
+                    '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                  html +=
+                    '<div style="font-size:0.8rem;">';
+                  html +=
+                    '<span style="color:' +
+                    prevColor +
+                    ';">' +
+                    entry.previous_status.toUpperCase() +
+                    "</span>";
+                  html += " &rarr; ";
+                  html +=
+                    '<span style="color:' +
+                    newColor +
+                    ';">' +
+                    entry.new_status.toUpperCase() +
+                    "</span>";
+                  html += "</div>";
+                  html +=
+                    '<span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; ' +
+                    "background:" +
+                    badgeColor +
+                    '; color:white;">' +
+                    badgeLabel +
+                    "</span>";
+                  html += "</div>";
+                  if (entry.suppression_reason) {
+                    html +=
+                      '<div style="font-size:0.75rem; color:gray; margin-top:2px;">' +
+                      escHtml(entry.suppression_reason) +
+                      "</div>";
+                  }
+                  html +=
+                    '<div style="font-size:0.7rem; color:gray; margin-top:4px;">' +
+                    timeAgo(entry.created_at) +
+                    "</div>";
+                  html += "</div>";
+                });
+
+                if (append) {
+                  page.$el.find("#check-history-list").append(html);
+                } else {
+                  page.$el.find("#check-history-list").html(html);
+                }
+
+                if (offset + items.length < data.total) {
+                  page.$el.find("#check-history-load-more").show();
+                } else {
+                  page.$el.find("#check-history-load-more").hide();
+                }
+              });
+          }
+
+          loadAlerts(false);
+
+          page.$el
+            .find("#check-history-load-more-btn")
+            .on("click", function () {
+              offset += limit;
+              loadAlerts(true);
+            });
         },
       },
     },

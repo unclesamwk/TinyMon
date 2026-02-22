@@ -41,12 +41,52 @@ $isDebug = !empty($debug);
         .if-ios, .if-md { display: none !important; }
         .ios .if-ios, .md .if-md { display: inherit !important; }
         .ios .if-md, .md .if-ios { display: none !important; }
+        .topic-group {
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: var(--f7-list-bg-color, #fff);
+        }
+        .ios .dark .topic-group, .ios.dark .topic-group,
+        .md .dark .topic-group, .md.dark .topic-group {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .topic-group .list { margin: 0; }
+        .topic-group .list ul {
+            background: transparent;
+            padding: 0;
+        }
+        .topic-group .list ul::before,
+        .topic-group .list ul::after { display: none; }
+        .topic-group .accordion-item-content .list { margin: 0; }
+        .topic-group .accordion-item-content .list ul { padding: 0; }
         .topic-header {
-            background: #e8e8ed;
+            background: rgba(0,0,0,0.03);
         }
         .ios .dark .topic-header, .ios.dark .topic-header,
         .md .dark .topic-header, .md.dark .topic-header {
-            background: #3a3a3c;
+            background: rgba(255,255,255,0.05);
+        }
+        .topic-header .item-inner::after { display: none; }
+        .status-dots { display: inline-flex; gap: 6px; font-size: 0.7rem; margin-left: 0.5rem; }
+        .status-dots span { display: inline-flex; align-items: center; gap: 1px; }
+        .host-checks-sublist {
+            margin-left: 1.5rem;
+            border-left: 2px solid rgba(0,0,0,0.08);
+            background: rgba(0,0,0,0.02);
+        }
+        .host-checks-sublist .list ul::before,
+        .host-checks-sublist .list ul::after { display: none; }
+        .host-checks-sublist .list ul { background: transparent; }
+        .ios .dark .host-checks-sublist, .ios.dark .host-checks-sublist,
+        .md .dark .host-checks-sublist, .md.dark .host-checks-sublist {
+            border-left-color: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+        }
+        .topic-group .accordion-item { border-left: none; }
+        .topic-group .item-inner::after {
+            left: 0 !important;
         }
         .ios .dark, .ios.dark,
         .md .dark, .md.dark {

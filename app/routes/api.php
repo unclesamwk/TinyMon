@@ -102,13 +102,26 @@ Flight::route("GET /api/alert-log", function () {
     $db = Flight::db();
     $limit = min((int) (Flight::request()->query->limit ?? 50), 200);
     $offset = max(0, (int) (Flight::request()->query->offset ?? 0));
+    $checkId = Flight::request()->query->check_id ?? null;
+
+    $where = "";
+    $params = [];
+    if ($checkId !== null) {
+        $where = " WHERE check_id = ?";
+        $params[] = (int) $checkId;
+    }
 
     $logs = $db->fetchAll(
-        "SELECT * FROM alert_log ORDER BY created_at DESC LIMIT ? OFFSET ?",
-        [$limit, $offset],
+        "SELECT * FROM alert_log" .
+            $where .
+            " ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        array_merge($params, [$limit, $offset]),
     );
 
-    $total = $db->fetchRow("SELECT COUNT(*) as count FROM alert_log");
+    $total = $db->fetchRow(
+        "SELECT COUNT(*) as count FROM alert_log" . $where,
+        $params,
+    );
 
     Flight::json([
         "items" => $logs,

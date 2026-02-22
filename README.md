@@ -84,7 +84,11 @@ Alerts fire only on **status transitions** -- no repeated spam while something i
 
 - Mobile-first SPA (Framework7, iOS-style)
 - Status overview across all hosts at a glance
+- Expandable hosts -- tap to see all checks inline with status icons
+- Status filter on check level -- filter by ok / warning / critical, auto-expands all groups
+- Alert history per check -- tap a check to see its status transitions
 - Charts per check (24h, 7d, 30d) with threshold zones
+- Update indicator -- notifies when a new version is available with link to update instructions
 - Dark mode (auto / on / off)
 - Multi-language (EN / DE)
 - PWA-ready, pull-to-refresh
@@ -208,6 +212,34 @@ curl -X POST https://mon.example.com/api/push/hosts \
 ```
 
 The `config` field in bulk push results allows multiple checks of the same type per host. Checks are matched by `host_address` + `check_type` + `config`. If no matching check exists, it is auto-created.
+
+## Updating
+
+TinyMon shows an update indicator in the dashboard navbar when a new version is available. To update:
+
+### Docker
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### Kubernetes (Helm)
+
+```bash
+helm repo update
+helm upgrade tinymon tinymon/tinymon
+```
+
+### Shared Hosting / Bare Metal
+
+```bash
+cd /path/to/TinyMon
+git pull
+composer install --no-dev --optimize-autoloader
+```
+
+Database migrations run automatically on startup -- no manual steps required.
 
 ## Terraform Provider
 
