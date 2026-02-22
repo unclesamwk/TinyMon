@@ -7,7 +7,8 @@ class AlertHelper
     /**
      * Determine whether an alert should be sent for this check result.
      *
-     * Recovery (status = "ok") alerts immediately when the previous result was non-ok.
+     * Recovery (status = "ok") alerts only when the previous consecutive non-ok
+     * streak was at least $threshold long (i.e. a non-ok alert was actually sent).
      * Non-ok alerts only fire after $threshold consecutive results with the same status,
      * and only once (the result before those N must have a different status).
      *
@@ -21,13 +22,30 @@ class AlertHelper
         int $threshold,
     ): ?string {
         if ($status === "ok") {
-            $prev = $db->fetchRow(
-                "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 1 OFFSET 1",
-                [$checkId],
+            // Count how many consecutive non-ok results precede this ok
+            // (offset 1 to skip the current result which is already inserted)
+            $recentResults = $db->fetchAll(
+                "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT ? OFFSET 1",
+                [$checkId, $threshold],
             );
-            if ($prev && $prev["status"] !== "ok") {
-                return $prev["status"];
+
+            if (empty($recentResults) || $recentResults[0]["status"] === "ok") {
+                return null;
             }
+
+            // Count consecutive non-ok from the top
+            $nonOkStreak = 0;
+            foreach ($recentResults as $row) {
+                if ($row["status"] === "ok") {
+                    break;
+                }
+                $nonOkStreak++;
+            }
+
+            if ($nonOkStreak >= $threshold) {
+                return $recentResults[0]["status"];
+            }
+
             return null;
         }
 
