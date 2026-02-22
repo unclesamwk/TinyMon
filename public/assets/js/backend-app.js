@@ -694,6 +694,18 @@ function renderDashboard(page) {
       return groups;
     }
 
+    var openTopics = (function () {
+      try {
+        return JSON.parse(localStorage.getItem("openTopics") || "[]");
+      } catch (e) {
+        return [];
+      }
+    })();
+
+    function isTopicOpen(label) {
+      return openTopics.indexOf(label) !== -1;
+    }
+
     function renderTree(node, depth) {
       var out = "";
       var groups = collapsePath(node);
@@ -706,8 +718,14 @@ function renderDashboard(page) {
         var hostCount = countHosts(child);
         var subGroups = collapsePath(child);
         var hasSubGroups = subGroups.length > 0;
+        var opened = isTopicOpen(group.label) ? " accordion-item-opened" : "";
 
-        out += '<li class="accordion-item accordion-item-opened">';
+        out +=
+          '<li class="accordion-item' +
+          opened +
+          '" data-topic="' +
+          escHtml(group.label) +
+          '">';
         out +=
           '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
           indent +
@@ -755,7 +773,13 @@ function renderDashboard(page) {
         for (var i = 1; i < node.hosts.length; i++) {
           ungroupedStatus = worseStatus(ungroupedStatus, node.hosts[i].status);
         }
-        out += '<li class="accordion-item accordion-item-opened">';
+        var ungroupedOpened = isTopicOpen("__general__")
+          ? " accordion-item-opened"
+          : "";
+        out +=
+          '<li class="accordion-item' +
+          ungroupedOpened +
+          '" data-topic="__general__">';
         out +=
           '<a class="item-link item-content topic-header" href="#" style="padding-left:' +
           indent +
@@ -804,6 +828,25 @@ function renderDashboard(page) {
     }
   }
   page.$el.find("#host-list").html(html);
+
+  page.$el.find(".accordion-item[data-topic]").on("accordion:opened", function () {
+    var topic = this.dataset.topic;
+    var open = (function () {
+      try { return JSON.parse(localStorage.getItem("openTopics") || "[]"); }
+      catch (e) { return []; }
+    })();
+    if (open.indexOf(topic) === -1) open.push(topic);
+    localStorage.setItem("openTopics", JSON.stringify(open));
+  });
+  page.$el.find(".accordion-item[data-topic]").on("accordion:closed", function () {
+    var topic = this.dataset.topic;
+    var open = (function () {
+      try { return JSON.parse(localStorage.getItem("openTopics") || "[]"); }
+      catch (e) { return []; }
+    })();
+    open = open.filter(function (t) { return t !== topic; });
+    localStorage.setItem("openTopics", JSON.stringify(open));
+  });
 
   page.$el.find(".host-link").on("click", function (ev) {
     ev.preventDefault();
