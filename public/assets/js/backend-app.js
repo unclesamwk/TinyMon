@@ -1745,8 +1745,19 @@ function checkGitHubUpdate(callback) {
   var cacheKey = "ghLatestVersion";
   var cacheTimeKey = "ghLatestVersionCheckedAt";
   var cacheUrl = "ghLatestVersionUrl";
+  var cacheAppVersion = "ghCheckedAppVersion";
   var now = Date.now();
   var lastCheck = parseInt(localStorage.getItem(cacheTimeKey) || "0", 10);
+  var prevAppVersion = localStorage.getItem(cacheAppVersion) || "";
+
+  // Invalidate cache if app version changed (after update/deploy)
+  if (prevAppVersion && prevAppVersion !== APP_VERSION) {
+    localStorage.removeItem(cacheKey);
+    localStorage.removeItem(cacheTimeKey);
+    localStorage.removeItem(cacheUrl);
+    lastCheck = 0;
+  }
+  localStorage.setItem(cacheAppVersion, APP_VERSION);
 
   if (now - lastCheck < 3600000) {
     var cached = localStorage.getItem(cacheKey);
