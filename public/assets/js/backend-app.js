@@ -1842,8 +1842,15 @@ var app = new Framework7({
           // GitHub update check
           checkGitHubUpdate(function (info) {
             if (info && info.hasUpdate) {
-              page.$el.find("#update-badge").show();
-              page.$el.find("#update-badge").on("click", function (ev) {
+              var navRight = page.$el.find(".navbar .right")[0];
+              var tmp = document.createElement("div");
+              tmp.innerHTML = '<a href="#" class="link icon-only" id="update-badge">' +
+                '<i class="icon f7-icons if-ios" style="color:#ff9500;">gift_fill</i>' +
+                '<i class="icon material-icons if-md" style="color:#ff9500;">new_releases</i>' +
+                '</a>';
+              var badge = tmp.firstChild;
+              navRight.insertBefore(badge, navRight.firstChild);
+              badge.addEventListener("click", function (ev) {
                 ev.preventDefault();
                 app.dialog.alert(
                   t("update_available") +
