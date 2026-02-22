@@ -41,6 +41,8 @@ $isDebug = !empty($debug);
         .if-ios, .if-md { display: none !important; }
         .ios .if-ios, .md .if-md { display: inherit !important; }
         .ios .if-md, .md .if-ios { display: none !important; }
+        .navbar .right { flex-shrink: 0; }
+        .navbar .right .link { padding: 0 8px; }
         .topic-group {
             border-radius: 10px;
             overflow: hidden;
