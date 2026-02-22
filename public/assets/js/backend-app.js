@@ -1818,12 +1818,7 @@ var app = new Framework7({
       url: "/assets/js/pages/home.html" + pageV,
       on: {
         pageInit: function (e, page) {
-          updateDarkModeIcon();
           loadDashboard(page);
-          page.$el.find("#toggle-dark").on("click", function (ev) {
-            ev.preventDefault();
-            toggleDarkMode();
-          });
           page.$el.find("#nav-settings").on("click", function (ev) {
             ev.preventDefault();
             app.views.main.router.navigate("/settings/");
