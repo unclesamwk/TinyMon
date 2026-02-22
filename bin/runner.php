@@ -57,11 +57,41 @@ foreach ($results as $result) {
         $result["status"],
         $alertThreshold,
     );
+
+    // Determine actual previous status for logging suppressed transitions
+    $lastTwo = $db->fetchAll(
+        "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 2",
+        [$result["check_id"]],
+    );
+    $actualPrevStatus = $lastTwo[1]["status"] ?? null;
+
     if ($prevStatus !== null) {
         $result["previous_status"] = $prevStatus;
         $alertService->sendAlert($result);
         $pushService->sendAll($result);
         $alertCount++;
+        AlertHelper::logAlert(
+            $db,
+            $result["check_id"],
+            $result["host_name"],
+            $result["address"] ?? "",
+            $result["type"],
+            $prevStatus,
+            $result["status"],
+            true,
+        );
+    } elseif ($actualPrevStatus !== null && $actualPrevStatus !== $result["status"]) {
+        AlertHelper::logAlert(
+            $db,
+            $result["check_id"],
+            $result["host_name"],
+            $result["address"] ?? "",
+            $result["type"],
+            $actualPrevStatus,
+            $result["status"],
+            false,
+            "threshold not met",
+        );
     }
 }
 

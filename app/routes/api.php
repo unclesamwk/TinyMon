@@ -97,6 +97,27 @@ Flight::route("PUT /api/settings/alert-threshold", function () {
     Flight::json(["value" => $value]);
 });
 
+// Alert Log
+Flight::route("GET /api/alert-log", function () {
+    $db = Flight::db();
+    $limit = min((int) (Flight::request()->query->limit ?? 50), 200);
+    $offset = max(0, (int) (Flight::request()->query->offset ?? 0));
+
+    $logs = $db->fetchAll(
+        "SELECT * FROM alert_log ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        [$limit, $offset],
+    );
+
+    $total = $db->fetchRow("SELECT COUNT(*) as count FROM alert_log");
+
+    Flight::json([
+        "items" => $logs,
+        "total" => (int) ($total["count"] ?? 0),
+        "limit" => $limit,
+        "offset" => $offset,
+    ]);
+});
+
 // Notifications (Web Push)
 Flight::route("GET /api/notifications/vapid-key", [
     NotificationController::class,

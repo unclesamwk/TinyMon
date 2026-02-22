@@ -39,6 +39,11 @@ class CheckRunner
             "DELETE FROM check_results WHERE checked_at < datetime('now', '-30 days')",
         );
 
+        // Cleanup old alert log entries (>30 days)
+        $this->db->runQuery(
+            "DELETE FROM alert_log WHERE created_at < datetime('now', '-30 days')",
+        );
+
         return $results;
     }
 

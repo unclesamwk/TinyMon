@@ -904,6 +904,13 @@ class PushController
             $alertThreshold,
         );
 
+        // Determine actual previous status for logging suppressed transitions
+        $lastTwo = $db->fetchAll(
+            "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 2",
+            [$check["id"]],
+        );
+        $actualPrevStatus = $lastTwo[1]["status"] ?? null;
+
         if ($prevStatus !== null) {
             $hostRow = $db->fetchRow("SELECT name FROM hosts WHERE id = ?", [
                 $host["id"],
@@ -928,6 +935,32 @@ class PushController
                 $config["alert_recipients"],
             );
             $alertService->sendAlert($alertData);
+
+            AlertHelper::logAlert(
+                $db,
+                $check["id"],
+                $hostRow["name"] ?? $hostAddress,
+                $hostAddress,
+                $checkType,
+                $prevStatus,
+                $status,
+                true,
+            );
+        } elseif ($actualPrevStatus !== null && $actualPrevStatus !== $status) {
+            $hostRow = $db->fetchRow("SELECT name FROM hosts WHERE id = ?", [
+                $host["id"],
+            ]);
+            AlertHelper::logAlert(
+                $db,
+                $check["id"],
+                $hostRow["name"] ?? $hostAddress,
+                $hostAddress,
+                $checkType,
+                $actualPrevStatus,
+                $status,
+                false,
+                "threshold not met",
+            );
         }
 
         return [

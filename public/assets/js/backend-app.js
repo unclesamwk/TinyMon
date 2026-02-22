@@ -195,6 +195,11 @@ var translations = {
     push_test_error: "Fehler beim Senden der Test-Benachrichtigung.",
     alert_threshold: "Alert-Schwelle",
     alert_threshold_saved: "Alert-Schwelle gespeichert",
+    alert_history: "Alert-Verlauf",
+    alert_sent: "Gesendet",
+    alert_suppressed: "Unterdr\u00fcckt",
+    no_alerts: "Keine Alert-Events vorhanden.",
+    load_more: "Mehr laden",
     not_checked_yet: "Noch nicht geprüft",
     add_check: "Check hinzufügen",
     delete_host_btn: "Host löschen",
@@ -324,6 +329,11 @@ var translations = {
     push_test_error: "Error sending test notification.",
     alert_threshold: "Alert Threshold",
     alert_threshold_saved: "Alert threshold saved",
+    alert_history: "Alert History",
+    alert_sent: "Sent",
+    alert_suppressed: "Suppressed",
+    no_alerts: "No alert events recorded.",
+    load_more: "Load more",
     not_checked_yet: "Not checked yet",
     add_check: "Add check",
     delete_host_btn: "Delete host",
@@ -2287,6 +2297,129 @@ var app = new Framework7({
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
+          });
+
+          page.$el.find("#alert-history-link").on("click", function (ev) {
+            ev.preventDefault();
+            app.views.main.router.navigate("/alert-log/");
+          });
+        },
+      },
+    },
+    // Alert History
+    {
+      path: "/alert-log/",
+      url: "/assets/js/pages/alert-log.html" + pageV,
+      on: {
+        pageInit: function (e, page) {
+          page.$el.find("[data-i18n]").each(function () {
+            this.textContent = t(this.dataset.i18n);
+          });
+          var offset = 0;
+          var limit = 50;
+
+          function loadAlerts(append) {
+            fetch(
+              "/api/alert-log?limit=" + limit + "&offset=" + offset,
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(function (data) {
+                var items = data.items || [];
+                var html = "";
+
+                if (items.length === 0 && offset === 0) {
+                  html =
+                    '<div class="block text-align-center" style="color:gray; padding:2rem;">' +
+                    t("no_alerts") +
+                    "</div>";
+                  page.$el.find("#alert-log-list").html(html);
+                  return;
+                }
+
+                items.forEach(function (entry) {
+                  var sent = entry.alert_sent === 1;
+                  var badgeColor = sent ? "#4cd964" : "#8e8e93";
+                  var badgeLabel = sent
+                    ? t("alert_sent")
+                    : t("alert_suppressed");
+                  var prevColor =
+                    statusColors[entry.previous_status] ||
+                    statusColors.unknown;
+                  var newColor =
+                    statusColors[entry.new_status] ||
+                    statusColors.unknown;
+
+                  html +=
+                    '<div class="block" style="margin:0.5rem 1rem; padding:0.75rem; ' +
+                    "border-radius:8px; border-left:4px solid " +
+                    badgeColor +
+                    '; background:var(--f7-block-bg-color, #fff);">';
+                  html +=
+                    '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                  html +=
+                    '<div style="font-weight:600; font-size:0.9rem;">' +
+                    escHtml(entry.host_name) +
+                    " / " +
+                    escHtml(entry.check_type) +
+                    "</div>";
+                  html +=
+                    '<span style="font-size:0.75rem; padding:2px 8px; border-radius:10px; ' +
+                    "background:" +
+                    badgeColor +
+                    '; color:white;">' +
+                    badgeLabel +
+                    "</span>";
+                  html += "</div>";
+                  html +=
+                    '<div style="font-size:0.8rem; margin-top:4px;">';
+                  html +=
+                    '<span style="color:' +
+                    prevColor +
+                    ';">' +
+                    entry.previous_status.toUpperCase() +
+                    "</span>";
+                  html += " &rarr; ";
+                  html +=
+                    '<span style="color:' +
+                    newColor +
+                    ';">' +
+                    entry.new_status.toUpperCase() +
+                    "</span>";
+                  html += "</div>";
+                  if (entry.suppression_reason) {
+                    html +=
+                      '<div style="font-size:0.75rem; color:gray; margin-top:2px;">' +
+                      escHtml(entry.suppression_reason) +
+                      "</div>";
+                  }
+                  html +=
+                    '<div style="font-size:0.7rem; color:gray; margin-top:4px;">' +
+                    timeAgo(entry.created_at) +
+                    "</div>";
+                  html += "</div>";
+                });
+
+                if (append) {
+                  page.$el.find("#alert-log-list").append(html);
+                } else {
+                  page.$el.find("#alert-log-list").html(html);
+                }
+
+                if (offset + items.length < data.total) {
+                  page.$el.find("#alert-log-load-more").show();
+                } else {
+                  page.$el.find("#alert-log-load-more").hide();
+                }
+              });
+          }
+
+          loadAlerts(false);
+
+          page.$el.find("#load-more-btn").on("click", function () {
+            offset += limit;
+            loadAlerts(true);
           });
         },
       },

@@ -74,4 +74,31 @@ class AlertHelper
 
         return null;
     }
+
+    public static function logAlert(
+        Database $db,
+        int $checkId,
+        string $hostName,
+        string $hostAddress,
+        string $checkType,
+        string $previousStatus,
+        string $newStatus,
+        bool $alertSent,
+        ?string $suppressionReason = null,
+    ): void {
+        $db->runQuery(
+            "INSERT INTO alert_log (check_id, host_name, host_address, check_type, previous_status, new_status, alert_sent, suppression_reason)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $checkId,
+                $hostName,
+                $hostAddress,
+                $checkType,
+                $previousStatus,
+                $newStatus,
+                $alertSent ? 1 : 0,
+                $suppressionReason,
+            ],
+        );
+    }
 }

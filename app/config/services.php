@@ -87,6 +87,29 @@ if (!in_array("topic", $colNames, true)) {
     $pdo->exec("ALTER TABLE hosts ADD COLUMN topic TEXT DEFAULT ''");
 }
 
+// Ensure alert_log table exists (migration)
+$pdo->exec("
+    CREATE TABLE IF NOT EXISTS alert_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        check_id INTEGER NOT NULL,
+        host_name TEXT NOT NULL,
+        host_address TEXT NOT NULL,
+        check_type TEXT NOT NULL,
+        previous_status TEXT NOT NULL,
+        new_status TEXT NOT NULL,
+        alert_sent INTEGER NOT NULL DEFAULT 0,
+        suppression_reason TEXT DEFAULT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (check_id) REFERENCES checks(id) ON DELETE CASCADE
+    )
+");
+$pdo->exec(
+    "CREATE INDEX IF NOT EXISTS idx_alert_log_created_at ON alert_log(created_at DESC)",
+);
+$pdo->exec(
+    "CREATE INDEX IF NOT EXISTS idx_alert_log_check_id ON alert_log(check_id)",
+);
+
 // Cleanup old login attempts
 $pdo->exec(
     "DELETE FROM login_attempts WHERE attempted_at < datetime('now', '-1 hour')",
