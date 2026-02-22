@@ -62,7 +62,8 @@ steps:
         - if [ ! -d .git ]; then git init && git remote add origin "$$REPO_URL"; fi
         - git remote set-url origin "$$REPO_URL"
         - git fetch origin --tags --force
-        - git checkout "$${DRONE_TAG}"
+        - git clean -fd -e data/ -e .env -e vendor/
+        - git checkout -f "$${DRONE_TAG}"
         - bash deploy.sh "$${DRONE_TAG}"
 
 ---
@@ -106,7 +107,8 @@ steps:
         - if [ ! -d .git ]; then git init && git remote add origin "$$REPO_URL"; fi
         - git remote set-url origin "$$REPO_URL"
         - git fetch origin --tags --force
-        - git checkout "$${DRONE_TAG}"
+        - git clean -fd -e data/ -e .env -e vendor/
+        - git checkout -f "$${DRONE_TAG}"
         - bash deploy.sh "$${DRONE_TAG}"
         - echo -e "APP_DEBUG=false\nADMIN_PASSWORD=demo\nPUSH_API_KEY=" > .env
         - php bin/seed-demo.php
