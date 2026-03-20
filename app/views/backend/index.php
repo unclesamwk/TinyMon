@@ -81,22 +81,64 @@ $isDebug = !empty($debug);
             font-display: swap;
         }
 
+        /* Dashboard Pro — CSS Custom Properties */
+        :root {
+            --tm-bg-primary: #f4f4f5;
+            --tm-bg-card: #ffffff;
+            --tm-bg-card-header: #fafafa;
+            --tm-border: #d4d4d8;
+            --tm-text-primary: #18181b;
+            --tm-text-secondary: #71717a;
+            --tm-text-mono: #52525b;
+            --tm-font-mono: 'JetBrains Mono', monospace;
+            --tm-font-ui: 'DM Sans', sans-serif;
+            --tm-ok: #22c55e;
+            --tm-warning: #eab308;
+            --tm-critical: #ef4444;
+            --tm-unknown: #a1a1aa;
+            --f7-page-bg-color: var(--tm-bg-primary);
+            --f7-navbar-bg-color: var(--tm-bg-card);
+            --f7-toolbar-bg-color: var(--tm-bg-card);
+        }
+
+        /* Dark mode */
+        .ios .dark, .ios.dark,
+        .md .dark, .md.dark {
+            --tm-bg-primary: #0c0c0c;
+            --tm-bg-card: #141414;
+            --tm-bg-card-header: #1a1a1a;
+            --tm-border: #1e1e1e;
+            --tm-text-primary: #e0e0e0;
+            --tm-text-secondary: #555;
+            --tm-text-mono: #888;
+            --tm-unknown: #555;
+            --f7-page-bg-color: #0c0c0c;
+            --f7-bars-bg-color: #141414;
+            --f7-navbar-bg-color: #141414;
+            --f7-toolbar-bg-color: #141414;
+            --f7-list-bg-color: #141414;
+            --f7-list-strong-bg-color: #141414;
+            --f7-list-group-title-bg-color: #141414;
+            --f7-block-strong-bg-color: #141414;
+            --f7-glass-bg-color: #141414cc;
+            --f7-input-bg-color: transparent;
+            --f7-list-button-bg-color: #141414;
+        }
+
         /* Hide conditional icons until F7 sets theme class */
         .if-ios, .if-md { display: none !important; }
         .ios .if-ios, .md .if-md { display: inherit !important; }
         .ios .if-md, .md .if-ios { display: none !important; }
         .navbar .left, .navbar .right { flex-shrink: 0; }
         .navbar .right a + a { margin-left: 4px; }
+
+        /* Topic groups */
         .topic-group {
             border-radius: 10px;
             overflow: hidden;
             margin: 0.5rem 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            background: var(--f7-list-bg-color, #fff);
-        }
-        .ios .dark .topic-group, .ios.dark .topic-group,
-        .md .dark .topic-group, .md.dark .topic-group {
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid var(--tm-border);
+            background: var(--tm-bg-card);
         }
         .topic-group .list { margin: 0; }
         .topic-group .list ul {
@@ -108,45 +150,82 @@ $isDebug = !empty($debug);
         .topic-group .accordion-item-content .list { margin: 0; }
         .topic-group .accordion-item-content .list ul { padding: 0; }
         .topic-header {
-            background: rgba(0,0,0,0.03);
-        }
-        .ios .dark .topic-header, .ios.dark .topic-header,
-        .md .dark .topic-header, .md.dark .topic-header {
-            background: rgba(255,255,255,0.05);
+            background: var(--tm-bg-card-header);
         }
         .topic-header .item-inner::after { display: none; }
-        .status-dots { display: inline-flex; gap: 6px; font-size: 0.7rem; margin-left: 0.5rem; }
+        .status-dots { display: inline-flex; gap: 6px; font-size: 0.7rem; margin-left: 0.5rem; font-family: var(--tm-font-mono); }
         .status-dots span { display: inline-flex; align-items: center; gap: 1px; }
         .host-checks-sublist {
             margin-left: 1.5rem;
-            border-left: 2px solid rgba(0,0,0,0.08);
-            background: rgba(0,0,0,0.02);
+            border-left: 2px solid var(--tm-border);
+            background: var(--tm-bg-card-header);
         }
         .host-checks-sublist .list ul::before,
         .host-checks-sublist .list ul::after { display: none; }
         .host-checks-sublist .list ul { background: transparent; }
-        .ios .dark .host-checks-sublist, .ios.dark .host-checks-sublist,
-        .md .dark .host-checks-sublist, .md.dark .host-checks-sublist {
-            border-left-color: rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.03);
-        }
         .topic-group .accordion-item { border-left: none; }
         .topic-group .item-inner::after {
             left: 0 !important;
         }
-        .ios .dark, .ios.dark,
-        .md .dark, .md.dark {
-            --f7-page-bg-color: #1c1c1e;
-            --f7-bars-bg-color: #2c2c2e;
-            --f7-navbar-bg-color: #2c2c2e;
-            --f7-toolbar-bg-color: #2c2c2e;
-            --f7-list-bg-color: #2c2c2e;
-            --f7-list-strong-bg-color: #2c2c2e;
-            --f7-list-group-title-bg-color: #2c2c2e;
-            --f7-block-strong-bg-color: #2c2c2e;
-            --f7-glass-bg-color: #2c2c2ecc;
-            --f7-input-bg-color: transparent;
-            --f7-list-button-bg-color: #2c2c2e;
+
+        /* Summary tiles */
+        .summary-tiles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+            padding: 0.75rem;
+        }
+        @media (max-width: 399px) {
+            .summary-tiles { grid-template-columns: repeat(2, 1fr); }
+        }
+        .summary-tile {
+            background: var(--tm-bg-card);
+            border: 1px solid var(--tm-border);
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            transition: border-color 0.15s;
+        }
+
+        /* Sparklines */
+        .sparkline {
+            display: inline-flex;
+            align-items: flex-end;
+            gap: 1px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        .sparkline .bar {
+            width: 2px;
+            border-radius: 0.5px;
+            min-height: 1px;
+        }
+        @media (max-width: 479px) {
+            .sparkline { display: none; }
+        }
+
+        /* Value badge */
+        .value-badge {
+            font-family: var(--tm-font-mono);
+            font-size: 0.6rem;
+            color: var(--tm-text-mono);
+            background: var(--tm-bg-card-header);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            border: 1px solid var(--tm-border);
+            white-space: nowrap;
+        }
+
+        /* Uptime 24h */
+        .uptime-24h {
+            display: flex;
+            gap: 1px;
+            height: 8px;
+        }
+        .uptime-24h .uptime-block {
+            flex: 1;
+            border-radius: 1px;
+            min-width: 3px;
         }
     </style>
 </head>
