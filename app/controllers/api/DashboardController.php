@@ -153,6 +153,26 @@ class DashboardController
              ORDER BY c.host_id, c.id",
         );
 
+        // Sparkline data: last 20 results per check (batch via window function)
+        $sparkRows = $db->fetchAll(
+            "SELECT check_id, value, status FROM (
+                SELECT check_id, value, status,
+                       ROW_NUMBER() OVER (PARTITION BY check_id ORDER BY checked_at DESC) AS rn
+                FROM check_results
+                WHERE check_id IN (SELECT id FROM checks WHERE enabled = 1)
+                  AND checked_at >= datetime('now', '-2 hours')
+            ) WHERE rn <= 20
+            ORDER BY check_id, rn DESC",
+        );
+
+        $sparkByCheck = [];
+        foreach ($sparkRows as $sr) {
+            $sparkByCheck[$sr['check_id']][] = [
+                'value' => $sr['value'],
+                'status' => $sr['status'],
+            ];
+        }
+
         // Group checks by host_id
         $checksByHost = [];
         foreach ($rows as $row) {
@@ -173,6 +193,7 @@ class DashboardController
                 $row["result_checked_at"],
             );
             $row["last_result"] = $lastResult;
+            $row["recent_values"] = $sparkByCheck[$row["id"]] ?? [];
             $checksByHost[$hostId][] = $row;
         }
 

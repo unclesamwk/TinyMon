@@ -134,6 +134,84 @@ class HostController
             );
             $check["last_result"] = $lastResult;
         }
+        unset($check);
+
+        // Uptime 24h: worst status per hour per check (batch)
+        $checkIds = array_column($checks, 'id');
+        if (!empty($checkIds)) {
+            $placeholders = implode(',', array_fill(0, count($checkIds), '?'));
+            $uptimeRows = $db->fetchAll(
+                "SELECT check_id,
+                        strftime('%Y-%m-%d %H:00:00', checked_at) AS hour_bucket,
+                        CASE
+                          WHEN SUM(CASE WHEN status = 'critical' THEN 1 ELSE 0 END) > 0 THEN 'critical'
+                          WHEN SUM(CASE WHEN status = 'warning' THEN 1 ELSE 0 END) > 0 THEN 'warning'
+                          WHEN SUM(CASE WHEN status = 'unknown' THEN 1 ELSE 0 END) > 0 THEN 'unknown'
+                          ELSE 'ok'
+                        END AS worst_status
+                 FROM check_results
+                 WHERE check_id IN ($placeholders)
+                   AND checked_at >= datetime('now', '-24 hours')
+                 GROUP BY check_id, hour_bucket
+                 ORDER BY check_id, hour_bucket",
+                $checkIds
+            );
+
+            // Build lookup: check_id -> hour_bucket -> status
+            $uptimeByCheck = [];
+            foreach ($uptimeRows as $ur) {
+                $uptimeByCheck[$ur['check_id']][$ur['hour_bucket']] = $ur['worst_status'];
+            }
+
+            // Generate 24-slot arrays
+            $now = new \DateTime('now', new \DateTimeZone('UTC'));
+            $hours = [];
+            for ($i = 23; $i >= 0; $i--) {
+                $h = (clone $now)->modify("-{$i} hours");
+                $hours[] = $h->format('Y-m-d H:00:00');
+            }
+
+            // Build hour labels (UTC, HH:00 format) for frontend display
+            $hourLabels = [];
+            foreach ($hours as $hour) {
+                $hourLabels[] = substr($hour, 11, 5); // "HH:00"
+            }
+
+            foreach ($checks as &$check) {
+                $checkUptime = $uptimeByCheck[$check['id']] ?? [];
+                $uptime24h = [];
+                foreach ($hours as $hour) {
+                    $uptime24h[] = $checkUptime[$hour] ?? 'unknown';
+                }
+                $check['uptime_24h'] = $uptime24h;
+                $check['uptime_hours'] = $hourLabels;
+            }
+            unset($check);
+
+            // Sparkline data: last 20 results per check
+            $sparkRows = $db->fetchAll(
+                "SELECT check_id, value, status FROM (
+                    SELECT check_id, value, status,
+                           ROW_NUMBER() OVER (PARTITION BY check_id ORDER BY checked_at DESC) AS rn
+                    FROM check_results
+                    WHERE check_id IN ($placeholders)
+                      AND checked_at >= datetime('now', '-2 hours')
+                ) WHERE rn <= 20
+                ORDER BY check_id, rn DESC",
+                $checkIds
+            );
+            $sparkByCheck = [];
+            foreach ($sparkRows as $sr) {
+                $sparkByCheck[$sr['check_id']][] = [
+                    'value' => $sr['value'],
+                    'status' => $sr['status'],
+                ];
+            }
+            foreach ($checks as &$check) {
+                $check['recent_values'] = $sparkByCheck[$check['id']] ?? [];
+            }
+            unset($check);
+        }
 
         $host["checks"] = $checks;
         Flight::json($host);

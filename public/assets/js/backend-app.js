@@ -538,12 +538,68 @@ function isHostOpen(hostId) {
 }
 
 function renderStatusDots(counts) {
-  var html = '<span class="status-dots">';
+  var html = '<span class="status-dots" style="font-family:var(--tm-font-mono, monospace);">';
   if (counts.ok > 0) html += '<span style="color:#4cd964;">' + counts.ok + "●</span>";
   if (counts.warning > 0) html += '<span style="color:#ff9500;">' + counts.warning + "●</span>";
   if (counts.critical > 0) html += '<span style="color:#ff3b30;">' + counts.critical + "●</span>";
   if (counts.unknown > 0) html += '<span style="color:#8e8e93;">' + counts.unknown + "●</span>";
   html += "</span>";
+  return html;
+}
+
+function renderSparkline(recentValues) {
+  if (!recentValues || recentValues.length < 2) return '';
+  var vals = recentValues.map(function(r) { return r.value !== null && r.value !== undefined ? parseFloat(r.value) : null; });
+  var valid = vals.filter(function(v) { return v !== null && !isNaN(v); });
+  if (valid.length < 2) return '';
+  var min = Math.min.apply(null, valid);
+  var max = Math.max.apply(null, valid);
+  var html = '<span class="sparkline" aria-label="Recent values">';
+  recentValues.forEach(function(r) {
+    var v = r.value !== null && r.value !== undefined ? parseFloat(r.value) : null;
+    var pct = 10;
+    if (v !== null && !isNaN(v) && max > min) {
+      pct = Math.max(10, Math.min(100, ((v - min) / (max - min)) * 90 + 10));
+    } else if (v !== null && !isNaN(v)) {
+      pct = 50;
+    }
+    var color = 'var(--tm-' + (r.status || 'unknown') + ', #888)';
+    html += '<span class="bar" style="height:' + Math.round(pct) + '%;background:' + color + ';"></span>';
+  });
+  html += '</span>';
+  return html;
+}
+
+function renderValueBadge(check) {
+  var lr = check.last_result;
+  if (!lr || lr.value === null || lr.value === undefined) return '';
+  var val = parseFloat(lr.value);
+  if (isNaN(val)) return '';
+  var type = check.type;
+  var text = '';
+  if (type === 'ping' || type === 'http' || type === 'port') {
+    text = val < 1000 ? Math.round(val) + 'ms' : (val / 1000).toFixed(1) + 's';
+  } else if (type === 'certificate') {
+    text = Math.round(val) + 'd';
+  } else if (type === 'disk' || type === 'memory') {
+    text = val.toFixed(1) + '%';
+  } else if (type === 'load') {
+    text = val.toFixed(2);
+  } else {
+    return '';
+  }
+  return '<span class="value-badge">' + text + '</span>';
+}
+
+function renderUptime24h(uptime24h, uptimeHours) {
+  if (!uptime24h || uptime24h.length === 0) return '';
+  var html = '<div class="uptime-24h" aria-label="24 hour uptime">';
+  uptime24h.forEach(function(status, i) {
+    var timeStr = (uptimeHours && uptimeHours[i]) ? uptimeHours[i] + ' UTC' : '';
+    var color = 'var(--tm-' + (status || 'unknown') + ', #888)';
+    html += '<span class="uptime-block" style="background:' + color + ';" title="' + timeStr + ' — ' + status + '"></span>';
+  });
+  html += '</div>';
   return html;
 }
 
@@ -580,12 +636,12 @@ function renderHostListItem(h) {
     escHtml(h.name) +
     "</div>";
   li +=
-    '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+    '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
     cs + renderStatusDots(checkCounts) +
     "</div>";
   li += "</div>";
   li +=
-    '<div class="item-subtitle" style="color:gray;">' +
+    '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-family:var(--tm-font-ui, sans-serif);">' +
     escHtml(h.address);
   if (lastChecked) {
     li +=
@@ -617,8 +673,8 @@ function renderHostListItem(h) {
       li += '<div class="item-media"><i class="icon ' + iconClass() + '" style="color:' + color + '; font-size:16px;">' + typeIcon(c.type) + '</i></div>';
       li += '<div class="item-inner"><div class="item-title-row">';
       li += '<div class="item-title" style="font-size:0.8rem;">' + escHtml(checkTitle) + '</div>';
-      li += '<div class="item-after">' + statusBadge(st) + '</div></div>';
-      li += '<div class="item-subtitle" style="color:gray; font-size:0.75rem;">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
+      li += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
+      li += '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.75rem; font-family:var(--tm-font-mono, monospace);">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
       li += '</div></a></li>';
     });
     li += '</ul></div>';
@@ -646,34 +702,24 @@ function renderDashboard(page) {
   function filterBadge(status, count, color, label) {
     var active = dashboardFilter === status;
     var opacity = dashboardFilter && !active ? "0.4" : "1";
-    var border = active
-      ? "border-bottom:2px solid " + color
-      : "border-bottom:2px solid transparent";
+    var activeBorder = active ? color : "var(--tm-border, #d4d4d8)";
     return (
-      '<div class="status-filter" data-status="' +
+      '<div class="status-filter summary-tile" data-status="' +
       status +
-      '" style="cursor:pointer; padding:0.25rem 0.5rem; ' +
-      border +
-      "; opacity:" +
-      opacity +
-      ';">' +
-      '<div style="font-size:2rem; font-weight:bold; color:' +
-      color +
-      ';">' +
-      (count || 0) +
-      "</div>" +
-      '<div style="font-size:0.75rem; color:gray;">' +
-      label +
-      "</div></div>"
+      '" style="cursor:pointer; opacity:' + opacity +
+      '; border-color:' + activeBorder + ';">' +
+      '<div style="font-family:var(--tm-font-mono, monospace); font-size:1.8rem; font-weight:500; color:' + color +
+      '; letter-spacing:-0.03em;">' + (count || 0) + '</div>' +
+      '<div style="font-family:var(--tm-font-mono, monospace); font-size:0.6rem; color:var(--tm-text-secondary, gray); text-transform:uppercase; letter-spacing:0.06em;">' +
+      label + '</div></div>'
     );
   }
 
-  var s =
-    '<div style="display:flex; justify-content:space-around; text-align:center; margin:1rem 0; padding:0 1rem;">';
-  s += filterBadge("ok", summary.ok, "#4cd964", "OK");
-  s += filterBadge("warning", summary.warning, "#ff9500", "Warning");
-  s += filterBadge("critical", summary.critical, "#ff3b30", "Critical");
-  s += filterBadge("unknown", summary.unknown, "#8e8e93", "Unknown");
+  var s = '<div class="summary-tiles">';
+  s += filterBadge("ok", summary.ok, "var(--tm-ok, #22c55e)", "OK");
+  s += filterBadge("warning", summary.warning, "var(--tm-warning, #eab308)", "Warning");
+  s += filterBadge("critical", summary.critical, "var(--tm-critical, #ef4444)", "Critical");
+  s += filterBadge("unknown", summary.unknown, "var(--tm-unknown, #a1a1aa)", "Unknown");
   s += "</div>";
   page.$el.find("#dashboard-summary").html(s);
 
@@ -703,9 +749,9 @@ function renderDashboard(page) {
 
   var runnerEl = page.$el.find("#runner-status");
   if (data.runner_last_run) {
-    runnerEl.html(t("runner_prefix") + ": " + timeAgo(data.runner_last_run));
+    runnerEl.html('<span style="font-family:var(--tm-font-mono, monospace); font-size:0.7rem; color:var(--tm-text-secondary, gray);">' + t("runner_prefix") + ': ' + timeAgo(data.runner_last_run) + '</span>');
   } else {
-    runnerEl.html(t("runner_prefix") + ": " + t("runner_never"));
+    runnerEl.html('<span style="font-family:var(--tm-font-mono, monospace); font-size:0.7rem; color:var(--tm-text-secondary, gray);">' + t("runner_prefix") + ': ' + t("runner_never") + '</span>');
   }
 
   var html = "";
@@ -855,11 +901,11 @@ function renderDashboard(page) {
         out +=
           '<div class="item-title" style="font-weight:600; font-size:' +
           (depth === 0 ? "1rem" : "0.9rem") +
-          ';">' +
+          '; font-family:var(--tm-font-ui, sans-serif);">' +
           escHtml(group.label) +
           "</div>";
         out +=
-          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
           hostCount +
           " " +
           (hostCount > 1 ? t("hosts") : t("host")) +
@@ -919,11 +965,11 @@ function renderDashboard(page) {
           '<div class="item-media">' + statusBadge(ungroupedStatus) + "</div>";
         out += '<div class="item-inner"><div class="item-title-row">';
         out +=
-          '<div class="item-title" style="font-weight:600; font-size:1rem;">' +
+          '<div class="item-title" style="font-weight:600; font-size:1rem; font-family:var(--tm-font-ui, sans-serif);">' +
           t("general") +
           "</div>";
         out +=
-          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
           node.hosts.length +
           " " +
           (node.hosts.length > 1 ? t("hosts") : t("host")) +
@@ -1124,14 +1170,14 @@ function loadHostDetail(page, hostId) {
             '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="font-size:0.85rem; font-weight:600;">' +
             escHtml(checkTitle) +
             "</div>";
-          html += '<div class="item-after">' + statusBadge(st) + "</div></div>";
+          html += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
           html +=
-            '<div class="item-subtitle" style="color:gray; font-size:0.8rem;">';
+            '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">';
           html += lr ? escHtml(lr.message) : t("not_checked_yet");
           html += "</div>";
           if (lr) {
             html +=
-              '<div class="item-subtitle" style="color:gray; font-size:0.75rem; margin-top:2px;">';
+              '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.75rem; margin-top:2px; font-family:var(--tm-font-mono, monospace);">';
             html += timeAgo(lr.checked_at);
             html += "</div>";
           }
@@ -1197,6 +1243,7 @@ function loadHostDetail(page, hostId) {
             iconHtml("trash", "delete", icoStyle) +
             "</a>";
           html += "</div>";
+          html += '<div style="padding:0 1rem 0.25rem;">' + renderUptime24h(c.uptime_24h, c.uptime_hours) + '</div>';
           html +=
             '<div class="check-chart-container" id="chart-container-' +
             c.id +
