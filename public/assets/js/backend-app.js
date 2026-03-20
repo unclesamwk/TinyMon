@@ -591,6 +591,20 @@ function renderValueBadge(check) {
   return '<span class="value-badge">' + text + '</span>';
 }
 
+function renderUptime24h(uptime24h) {
+  if (!uptime24h || uptime24h.length === 0) return '';
+  var now = new Date();
+  var html = '<div class="uptime-24h" aria-label="24 hour uptime">';
+  uptime24h.forEach(function(status, i) {
+    var hour = new Date(now.getTime() - (23 - i) * 3600000);
+    var timeStr = hour.getHours().toString().padStart(2, '0') + ':00';
+    var color = 'var(--tm-' + (status || 'unknown') + ', #888)';
+    html += '<span class="uptime-block" style="background:' + color + ';" title="' + timeStr + ' — ' + status + '"></span>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderHostListItem(h) {
   var cs =
     h.checks && h.checks.length > 0
@@ -1158,7 +1172,7 @@ function loadHostDetail(page, hostId) {
             '<div class="item-inner"><div class="item-title-row"><div class="item-title" style="font-size:0.85rem; font-weight:600;">' +
             escHtml(checkTitle) +
             "</div>";
-          html += '<div class="item-after">' + statusBadge(st) + "</div></div>";
+          html += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
           html +=
             '<div class="item-subtitle" style="color:gray; font-size:0.8rem;">';
           html += lr ? escHtml(lr.message) : t("not_checked_yet");
@@ -1231,6 +1245,7 @@ function loadHostDetail(page, hostId) {
             iconHtml("trash", "delete", icoStyle) +
             "</a>";
           html += "</div>";
+          html += '<div style="padding:0 1rem 0.25rem;">' + renderUptime24h(c.uptime_24h) + '</div>';
           html +=
             '<div class="check-chart-container" id="chart-container-' +
             c.id +
