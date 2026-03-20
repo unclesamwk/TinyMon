@@ -591,13 +591,11 @@ function renderValueBadge(check) {
   return '<span class="value-badge">' + text + '</span>';
 }
 
-function renderUptime24h(uptime24h) {
+function renderUptime24h(uptime24h, uptimeHours) {
   if (!uptime24h || uptime24h.length === 0) return '';
-  var now = new Date();
   var html = '<div class="uptime-24h" aria-label="24 hour uptime">';
   uptime24h.forEach(function(status, i) {
-    var hour = new Date(now.getTime() - (23 - i) * 3600000);
-    var timeStr = hour.getHours().toString().padStart(2, '0') + ':00';
+    var timeStr = (uptimeHours && uptimeHours[i]) ? uptimeHours[i] + ' UTC' : '';
     var color = 'var(--tm-' + (status || 'unknown') + ', #888)';
     html += '<span class="uptime-block" style="background:' + color + ';" title="' + timeStr + ' — ' + status + '"></span>';
   });
@@ -1245,7 +1243,7 @@ function loadHostDetail(page, hostId) {
             iconHtml("trash", "delete", icoStyle) +
             "</a>";
           html += "</div>";
-          html += '<div style="padding:0 1rem 0.25rem;">' + renderUptime24h(c.uptime_24h) + '</div>';
+          html += '<div style="padding:0 1rem 0.25rem;">' + renderUptime24h(c.uptime_24h, c.uptime_hours) + '</div>';
           html +=
             '<div class="check-chart-container" id="chart-container-' +
             c.id +

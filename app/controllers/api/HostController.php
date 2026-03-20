@@ -171,6 +171,12 @@ class HostController
                 $hours[] = $h->format('Y-m-d H:00:00');
             }
 
+            // Build hour labels (UTC, HH:00 format) for frontend display
+            $hourLabels = [];
+            foreach ($hours as $hour) {
+                $hourLabels[] = substr($hour, 11, 5); // "HH:00"
+            }
+
             foreach ($checks as &$check) {
                 $checkUptime = $uptimeByCheck[$check['id']] ?? [];
                 $uptime24h = [];
@@ -178,6 +184,7 @@ class HostController
                     $uptime24h[] = $checkUptime[$hour] ?? 'unknown';
                 }
                 $check['uptime_24h'] = $uptime24h;
+                $check['uptime_hours'] = $hourLabels;
             }
             unset($check);
 
@@ -188,6 +195,7 @@ class HostController
                            ROW_NUMBER() OVER (PARTITION BY check_id ORDER BY checked_at DESC) AS rn
                     FROM check_results
                     WHERE check_id IN ($placeholders)
+                      AND checked_at >= datetime('now', '-2 hours')
                 ) WHERE rn <= 20
                 ORDER BY check_id, rn DESC",
                 $checkIds

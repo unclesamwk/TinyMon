@@ -160,6 +160,7 @@ class DashboardController
                        ROW_NUMBER() OVER (PARTITION BY check_id ORDER BY checked_at DESC) AS rn
                 FROM check_results
                 WHERE check_id IN (SELECT id FROM checks WHERE enabled = 1)
+                  AND checked_at >= datetime('now', '-2 hours')
             ) WHERE rn <= 20
             ORDER BY check_id, rn DESC",
         );
