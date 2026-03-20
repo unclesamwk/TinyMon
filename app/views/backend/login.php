@@ -22,23 +22,29 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
     <link rel="icon" type="image/svg+xml" href="/assets/images/logo.svg">
     <link rel="apple-touch-icon" href="/assets/images/logo.svg">
     <style>
+        @font-face { font-family: 'JetBrains Mono'; src: url('/assets/fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'DM Sans'; src: url('/assets/fonts/DMSans-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'DM Sans'; src: url('/assets/fonts/DMSans-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+        @font-face { font-family: 'DM Sans'; src: url('/assets/fonts/DMSans-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .login-card { background: white; border-radius: 8px; padding: 2rem; width: 100%; max-width: 360px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .login-card h1 { margin: 0 0 1.5rem; font-size: 1.4rem; text-align: center; color: inherit; }
+        body { font-family: 'DM Sans', sans-serif; margin: 0; background: #f4f4f5; color: #18181b; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-card { background: #fff; border: 1px solid #d4d4d8; border-radius: 10px; padding: 2rem; width: 100%; max-width: 360px; box-shadow: none; }
+        .login-card h1 { margin: 0 0 1.5rem; font-size: 1.4rem; text-align: center; color: inherit; font-family: 'DM Sans', sans-serif; font-weight: 700; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; font-size: 0.95rem; }
-        .form-group input { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; background: white; color: #333; }
-        .form-group input:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
-        .btn { display: block; width: 100%; padding: 0.75rem; background: #007aff; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 500; cursor: pointer; }
-        .btn:hover { background: #0056b3; }
+        .form-group input { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d4d4d8; border-radius: 6px; font-size: 1rem; background: #fff; color: #18181b; font-family: 'DM Sans', sans-serif; }
+        .form-group input:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.15); }
+        .btn { display: block; width: 100%; padding: 0.75rem; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 1rem; font-family: 'DM Sans', sans-serif; font-weight: 600; cursor: pointer; }
+        .btn:hover { background: #16a34a; }
         .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 0.6rem 0.8rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; }
+        .version-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #a1a1aa; }
         @media (prefers-color-scheme: dark) {
-            body { background: #1c1c1e; color: #f2f2f7; }
-            .login-card { background: #2c2c2e; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
-            .form-group input { background: #3a3a3c; color: #f2f2f7; border-color: #555; }
-            .form-group input[readonly] { background: #2a2a2c; }
-            .alert-error { background: #3a1c1e; color: #ff6b6b; border-color: #5a2c2e; }
+            body { background: #0c0c0c; color: #e0e0e0; }
+            .login-card { background: #141414; border-color: #1e1e1e; }
+            .form-group input { background: #1a1a1a; color: #e0e0e0; border-color: #1e1e1e; }
+            .form-group input:focus { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
+            .form-group input[readonly] { background: #1a1a1a; }
+            .alert-error { background: #1a1214; color: #ef4444; border-color: #2e1418; }
         }
     </style>
 </head>
@@ -64,7 +70,7 @@ $appVersion = file_exists(__DIR__ . "/../../../VERSION")
                 ? "Log in"
                 : "Anmelden" ?></button>
         </form>
-        <div style="text-align:center; margin-top:1rem; font-size:0.7rem; color:gray;"><?= htmlspecialchars(
+        <div class="version-label" style="text-align:center; margin-top:1rem;"><?= htmlspecialchars(
             $appVersion,
         ) ?></div>
     </div>
