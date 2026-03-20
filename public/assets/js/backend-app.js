@@ -538,7 +538,7 @@ function isHostOpen(hostId) {
 }
 
 function renderStatusDots(counts) {
-  var html = '<span class="status-dots">';
+  var html = '<span class="status-dots" style="font-family:var(--tm-font-mono, monospace);">';
   if (counts.ok > 0) html += '<span style="color:#4cd964;">' + counts.ok + "●</span>";
   if (counts.warning > 0) html += '<span style="color:#ff9500;">' + counts.warning + "●</span>";
   if (counts.critical > 0) html += '<span style="color:#ff3b30;">' + counts.critical + "●</span>";
@@ -638,12 +638,12 @@ function renderHostListItem(h) {
     escHtml(h.name) +
     "</div>";
   li +=
-    '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+    '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
     cs + renderStatusDots(checkCounts) +
     "</div>";
   li += "</div>";
   li +=
-    '<div class="item-subtitle" style="color:gray;">' +
+    '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-family:var(--tm-font-ui, sans-serif);">' +
     escHtml(h.address);
   if (lastChecked) {
     li +=
@@ -676,7 +676,7 @@ function renderHostListItem(h) {
       li += '<div class="item-inner"><div class="item-title-row">';
       li += '<div class="item-title" style="font-size:0.8rem;">' + escHtml(checkTitle) + '</div>';
       li += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
-      li += '<div class="item-subtitle" style="color:gray; font-size:0.75rem;">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
+      li += '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.75rem; font-family:var(--tm-font-mono, monospace);">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
       li += '</div></a></li>';
     });
     li += '</ul></div>';
@@ -903,11 +903,11 @@ function renderDashboard(page) {
         out +=
           '<div class="item-title" style="font-weight:600; font-size:' +
           (depth === 0 ? "1rem" : "0.9rem") +
-          ';">' +
+          '; font-family:var(--tm-font-ui, sans-serif);">' +
           escHtml(group.label) +
           "</div>";
         out +=
-          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
           hostCount +
           " " +
           (hostCount > 1 ? t("hosts") : t("host")) +
@@ -967,11 +967,11 @@ function renderDashboard(page) {
           '<div class="item-media">' + statusBadge(ungroupedStatus) + "</div>";
         out += '<div class="item-inner"><div class="item-title-row">';
         out +=
-          '<div class="item-title" style="font-weight:600; font-size:1rem;">' +
+          '<div class="item-title" style="font-weight:600; font-size:1rem; font-family:var(--tm-font-ui, sans-serif);">' +
           t("general") +
           "</div>";
         out +=
-          '<div class="item-after" style="color:gray; font-size:0.8rem;">' +
+          '<div class="item-after" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">' +
           node.hosts.length +
           " " +
           (node.hosts.length > 1 ? t("hosts") : t("host")) +
@@ -1174,12 +1174,12 @@ function loadHostDetail(page, hostId) {
             "</div>";
           html += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
           html +=
-            '<div class="item-subtitle" style="color:gray; font-size:0.8rem;">';
+            '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.8rem; font-family:var(--tm-font-mono, monospace);">';
           html += lr ? escHtml(lr.message) : t("not_checked_yet");
           html += "</div>";
           if (lr) {
             html +=
-              '<div class="item-subtitle" style="color:gray; font-size:0.75rem; margin-top:2px;">';
+              '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.75rem; margin-top:2px; font-family:var(--tm-font-mono, monospace);">';
             html += timeAgo(lr.checked_at);
             html += "</div>";
           }
