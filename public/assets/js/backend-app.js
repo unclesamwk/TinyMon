@@ -547,6 +547,50 @@ function renderStatusDots(counts) {
   return html;
 }
 
+function renderSparkline(recentValues) {
+  if (!recentValues || recentValues.length < 2) return '';
+  var vals = recentValues.map(function(r) { return r.value !== null && r.value !== undefined ? parseFloat(r.value) : null; });
+  var valid = vals.filter(function(v) { return v !== null && !isNaN(v); });
+  if (valid.length < 2) return '';
+  var min = Math.min.apply(null, valid);
+  var max = Math.max.apply(null, valid);
+  var html = '<span class="sparkline" aria-label="Recent values">';
+  recentValues.forEach(function(r) {
+    var v = r.value !== null && r.value !== undefined ? parseFloat(r.value) : null;
+    var pct = 10;
+    if (v !== null && !isNaN(v) && max > min) {
+      pct = Math.max(10, Math.min(100, ((v - min) / (max - min)) * 90 + 10));
+    } else if (v !== null && !isNaN(v)) {
+      pct = 50;
+    }
+    var color = 'var(--tm-' + (r.status || 'unknown') + ', #888)';
+    html += '<span class="bar" style="height:' + Math.round(pct) + '%;background:' + color + ';"></span>';
+  });
+  html += '</span>';
+  return html;
+}
+
+function renderValueBadge(check) {
+  var lr = check.last_result;
+  if (!lr || lr.value === null || lr.value === undefined) return '';
+  var val = parseFloat(lr.value);
+  if (isNaN(val)) return '';
+  var type = check.type;
+  var text = '';
+  if (type === 'ping' || type === 'http' || type === 'port') {
+    text = val < 1000 ? Math.round(val) + 'ms' : (val / 1000).toFixed(1) + 's';
+  } else if (type === 'certificate') {
+    text = Math.round(val) + 'd';
+  } else if (type === 'disk' || type === 'memory') {
+    text = val.toFixed(1) + '%';
+  } else if (type === 'load') {
+    text = val.toFixed(2);
+  } else {
+    return '';
+  }
+  return '<span class="value-badge">' + text + '</span>';
+}
+
 function renderHostListItem(h) {
   var cs =
     h.checks && h.checks.length > 0
@@ -617,7 +661,7 @@ function renderHostListItem(h) {
       li += '<div class="item-media"><i class="icon ' + iconClass() + '" style="color:' + color + '; font-size:16px;">' + typeIcon(c.type) + '</i></div>';
       li += '<div class="item-inner"><div class="item-title-row">';
       li += '<div class="item-title" style="font-size:0.8rem;">' + escHtml(checkTitle) + '</div>';
-      li += '<div class="item-after">' + statusBadge(st) + '</div></div>';
+      li += '<div class="item-after" style="display:flex;align-items:center;gap:6px;">' + renderSparkline(c.recent_values) + renderValueBadge(c) + statusBadge(st) + '</div></div>';
       li += '<div class="item-subtitle" style="color:gray; font-size:0.75rem;">' + (lr ? escHtml(lr.message) : t("not_checked_yet")) + '</div>';
       li += '</div></a></li>';
     });
