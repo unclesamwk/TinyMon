@@ -81,6 +81,12 @@ if ($isNew) {
 
         CREATE INDEX idx_labels_entity ON labels(entity_type, entity_id);
         CREATE INDEX idx_labels_key_value ON labels(key, value);
+
+        CREATE TRIGGER trg_host_delete_labels
+        AFTER DELETE ON hosts
+        BEGIN
+            DELETE FROM labels WHERE entity_type = 'host' AND entity_id = OLD.id;
+        END;
     ");
 }
 
@@ -164,6 +170,13 @@ $pdo->exec(
 $pdo->exec(
     "CREATE INDEX IF NOT EXISTS idx_labels_key_value ON labels(key, value)",
 );
+$pdo->exec("
+    CREATE TRIGGER IF NOT EXISTS trg_host_delete_labels
+    AFTER DELETE ON hosts
+    BEGIN
+        DELETE FROM labels WHERE entity_type = 'host' AND entity_id = OLD.id;
+    END
+");
 
 // Cleanup old login attempts
 $pdo->exec(

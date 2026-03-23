@@ -1032,29 +1032,49 @@ class PushController
             $value = (float) $value;
         }
 
-        // Look up check by slug
+        // Look up check by slug, auto-create on first push (with transaction for race safety)
         $check = $db->fetchRow(
             "SELECT c.id, c.host_id FROM checks c WHERE c.slug = ?",
             [$slug],
         );
 
-        // Auto-create host + check on first push
         if (!$check) {
-            $hostAddress = "push://" . $slug;
-            $hostName = $name ?? $slug;
+            $db->beginTransaction();
+            try {
+                // Re-check inside transaction
+                $check = $db->fetchRow(
+                    "SELECT c.id, c.host_id FROM checks c WHERE c.slug = ?",
+                    [$slug],
+                );
+                if (!$check) {
+                    $hostAddress = "push://" . $slug;
+                    $hostName = $name ?? $slug;
 
-            $db->runQuery(
-                "INSERT INTO hosts (name, address, topic, enabled) VALUES (?, ?, ?, 1)",
-                [$hostName, $hostAddress, $topic ?? ""],
-            );
-            $hostId = $db->lastInsertId();
+                    $db->runQuery(
+                        "INSERT INTO hosts (name, address, topic, enabled) VALUES (?, ?, ?, 1)",
+                        [$hostName, $hostAddress, $topic ?? ""],
+                    );
+                    $hostId = $db->lastInsertId();
 
-            $db->runQuery(
-                "INSERT INTO checks (host_id, type, slug, interval_seconds, enabled) VALUES (?, 'push', ?, 86400, 1)",
-                [$hostId, $slug],
-            );
-            $checkId = $db->lastInsertId();
-            $check = ["id" => $checkId, "host_id" => $hostId];
+                    $db->runQuery(
+                        "INSERT INTO checks (host_id, type, slug, interval_seconds, enabled) VALUES (?, 'push', ?, 86400, 1)",
+                        [$hostId, $slug],
+                    );
+                    $checkId = $db->lastInsertId();
+                    $check = ["id" => $checkId, "host_id" => $hostId];
+                }
+                $db->commit();
+            } catch (\Exception $e) {
+                $db->rollBack();
+                // Concurrent insert won — re-fetch
+                $check = $db->fetchRow(
+                    "SELECT c.id, c.host_id FROM checks c WHERE c.slug = ?",
+                    [$slug],
+                );
+                if (!$check) {
+                    throw $e;
+                }
+            }
         } else {
             // Update name/topic if provided
             if ($name !== null || $topic !== null) {
@@ -1089,11 +1109,14 @@ class PushController
             }
         }
 
-        // Store metrics as JSON
+        // Store metrics as JSON (validate if string)
         $metricsJson = null;
         if ($metrics !== null) {
             if (is_string($metrics)) {
-                $metricsJson = $metrics;
+                $decoded = json_decode($metrics);
+                if ($decoded !== null) {
+                    $metricsJson = $metrics;
+                }
             } elseif (is_array($metrics) || is_object($metrics)) {
                 $metricsJson = json_encode($metrics);
             }
