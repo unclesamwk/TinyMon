@@ -72,8 +72,12 @@ data/             SQLite database (auto-created), runner.log
 
 - **Pull checks**: Runner executes checks (ping, http, port, certificate, content, disk, load, memory, etc.) via cronjob every minute
 - **Push API**: External systems (K8s operator, Terraform, scripts) push results via Bearer token auth
-- **Upsert pattern**: Hosts matched by `address`, checks by `host_address` + `type` + `config`
+- **Slug-based push**: Simplified endpoint `GET|POST /api/push/<slug>` — auto-creates host+check on first push, status as 0/1/2, supports metrics and labels
+- **Push-only checks**: Checks with `type='push'` are skipped by the runner, only receive results via Push API
+- **Upsert pattern**: Hosts matched by `address`, checks by `host_address` + `type` + `config` (or by `slug` for slug-based push)
 - **Config-aware checks**: Multiple checks of same type per host distinguished by `config` JSON (e.g. `{"mount": "/"}`)
+- **Labels**: Arbitrary key-value labels on hosts (table `labels`), set via slug push endpoint, included in dashboard API for filtering
+- **Metrics**: Push results can include a `metrics` JSON object with named values (e.g. `{"size_gb": 59.4, "duration_s": 6682}`)
 - **Alerts on status transitions only**: No repeated notifications while something stays down
 
 ## Frontend Architecture
@@ -97,7 +101,7 @@ CSS custom properties on `:root` with dark mode overrides via F7 compound select
 
 ## Database
 
-SQLite at `data/tinymon.sqlite`. Schema in `app/config/services.php`. Tables: `hosts`, `checks`, `check_results`, `settings`, `push_subscriptions`, `login_attempts`, `alert_log`. Migrations run inline on boot. Foreign keys with CASCADE delete.
+SQLite at `data/tinymon.sqlite`. Schema in `app/config/services.php`. Tables: `hosts`, `checks` (with optional `slug`), `check_results` (with optional `metrics` JSON), `labels` (key-value per entity), `settings`, `push_subscriptions`, `login_attempts`, `alert_log`. Migrations run inline on boot. Foreign keys with CASCADE delete. SQLite trigger cleans up labels on host delete.
 
 ## APIs
 
@@ -105,6 +109,7 @@ SQLite at `data/tinymon.sqlite`. Schema in `app/config/services.php`. Tables: `h
   - `/api/dashboard` returns hosts with checks, `recent_values` (sparkline data, last 20 per check)
   - `/api/hosts/{id}` returns host with checks, `recent_values`, `uptime_24h` (24 hourly status slots), `uptime_hours` (UTC hour labels)
 - **Push API** (`/api/push/*`): Bearer token auth (`PUSH_API_KEY`). Upsert hosts/checks, push results (single + bulk), GET for state reads.
+  - Slug push: `GET|POST /api/push/<slug>?status=0&msg=OK&labels=env:prod` — simplified endpoint with auto-create
 - **Swagger UI**: `/api/docs`. OpenAPI spec auto-generated from PHP annotations.
 
 ## Related Repos
