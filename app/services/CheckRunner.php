@@ -18,7 +18,7 @@ class CheckRunner
             FROM checks c
             JOIN hosts h ON h.id = c.host_id
             WHERE c.enabled = 1 AND h.enabled = 1
-            AND c.type NOT IN ('status')
+            AND c.type NOT IN ('status', 'push')
             AND NOT (h.address LIKE 'k8s://%' AND c.type NOT IN ('http', 'certificate', 'icecast_listeners'))
             AND (
                 NOT EXISTS (SELECT 1 FROM check_results WHERE check_id = c.id)

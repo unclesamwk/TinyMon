@@ -34,20 +34,25 @@ TinyMon is not a replacement for enterprise monitoring. It is designed for a man
 
 ## Pull & Push -- One Dashboard
 
-### Pull Checks
+### Check Types
 
-TinyMon actively monitors your infrastructure via a cronjob runner:
+| Type | Mode | Description |
+|------|------|-------------|
+| `ping` | Pull | ICMP with TCP fallback (works on shared hosting) |
+| `http` | Pull | HTTP status code, response time, SSL verification |
+| `port` | Pull | TCP port connect time |
+| `certificate` | Pull | SSL certificate days until expiry |
+| `content` | Pull | Expected/unexpected strings on a page |
+| `content_hash` | Pull | Detect page changes (SHA-256) |
+| `disk` | Pull | Disk usage percentage |
+| `load` | Pull | System load average |
+| `memory` | Pull | RAM usage percentage |
+| `icecast_listeners` | Pull | Icecast mount listener count |
+| `push` | Push-only | Receives results exclusively via Push API (skipped by runner) |
 
-- **Ping** -- ICMP with TCP fallback (works on shared hosting)
-- **HTTP/HTTPS** -- status code, response time, SSL verification
-- **TCP Port** -- connect time
-- **SSL Certificate** -- days until expiry
-- **Content** -- expected/unexpected strings on a page
-- **Content Hash** -- detect changes (SHA-256)
-- **Disk / Load / Memory** -- local system resources
-- **Disk Health** -- S.M.A.R.T. health status and temperature (push-only)
+**Pull checks** are executed by the cronjob runner at configurable intervals. Each check has configurable **warning** and **critical** thresholds.
 
-Each check has configurable **warning** and **critical** thresholds.
+**Push-only checks** (`type: push`) are never executed by the runner -- they only receive results via the Push API. Use this for external systems like backups, cronjobs, or CI pipelines where TinyMon cannot actively check the status.
 
 ### Push API
 
