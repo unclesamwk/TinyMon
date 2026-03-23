@@ -56,17 +56,47 @@ TinyMon is not a replacement for enterprise monitoring. It is designed for a man
 
 ### Push API
 
-External systems push results to TinyMon via REST API with bearer token auth:
+#### Simple Push (Slug-based)
+
+The simplest way to push results. A slug uniquely identifies the monitor -- host and check are auto-created on first push:
 
 ```bash
-# Push a check result from a cronjob, CI pipeline, or K8s operator
+# Simple GET (works with wget, curl, or any HTTP client)
+curl "https://mon.example.com/api/push/garage-backup?status=0&msg=7+buckets+synced" \
+  -H "Authorization: Bearer $API_KEY"
+
+# First push with name and topic (configures the display name)
+curl "https://mon.example.com/api/push/garage-backup?status=0&msg=OK&name=Garage+S3+Backup&topic=Backup" \
+  -H "Authorization: Bearer $API_KEY"
+
+# With metrics (JSON body)
+curl -X POST "https://mon.example.com/api/push/garage-backup" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status": 0, "msg": "7 buckets synced", "value": 59.4, "metrics": {"size_gb": 59.4, "duration_s": 6682, "buckets": 7}}'
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `status` | yes | `0` = ok, `1` = warning, `2` = critical |
+| `msg` | no | Human-readable message |
+| `value` | no | Single metric value (for sparkline charts) |
+| `name` | no | Display name (default: slug, set on first push) |
+| `topic` | no | Grouping in dashboard (set on first push) |
+| `metrics` | no | JSON object with named metrics (JSON body only) |
+
+#### Advanced Push (Host/Check-based)
+
+For more control, use the host/check-based API. Supports multiple check types per host and config-aware matching:
+
+```bash
 curl -X POST https://mon.example.com/api/push/results \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"host_address": "10.0.1.5", "check_type": "backup", "status": "ok", "value": 42, "message": "Backup completed in 42s"}'
+  -d '{"host_address": "10.0.1.5", "check_type": "push", "status": "ok", "value": 42, "message": "Backup completed in 42s"}'
 ```
 
-Hosts and checks are created automatically on first push (upsert by address + type). Bulk endpoint available for submitting multiple results at once. Push results can include a `config` field to distinguish multiple checks of the same type (e.g. multiple disk mounts on one host).
+Hosts and checks must be created first via `POST /api/push/hosts` and `POST /api/push/checks`. Bulk endpoint available for submitting multiple results at once. Push results can include a `config` field to distinguish multiple checks of the same type (e.g. multiple disk mounts on one host).
 
 Use cases:
 - **Kubernetes** -- an operator pushes node/pod health

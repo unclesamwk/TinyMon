@@ -37,11 +37,14 @@ if ($isNew) {
             host_id INTEGER NOT NULL,
             type TEXT NOT NULL,
             config TEXT DEFAULT '{}',
+            slug TEXT DEFAULT NULL,
             interval_seconds INTEGER DEFAULT 300,
             enabled INTEGER DEFAULT 1,
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (host_id) REFERENCES hosts(id) ON DELETE CASCADE
         );
+
+        CREATE UNIQUE INDEX idx_checks_slug ON checks(slug) WHERE slug IS NOT NULL;
 
         CREATE TABLE check_results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,6 +52,7 @@ if ($isNew) {
             status TEXT NOT NULL,
             value REAL,
             message TEXT DEFAULT '',
+            metrics TEXT DEFAULT NULL,
             checked_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (check_id) REFERENCES checks(id) ON DELETE CASCADE
         );
@@ -109,6 +113,27 @@ $pdo->exec(
 $pdo->exec(
     "CREATE INDEX IF NOT EXISTS idx_alert_log_check_id ON alert_log(check_id)",
 );
+
+// Add slug column to checks (migration)
+$checkCols = $pdo->fetchAll("PRAGMA table_info(checks)");
+$checkColNames = array_column($checkCols, "name");
+if (!in_array("slug", $checkColNames, true)) {
+    $pdo->exec(
+        "ALTER TABLE checks ADD COLUMN slug TEXT DEFAULT NULL",
+    );
+    $pdo->exec(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_checks_slug ON checks(slug) WHERE slug IS NOT NULL",
+    );
+}
+
+// Add metrics column to check_results (migration)
+$resultCols = $pdo->fetchAll("PRAGMA table_info(check_results)");
+$resultColNames = array_column($resultCols, "name");
+if (!in_array("metrics", $resultColNames, true)) {
+    $pdo->exec(
+        "ALTER TABLE check_results ADD COLUMN metrics TEXT DEFAULT NULL",
+    );
+}
 
 // Cleanup old login attempts
 $pdo->exec(

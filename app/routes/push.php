@@ -14,3 +14,7 @@ Flight::route("DELETE /api/push/checks", [
 ]);
 Flight::route("POST /api/push/results", [PushController::class, "pushResult"]);
 Flight::route("POST /api/push/bulk", [PushController::class, "pushBulk"]);
+Flight::route("GET|POST /api/push/@slug:[a-zA-Z0-9_-]+", [
+    PushController::class,
+    "pushBySlug",
+]);

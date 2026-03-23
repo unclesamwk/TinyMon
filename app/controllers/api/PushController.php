@@ -971,4 +971,206 @@ class PushController
             "previous_status" => $prevStatus,
         ];
     }
+
+    /**
+     * Simplified push endpoint: GET|POST /api/push/<slug>
+     *
+     * Query params or JSON body:
+     *   status  - 0=ok, 1=warning, 2=critical (required)
+     *   msg     - Human-readable message (optional)
+     *   value   - Single metric value for charts (optional)
+     *   name    - Display name, used on first push (optional, default=slug)
+     *   topic   - Grouping, used on first push (optional)
+     *   metrics - JSON object with named metrics (optional, JSON body only)
+     *
+     * Auto-creates host + check on first push.
+     */
+    public static function pushBySlug(string $slug): void
+    {
+        // Reject reserved slugs that conflict with other API routes
+        $reserved = ["hosts", "checks", "results", "bulk"];
+        if (in_array($slug, $reserved, true)) {
+            Flight::halt(
+                400,
+                json_encode(["error" => "Slug '$slug' is reserved"]),
+            );
+            return;
+        }
+
+        $db = Flight::db();
+        $req = Flight::request();
+
+        // Merge query params and JSON body
+        $statusRaw = $req->query->status ?? $req->data->status ?? null;
+        $msg = $req->query->msg ?? $req->data->msg ?? $req->data->message ?? "";
+        $value = $req->query->value ?? $req->data->value ?? null;
+        $name = $req->query->name ?? $req->data->name ?? null;
+        $topic = $req->query->topic ?? $req->data->topic ?? null;
+        $metrics = $req->data->metrics ?? null;
+
+        // Validate status
+        if ($statusRaw === null) {
+            Flight::halt(
+                400,
+                json_encode(["error" => "status is required (0=ok, 1=warning, 2=critical)"]),
+            );
+            return;
+        }
+
+        $statusMap = ["0" => "ok", "1" => "warning", "2" => "critical"];
+        $status = $statusMap[(string) $statusRaw] ?? null;
+        if ($status === null) {
+            Flight::halt(
+                400,
+                json_encode(["error" => "Invalid status. Use 0 (ok), 1 (warning), or 2 (critical)"]),
+            );
+            return;
+        }
+
+        if ($value !== null) {
+            $value = (float) $value;
+        }
+
+        // Look up check by slug
+        $check = $db->fetchRow(
+            "SELECT c.id, c.host_id FROM checks c WHERE c.slug = ?",
+            [$slug],
+        );
+
+        // Auto-create host + check on first push
+        if (!$check) {
+            $hostAddress = "push://" . $slug;
+            $hostName = $name ?? $slug;
+
+            $db->runQuery(
+                "INSERT INTO hosts (name, address, topic, enabled) VALUES (?, ?, ?, 1)",
+                [$hostName, $hostAddress, $topic ?? ""],
+            );
+            $hostId = $db->lastInsertId();
+
+            $db->runQuery(
+                "INSERT INTO checks (host_id, type, slug, interval_seconds, enabled) VALUES (?, 'push', ?, 86400, 1)",
+                [$hostId, $slug],
+            );
+            $checkId = $db->lastInsertId();
+            $check = ["id" => $checkId, "host_id" => $hostId];
+        } else {
+            // Update name/topic if provided
+            if ($name !== null || $topic !== null) {
+                $updates = [];
+                $params = [];
+                if ($name !== null) {
+                    $updates[] = "name = ?";
+                    $params[] = $name;
+                }
+                if ($topic !== null) {
+                    $updates[] = "topic = ?";
+                    $params[] = $topic;
+                }
+                $updates[] = "updated_at = datetime('now')";
+                $params[] = $check["host_id"];
+                $db->runQuery(
+                    "UPDATE hosts SET " . implode(", ", $updates) . " WHERE id = ?",
+                    $params,
+                );
+            }
+        }
+
+        // Store metrics as JSON
+        $metricsJson = null;
+        if ($metrics !== null) {
+            if (is_string($metrics)) {
+                $metricsJson = $metrics;
+            } elseif (is_array($metrics) || is_object($metrics)) {
+                $metricsJson = json_encode($metrics);
+            }
+        }
+
+        // Store result
+        $db->runQuery(
+            "INSERT INTO check_results (check_id, status, value, message, metrics) VALUES (?, ?, ?, ?, ?)",
+            [$check["id"], $status, $value, $msg, $metricsJson],
+        );
+
+        // Alert handling (reuse existing logic)
+        $thresholdRow = $db->fetchRow(
+            "SELECT value FROM settings WHERE key = 'alert_threshold'",
+        );
+        $alertThreshold = max(1, (int) ($thresholdRow["value"] ?? 1));
+
+        $prevStatus = AlertHelper::shouldAlert(
+            $db,
+            $check["id"],
+            $status,
+            $alertThreshold,
+        );
+
+        $lastTwo = $db->fetchAll(
+            "SELECT status FROM check_results WHERE check_id = ? ORDER BY id DESC LIMIT 2",
+            [$check["id"]],
+        );
+        $actualPrevStatus = $lastTwo[1]["status"] ?? null;
+
+        if ($prevStatus !== null) {
+            $hostRow = $db->fetchRow("SELECT name, address FROM hosts WHERE id = ?", [
+                $check["host_id"],
+            ]);
+            $alertData = [
+                "check_id" => $check["id"],
+                "host_name" => $hostRow["name"] ?? $slug,
+                "type" => "push",
+                "status" => $status,
+                "previous_status" => $prevStatus,
+                "value" => $value,
+                "message" => $msg,
+            ];
+
+            $config = Flight::get("config");
+            $pushService = new WebPushService($db, $config);
+            $pushService->sendAll($alertData);
+
+            $alertService = new AlertService(
+                $config["smtp"],
+                $config["alert_recipients"],
+            );
+            $alertService->sendAlert($alertData);
+
+            AlertHelper::logAlert(
+                $db,
+                $check["id"],
+                $hostRow["name"] ?? $slug,
+                $hostRow["address"] ?? "push://" . $slug,
+                "push",
+                $prevStatus,
+                $status,
+                true,
+            );
+        } elseif ($actualPrevStatus !== null && $actualPrevStatus !== $status) {
+            $hostRow = $db->fetchRow("SELECT name, address FROM hosts WHERE id = ?", [
+                $check["host_id"],
+            ]);
+            AlertHelper::logAlert(
+                $db,
+                $check["id"],
+                $hostRow["name"] ?? $slug,
+                $hostRow["address"] ?? "push://" . $slug,
+                "push",
+                $actualPrevStatus,
+                $status,
+                false,
+                "threshold not met",
+            );
+        }
+
+        Flight::json([
+            "slug" => $slug,
+            "check_id" => $check["id"],
+            "status" => $status,
+            "message" => $msg,
+            "value" => $value,
+            "metrics" => $metrics,
+            "status_changed" => $prevStatus !== null,
+            "previous_status" => $prevStatus,
+        ]);
+    }
 }
