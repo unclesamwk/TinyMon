@@ -84,6 +84,9 @@ curl -X POST "https://mon.example.com/api/push/garage-backup" \
 | `name` | no | Display name (default: slug, set on first push) |
 | `topic` | no | Grouping in dashboard (set on first push) |
 | `metrics` | no | JSON object with named metrics (JSON body only) |
+| `labels` | no | Key-value labels for filtering. Query: `env:prod,type:backup`. JSON: `{"env": "prod"}` |
+
+Labels are upserted on every push -- existing keys are updated, new keys are added. The dashboard API includes labels per host for client-side filtering.
 
 #### Advanced Push (Host/Check-based)
 
