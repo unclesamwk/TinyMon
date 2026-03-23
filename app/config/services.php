@@ -69,6 +69,18 @@ if ($isNew) {
             ip TEXT NOT NULL,
             attempted_at TEXT NOT NULL
         );
+
+        CREATE TABLE labels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity_type TEXT NOT NULL,
+            entity_id INTEGER NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            UNIQUE(entity_type, entity_id, key)
+        );
+
+        CREATE INDEX idx_labels_entity ON labels(entity_type, entity_id);
+        CREATE INDEX idx_labels_key_value ON labels(key, value);
     ");
 }
 
@@ -134,6 +146,24 @@ if (!in_array("metrics", $resultColNames, true)) {
         "ALTER TABLE check_results ADD COLUMN metrics TEXT DEFAULT NULL",
     );
 }
+
+// Ensure labels table exists (migration)
+$pdo->exec("
+    CREATE TABLE IF NOT EXISTS labels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        UNIQUE(entity_type, entity_id, key)
+    )
+");
+$pdo->exec(
+    "CREATE INDEX IF NOT EXISTS idx_labels_entity ON labels(entity_type, entity_id)",
+);
+$pdo->exec(
+    "CREATE INDEX IF NOT EXISTS idx_labels_key_value ON labels(key, value)",
+);
 
 // Cleanup old login attempts
 $pdo->exec(

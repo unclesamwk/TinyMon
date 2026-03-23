@@ -1007,6 +1007,7 @@ class PushController
         $name = $req->query->name ?? $req->data->name ?? null;
         $topic = $req->query->topic ?? $req->data->topic ?? null;
         $metrics = $req->data->metrics ?? null;
+        $labelsRaw = $req->query->labels ?? $req->data->labels ?? null;
 
         // Validate status
         if ($statusRaw === null) {
@@ -1072,6 +1073,18 @@ class PushController
                 $db->runQuery(
                     "UPDATE hosts SET " . implode(", ", $updates) . " WHERE id = ?",
                     $params,
+                );
+            }
+        }
+
+        // Store labels (upsert)
+        if ($labelsRaw !== null) {
+            $labels = self::parseLabels($labelsRaw);
+            foreach ($labels as $key => $val) {
+                $db->runQuery(
+                    "INSERT INTO labels (entity_type, entity_id, key, value) VALUES ('host', ?, ?, ?)
+                     ON CONFLICT(entity_type, entity_id, key) DO UPDATE SET value = excluded.value",
+                    [$check["host_id"], $key, $val],
                 );
             }
         }
@@ -1172,5 +1185,43 @@ class PushController
             "status_changed" => $prevStatus !== null,
             "previous_status" => $prevStatus,
         ]);
+    }
+
+    /**
+     * Parse labels from query string ("env:prod,type:backup")
+     * or JSON object ({"env": "prod", "type": "backup"}).
+     *
+     * @return array<string, string>
+     */
+    private static function parseLabels(mixed $raw): array
+    {
+        if (is_array($raw) || is_object($raw)) {
+            $labels = [];
+            foreach ((array) $raw as $k => $v) {
+                $k = trim((string) $k);
+                $v = trim((string) $v);
+                if ($k !== "" && $v !== "") {
+                    $labels[$k] = $v;
+                }
+            }
+            return $labels;
+        }
+
+        if (is_string($raw) && $raw !== "") {
+            $labels = [];
+            foreach (explode(",", $raw) as $pair) {
+                $parts = explode(":", $pair, 2);
+                if (count($parts) === 2) {
+                    $k = trim($parts[0]);
+                    $v = trim($parts[1]);
+                    if ($k !== "" && $v !== "") {
+                        $labels[$k] = $v;
+                    }
+                }
+            }
+            return $labels;
+        }
+
+        return [];
     }
 }

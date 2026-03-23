@@ -205,6 +205,17 @@ class DashboardController
             "critical" => 3,
         ];
 
+        // Batch-load all labels for enabled hosts
+        $allLabels = $db->fetchAll(
+            "SELECT entity_id, key, value FROM labels
+             WHERE entity_type = 'host'
+             AND entity_id IN (SELECT id FROM hosts WHERE enabled = 1)",
+        );
+        $labelsByHost = [];
+        foreach ($allLabels as $label) {
+            $labelsByHost[$label["entity_id"]][$label["key"]] = $label["value"];
+        }
+
         foreach ($hosts as &$host) {
             $hostChecks = $checksByHost[$host["id"]] ?? [];
             $worstPrio = -1;
@@ -222,6 +233,7 @@ class DashboardController
 
             $host["status"] = $hostStatus;
             $host["checks"] = $hostChecks;
+            $host["labels"] = $labelsByHost[$host["id"]] ?? (object) [];
         }
 
         $runnerLastRun = $db->fetchRow(
