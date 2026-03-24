@@ -1170,6 +1170,14 @@ function loadHostDetail(page, hostId) {
           '<p style="margin:0.25rem 0 0;">' +
           escHtml(data.description) +
           "</p>";
+      if (data.labels && typeof data.labels === "object" && Object.keys(data.labels).length > 0) {
+        info += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:0.4rem;">';
+        Object.keys(data.labels).sort().forEach(function (k) {
+          info += '<span style="font-family:var(--tm-font-mono, monospace); font-size:0.65rem; padding:0.1rem 0.4rem; border-radius:0.75rem; border:1px solid var(--tm-border, #d4d4d8); background:var(--tm-bg-card, #f4f4f5); color:var(--tm-text-primary, #18181b);">' +
+            escHtml(k) + ': ' + escHtml(data.labels[k]) + '</span>';
+        });
+        info += '</div>';
+      }
       page.$el.find("#host-info").html(info);
 
       var checks = data.checks || [];
@@ -1258,18 +1266,22 @@ function loadHostDetail(page, hostId) {
             btnStyle + '">' +
             iconHtml("clock", "history", icoStyle) +
             " " + t("history") + "</a>";
-          html +=
-            '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
-            c.id +
-            '" style="' +
-            btnStyle +
-            '">' +
-            iconHtml("chart_bar", "show_chart", icoStyle) +
-            " " +
-            t("chart") +
-            "</a>";
+          var hasNumericValue = lr && lr.value !== null && lr.value !== undefined;
+          if (hasNumericValue) {
+            html +=
+              '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
+              c.id +
+              '" style="' +
+              btnStyle +
+              '">' +
+              iconHtml("chart_bar", "show_chart", icoStyle) +
+              " " +
+              t("chart") +
+              "</a>";
+          }
           var isPushOnly =
             c.type === "status" ||
+            c.type === "push" ||
             (data.address.indexOf("k8s://") === 0 &&
               c.type !== "http" &&
               c.type !== "certificate");

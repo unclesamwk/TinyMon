@@ -123,6 +123,17 @@ class HostController
             return;
         }
 
+        // Add labels
+        $labelRows = $db->fetchAll(
+            "SELECT key, value FROM labels WHERE entity_type = 'host' AND entity_id = ?",
+            [$id],
+        );
+        $labels = new \stdClass();
+        foreach ($labelRows as $lr) {
+            $labels->{$lr["key"]} = $lr["value"];
+        }
+        $host["labels"] = $labels;
+
         $checks = $db->fetchAll(
             "SELECT * FROM checks WHERE host_id = ? ORDER BY type ASC",
             [$id],
@@ -132,6 +143,9 @@ class HostController
                 "SELECT * FROM check_results WHERE check_id = ? ORDER BY checked_at DESC LIMIT 1",
                 [$check["id"]],
             );
+            if ($lastResult && isset($lastResult["metrics"]) && $lastResult["metrics"]) {
+                $lastResult["metrics"] = json_decode($lastResult["metrics"], true);
+            }
             $check["last_result"] = $lastResult;
         }
         unset($check);
