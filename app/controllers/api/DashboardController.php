@@ -144,7 +144,8 @@ class DashboardController
         $rows = $db->fetchAll(
             "SELECT c.*,
                     cr.status AS result_status, cr.value AS result_value,
-                    cr.message AS result_message, cr.checked_at AS result_checked_at
+                    cr.message AS result_message, cr.checked_at AS result_checked_at,
+                    cr.metrics AS result_metrics
              FROM checks c
              LEFT JOIN check_results cr ON cr.id = (
                  SELECT id FROM check_results WHERE check_id = c.id ORDER BY checked_at DESC LIMIT 1
@@ -184,6 +185,7 @@ class DashboardController
                     "value" => $row["result_value"],
                     "message" => $row["result_message"],
                     "checked_at" => $row["result_checked_at"],
+                    "metrics" => $row["result_metrics"] ? json_decode($row["result_metrics"], true) : null,
                 ];
             }
             unset(
@@ -191,6 +193,7 @@ class DashboardController
                 $row["result_value"],
                 $row["result_message"],
                 $row["result_checked_at"],
+                $row["result_metrics"],
             );
             $row["last_result"] = $lastResult;
             $row["recent_values"] = $sparkByCheck[$row["id"]] ?? [];

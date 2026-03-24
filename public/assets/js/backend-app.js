@@ -133,6 +133,7 @@ var translations = {
     type_content_hash: "Inhalt Hash",
     type_icecast: "Icecast",
     type_status: "Status",
+    type_push: "Push",
     cfg_path: "Pfad",
     cfg_port: "Port",
     cfg_expected_status: "Erwarteter Status",
@@ -274,6 +275,7 @@ var translations = {
     type_content_hash: "Content Hash",
     type_icecast: "Icecast",
     type_status: "Status",
+    type_push: "Push",
     cfg_path: "Path",
     cfg_port: "Port",
     cfg_expected_status: "Expected status",
@@ -502,6 +504,7 @@ function typeLabel(type) {
     content_hash: "type_content_hash",
     icecast_listeners: "type_icecast",
     status: "type_status",
+    push: "type_push",
   };
   return t(map[type] || type);
 }
@@ -673,7 +676,7 @@ function renderHostListItem(h) {
         else if (parsedCfg.device) { checkTitle += " " + parsedCfg.device; }
       }
       li += '<li>';
-      li += '<a href="/check-history/' + c.id + '/" class="item-link item-content" data-check-id="' + c.id + '">';
+      li += '<a href="#" class="item-link item-content dashboard-check-link" data-host-id="' + h.id + '" data-check-id="' + c.id + '">';
       li += '<div class="item-media"><i class="icon ' + iconClass() + '" style="color:' + color + '; font-size:16px;">' + typeIcon(c.type) + '</i></div>';
       li += '<div class="item-inner"><div class="item-title-row">';
       li += '<div class="item-title" style="font-size:0.8rem;">' + escHtml(checkTitle) + '</div>';
@@ -1100,6 +1103,12 @@ function renderDashboard(page) {
     app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
   });
 
+  page.$el.find(".dashboard-check-link").on("click", function (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    app.views.main.router.navigate("/hosts/" + this.dataset.hostId + "/");
+  });
+
   page.$el.find(".swipeout-delete-host").on("click", function (ev) {
     ev.preventDefault();
     var hostId = this.dataset.hostId;
@@ -1180,11 +1189,9 @@ function loadHostDetail(page, hostId) {
             typeof c.config === "string"
               ? c.config
               : JSON.stringify(c.config || {});
-          html += '<li class="swipeout" data-check-id="' + c.id + '">';
+          html += '<li class="accordion-item swipeout" data-check-id="' + c.id + '">';
           html +=
-            '<a href="/check-history/' +
-            c.id +
-            '/" class="item-link item-content swipeout-content check-card" data-check-id="' +
+            '<a href="#" class="item-link item-content swipeout-content check-card" data-check-id="' +
             c.id +
             '">';
           html +=
@@ -1230,13 +1237,27 @@ function loadHostDetail(page, hostId) {
               '<div class="item-subtitle" style="color:var(--tm-text-secondary, gray); font-size:0.75rem; margin-top:2px; font-family:var(--tm-font-mono, monospace);">';
             html += timeAgo(lr.checked_at);
             html += "</div>";
+            if (lr.metrics && typeof lr.metrics === "object") {
+              html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-top:4px;">';
+              Object.keys(lr.metrics).forEach(function (mk) {
+                html += '<span style="font-family:var(--tm-font-mono, monospace); font-size:0.65rem; padding:0.1rem 0.4rem; border-radius:0.75rem; border:1px solid var(--tm-border, #d4d4d8); background:var(--tm-bg-card, #f4f4f5); color:var(--tm-text-primary, #18181b);">' +
+                  escHtml(mk) + ': <b>' + escHtml(String(lr.metrics[mk])) + '</b></span>';
+              });
+              html += '</div>';
+            }
           }
           html += "</div></a>";
+          html += '<div class="accordion-item-content">';
           var btnStyle = "font-size:0.75rem; padding:0 8px; line-height:28px;";
           var icoSize = app.theme === "ios" ? "12px" : "14px";
           var icoStyle = "font-size:" + icoSize + "; vertical-align:middle;";
           html +=
-            '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; padding:0 1rem 0.5rem; align-items:center;">';
+            '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; padding:0.5rem 1rem 0.5rem; align-items:center;">';
+          html +=
+            '<a href="/check-history/' + c.id + '/" class="button button-small button-outline" style="' +
+            btnStyle + '">' +
+            iconHtml("clock", "history", icoStyle) +
+            " " + t("history") + "</a>";
           html +=
             '<a href="#" class="button button-small button-outline toggle-chart" data-check-id="' +
             c.id +
@@ -1302,6 +1323,7 @@ function loadHostDetail(page, hostId) {
             '" data-check-config="' +
             escHtml(cfgRaw) +
             '" style="display:none; padding:0.5rem 1rem 1rem;"></div>';
+          html += '</div>'; // close accordion-item-content
           html +=
             '<div class="swipeout-actions-right"><a href="#" class="swipeout-delete-check color-red swipeout-close" data-check-id="' +
             c.id +
