@@ -268,6 +268,7 @@ class PushController
         $description = trim($data->description ?? "");
         $topic = trim($data->topic ?? "");
         $enabled = (int) ($data->enabled ?? 1) ? 1 : 0;
+        $labelsRaw = $data->labels ?? null;
 
         if ($address === "") {
             Flight::halt(400, json_encode(["error" => "address is required"]));
@@ -286,8 +287,9 @@ class PushController
                 "UPDATE hosts SET name = ?, description = ?, topic = ?, enabled = ?, updated_at = datetime('now') WHERE id = ?",
                 [$name, $description, $topic, $enabled, $existing["id"]],
             );
+            $hostId = $existing["id"];
             $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [
-                $existing["id"],
+                $hostId,
             ]);
             Flight::json($host);
         } else {
@@ -295,9 +297,23 @@ class PushController
                 "INSERT INTO hosts (name, address, description, topic, enabled) VALUES (?, ?, ?, ?, ?)",
                 [$name, $address, $description, $topic, $enabled],
             );
-            $id = $db->lastInsertId();
-            $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [$id]);
+            $hostId = $db->lastInsertId();
+            $host = $db->fetchRow("SELECT * FROM hosts WHERE id = ?", [
+                $hostId,
+            ]);
             Flight::json($host, 201);
+        }
+
+        // Store labels if provided
+        if ($labelsRaw !== null) {
+            $labels = self::parseLabels($labelsRaw);
+            foreach ($labels as $key => $val) {
+                $db->runQuery(
+                    "INSERT INTO labels (entity_type, entity_id, key, value) VALUES ('host', ?, ?, ?)
+                     ON CONFLICT(entity_type, entity_id, key) DO UPDATE SET value = excluded.value",
+                    [$hostId, $key, $val],
+                );
+            }
         }
     }
 
