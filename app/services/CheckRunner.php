@@ -155,9 +155,9 @@ class CheckRunner
     {
         if ($this->isBlockedAddress($address)) {
             return [
-                "status" => "critical",
+                "status" => "ok",
                 "value" => null,
-                "message" => "Blocked: private/reserved IP",
+                "message" => "Skipped: private/reserved IP",
             ];
         }
         $warningMs = $config["warning_ms"] ?? 100;
@@ -294,9 +294,9 @@ class CheckRunner
 
         if ($this->isBlockedAddress($checkHost)) {
             return [
-                "status" => "critical",
+                "status" => "ok",
                 "value" => null,
-                "message" => "Blocked: private/reserved IP",
+                "message" => "Skipped: private/reserved IP",
             ];
         }
 
@@ -361,9 +361,9 @@ class CheckRunner
     {
         if ($this->isBlockedAddress($address)) {
             return [
-                "status" => "critical",
+                "status" => "ok",
                 "value" => null,
-                "message" => "Blocked: private/reserved IP",
+                "message" => "Skipped: private/reserved IP",
             ];
         }
         $port = $config["port"] ?? 22;
@@ -408,9 +408,9 @@ class CheckRunner
 
         if ($this->isBlockedAddress($checkHost)) {
             return [
-                "status" => "critical",
+                "status" => "ok",
                 "value" => null,
-                "message" => "Blocked: private/reserved IP",
+                "message" => "Skipped: private/reserved IP",
             ];
         }
 
@@ -480,10 +480,11 @@ class CheckRunner
         if ($this->isBlockedAddress($address)) {
             return [
                 "body" => "",
-                "http_code" => 0,
+                "http_code" => -1,
                 "elapsed_ms" => 0,
-                "error" => "Blocked: private/reserved IP",
+                "error" => "Skipped: private/reserved IP",
                 "url" => "",
+                "blocked" => true,
             ];
         }
         $port = $config["port"] ?? 443;
@@ -535,6 +536,14 @@ class CheckRunner
         $unexpectedContent = $config["unexpected_content"] ?? "";
 
         $resp = $this->fetchUrl($address, $config);
+
+        if (!empty($resp["blocked"])) {
+            return [
+                "status" => "ok",
+                "value" => null,
+                "message" => "Skipped: private/reserved IP",
+            ];
+        }
 
         if ($resp["http_code"] === 0) {
             return [
@@ -606,6 +615,14 @@ class CheckRunner
         $selector = $config["selector"] ?? ""; // optional: only hash part of body
 
         $resp = $this->fetchUrl($address, $config);
+
+        if (!empty($resp["blocked"])) {
+            return [
+                "status" => "ok",
+                "value" => null,
+                "message" => "Skipped: private/reserved IP",
+            ];
+        }
 
         if ($resp["http_code"] === 0) {
             return [
@@ -685,6 +702,14 @@ class CheckRunner
         $selector = $config["selector"] ?? "";
 
         $resp = $this->fetchUrl($address, $config);
+
+        if (!empty($resp["blocked"])) {
+            return [
+                "status" => "ok",
+                "value" => null,
+                "message" => "Skipped: private/reserved IP",
+            ];
+        }
 
         if ($resp["http_code"] === 0) {
             return [
