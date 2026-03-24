@@ -212,6 +212,8 @@ var translations = {
     update_instructions: "Update-Anleitung",
     password: "Passwort",
     login: "Anmelden",
+    labels: "Labels",
+    all_labels: "Alle",
   },
   en: {
     no_hosts: "No hosts configured.\nTap + to add a host.",
@@ -351,6 +353,8 @@ var translations = {
     update_instructions: "Update instructions",
     password: "Password",
     login: "Log in",
+    labels: "Labels",
+    all_labels: "All",
   },
 };
 
@@ -619,7 +623,7 @@ function renderHostListItem(h) {
     });
   }
   var hasChecks = h.checks && h.checks.length > 0;
-  var hostOpened = (hasChecks && (dashboardFilter || isHostOpen(String(h.id)))) ? " accordion-item-opened" : "";
+  var hostOpened = (hasChecks && (dashboardFilter || dashboardLabelFilter || isHostOpen(String(h.id)))) ? " accordion-item-opened" : "";
   var checkCounts = { ok: 0, warning: 0, critical: 0, unknown: 0 };
   if (hasChecks) {
     h.checks.forEach(function (c) {
@@ -691,6 +695,7 @@ function renderHostListItem(h) {
 
 // Dashboard loader
 var dashboardFilter = null;
+var dashboardLabelFilter = null; // { key: "env", value: "prod" } or null
 var dashboardData = null;
 
 function renderDashboard(page) {
@@ -728,6 +733,51 @@ function renderDashboard(page) {
     dashboardFilter = dashboardFilter === clicked ? null : clicked;
     renderDashboard(page);
   });
+
+  // Collect all unique label key:value pairs from hosts
+  var allLabels = {};
+  hosts.forEach(function (h) {
+    if (h.labels && typeof h.labels === "object") {
+      Object.keys(h.labels).forEach(function (k) {
+        var kv = k + ":" + h.labels[k];
+        allLabels[kv] = (allLabels[kv] || 0) + 1;
+      });
+    }
+  });
+
+  var labelKeys = Object.keys(allLabels).sort();
+  if (labelKeys.length > 0) {
+    var lf = '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; padding:0 1rem; margin:-0.3rem 0 0.4rem;">';
+    labelKeys.forEach(function (kv) {
+      var active = dashboardLabelFilter === kv;
+      var opacity = dashboardLabelFilter && !active ? "0.4" : "1";
+      var bg = active ? "var(--tm-bg-active, #e0e7ff)" : "var(--tm-bg-card, #f4f4f5)";
+      var border = active ? "var(--tm-text-primary, #18181b)" : "var(--tm-border, #d4d4d8)";
+      lf += '<span class="label-filter" data-label="' + escHtml(kv) + '" style="cursor:pointer; opacity:' + opacity +
+        '; font-family:var(--tm-font-mono, monospace); font-size:0.65rem; padding:0.15rem 0.5rem; border-radius:1rem; border:1px solid ' +
+        border + '; background:' + bg + '; color:var(--tm-text-primary, #18181b);">' + escHtml(kv) + '</span>';
+    });
+    lf += '</div>';
+    page.$el.find("#dashboard-labels").html(lf);
+  } else {
+    page.$el.find("#dashboard-labels").html("");
+  }
+
+  page.$el.find(".label-filter").on("click", function () {
+    var clicked = this.dataset.label;
+    dashboardLabelFilter = dashboardLabelFilter === clicked ? null : clicked;
+    renderDashboard(page);
+  });
+
+  // Apply label filter
+  if (dashboardLabelFilter) {
+    var parts = dashboardLabelFilter.split(":");
+    var fKey = parts[0];
+    var fVal = parts.slice(1).join(":");
+    hosts = hosts.filter(function (h) {
+      return h.labels && h.labels[fKey] === fVal;
+    });
+  }
 
   if (dashboardFilter) {
     hosts = hosts
@@ -875,7 +925,7 @@ function renderDashboard(page) {
         var counts = statusSummary(child);
         var subGroups = collapsePath(child);
         var hasSubGroups = subGroups.length > 0;
-        var opened = (dashboardFilter || isTopicOpen(group.label)) ? " accordion-item-opened" : "";
+        var opened = (dashboardFilter || dashboardLabelFilter || isTopicOpen(group.label)) ? " accordion-item-opened" : "";
         var borderColor = statusColors[groupStatus] || statusColors.unknown;
 
         if (depth === 0) {
